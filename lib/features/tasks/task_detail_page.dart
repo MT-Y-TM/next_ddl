@@ -8,10 +8,7 @@ import 'task_edit_page.dart';
 import 'tasks_controller.dart';
 
 class TaskDetailPage extends ConsumerWidget {
-  const TaskDetailPage({
-    required this.taskId,
-    super.key,
-  });
+  const TaskDetailPage({required this.taskId, super.key});
 
   final String taskId;
 
@@ -31,6 +28,7 @@ class TaskDetailPage extends ConsumerWidget {
     }
 
     final nextMilestone = resolveNextMilestone(task, now);
+    final progress = resolveRemainingProgress(task, now);
     final timeline = [...task.milestones]
       ..sort((left, right) => left.dueAtUtc.compareTo(right.dueAtUtc));
 
@@ -69,6 +67,8 @@ class TaskDetailPage extends ConsumerWidget {
                     Text(task.note),
                   ],
                   const SizedBox(height: 16),
+                  _RemainingProgressBar(progress: progress),
+                  const SizedBox(height: 16),
                   Text('时区：${task.timezoneId}'),
                   const SizedBox(height: 8),
                   Text('下一个节点：${nextMilestone?.title ?? '已全部超时'}'),
@@ -90,10 +90,7 @@ class TaskDetailPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            '时间线',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('时间线', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           for (final milestone in timeline)
             ListTile(
@@ -109,10 +106,7 @@ class TaskDetailPage extends ConsumerWidget {
             subtitle: Text(task.finalDueAtUtc.toLocal().toString()),
           ),
           const SizedBox(height: 12),
-          Text(
-            '提醒策略',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('提醒策略', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -120,7 +114,9 @@ class TaskDetailPage extends ConsumerWidget {
             children: [
               for (final offset in task.reminderOffsetsSeconds)
                 Chip(
-                  label: Text(offset == 0 ? '到点提醒' : '提前 ${_formatOffset(offset)}'),
+                  label: Text(
+                    offset == 0 ? '到点提醒' : '提前 ${_formatOffset(offset)}',
+                  ),
                 ),
               if (task.reminderOffsetsSeconds.isEmpty)
                 const Chip(label: Text('未设置提醒')),
@@ -176,5 +172,40 @@ class TaskDetailPage extends ConsumerWidget {
       return '${duration.inMinutes}分钟';
     }
     return '${duration.inSeconds}秒';
+  }
+}
+
+class _RemainingProgressBar extends StatelessWidget {
+  const _RemainingProgressBar({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (progress * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('剩余时间', style: Theme.of(context).textTheme.labelLarge),
+            const Spacer(),
+            Text(
+              '$percent%',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: progress,
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ],
+    );
   }
 }

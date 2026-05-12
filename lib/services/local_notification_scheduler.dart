@@ -12,8 +12,8 @@ class LocalNotificationScheduler implements NotificationScheduler {
   LocalNotificationScheduler({
     required TimezoneService timezoneService,
     FlutterLocalNotificationsPlugin? plugin,
-  })  : _timezoneService = timezoneService,
-        _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  }) : _timezoneService = timezoneService,
+       _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final TimezoneService _timezoneService;
   final FlutterLocalNotificationsPlugin _plugin;
@@ -31,10 +31,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
       appUserModelId: 'com.mtytm.nextddl',
       guid: '2f3f753f-5c7b-4339-8695-0f310b8f79a0',
     );
-    const settings = InitializationSettings(
-      android: android,
-      windows: windows,
-    );
+    const settings = InitializationSettings(android: android, windows: windows);
     await _plugin.initialize(
       settings,
       onDidReceiveNotificationResponse: (response) {
@@ -64,8 +61,10 @@ class LocalNotificationScheduler implements NotificationScheduler {
   @override
   Future<void> requestPermissionIfNeeded() async {
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await android?.requestNotificationsPermission();
     }
   }
@@ -93,8 +92,9 @@ class LocalNotificationScheduler implements NotificationScheduler {
 
     for (final target in targets) {
       for (final offset in task.reminderOffsetsSeconds.toSet()) {
-        final scheduledAtUtc =
-            target.dueAtUtc.subtract(Duration(seconds: offset));
+        final scheduledAtUtc = target.dueAtUtc.subtract(
+          Duration(seconds: offset),
+        );
         if (!scheduledAtUtc.isAfter(DateTime.now().toUtc())) {
           continue;
         }
@@ -102,8 +102,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
           scheduledAtUtc,
           _timezoneService.location,
         );
-        final notificationId =
-            '${target.idSeed}:$offset'.hashCode & 0x7fffffff;
+        final notificationId = '${target.idSeed}:$offset'.hashCode & 0x7fffffff;
         final message = offset == 0
             ? '现在到点 · ${target.title}'
             : '提前${_formatOffset(offset)} · ${target.title}';
@@ -114,11 +113,11 @@ class LocalNotificationScheduler implements NotificationScheduler {
           scheduleTime,
           NotificationDetails(
             android: const AndroidNotificationDetails(
-              'next_ddl_deadline',
-              'Next DDL Deadlines',
-              channelDescription: '任务节点与最终截止提醒',
-              importance: Importance.max,
-              priority: Priority.high,
+              'next_ddl_messages',
+              'Next DDL Messages',
+              channelDescription: '任务节点与最终截止消息通知',
+              importance: Importance.defaultImportance,
+              priority: Priority.defaultPriority,
             ),
             windows: const WindowsNotificationDetails(),
           ),

@@ -57,4 +57,47 @@ void main() {
       isTrue,
     );
   });
+
+  test('remaining progress counts down from creation to final deadline', () {
+    final createdAt = DateTime.utc(2026, 1, 1);
+    final task = DeadlineTask(
+      id: 'task_1',
+      title: '毕业设计',
+      note: '',
+      timezoneId: 'Asia/Shanghai',
+      createdAtUtc: createdAt,
+      updatedAtUtc: createdAt,
+      finalDueAtUtc: DateTime.utc(2026, 1, 11),
+      milestones: const [],
+      reminderOffsetsSeconds: const [],
+      notificationsEnabled: false,
+    );
+
+    expect(resolveRemainingProgress(task, createdAt), 1);
+    expect(resolveRemainingProgress(task, DateTime.utc(2026, 1, 6)), 0.5);
+    expect(resolveRemainingProgress(task, DateTime.utc(2026, 1, 11)), 0);
+    expect(resolveRemainingProgress(task, DateTime.utc(2026, 1, 12)), 0);
+  });
+
+  test('remaining progress handles invalid task time range', () {
+    final now = DateTime.utc(2026, 1, 1);
+    final futureTask = DeadlineTask(
+      id: 'task_1',
+      title: '未来任务',
+      note: '',
+      timezoneId: 'Asia/Shanghai',
+      createdAtUtc: DateTime.utc(2026, 1, 2),
+      updatedAtUtc: now,
+      finalDueAtUtc: DateTime.utc(2026, 1, 1, 12),
+      milestones: const [],
+      reminderOffsetsSeconds: const [],
+      notificationsEnabled: false,
+    );
+    final overdueTask = futureTask.copyWith(
+      finalDueAtUtc: DateTime.utc(2025, 12, 31),
+    );
+
+    expect(resolveRemainingProgress(futureTask, now), 1);
+    expect(resolveRemainingProgress(overdueTask, now), 0);
+  });
 }

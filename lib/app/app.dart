@@ -22,16 +22,15 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp> {
   @override
   void initState() {
     super.initState();
-    _tapSubscription =
-        LocalNotificationScheduler.notificationTapStream.listen((taskId) {
+    _tapSubscription = LocalNotificationScheduler.notificationTapStream.listen((
+      taskId,
+    ) {
       final navigator = _navigatorKey.currentState;
       if (navigator == null) {
         return;
       }
       navigator.push(
-        MaterialPageRoute<void>(
-          builder: (_) => TaskDetailPage(taskId: taskId),
-        ),
+        MaterialPageRoute<void>(builder: (_) => TaskDetailPage(taskId: taskId)),
       );
     });
   }
@@ -49,6 +48,8 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp> {
       title: 'Next DDL',
       debugShowCheckedModeBanner: false,
       theme: buildNextDdlTheme(),
+      darkTheme: buildNextDdlTheme(brightness: Brightness.dark),
+      themeMode: ThemeMode.system,
       home: const TaskListPage(),
     );
   }

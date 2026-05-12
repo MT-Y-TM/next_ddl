@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/app/app.dart';
+import 'package:next_ddl/features/tasks/task_edit_page.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/services/app_info_service.dart';
@@ -40,7 +42,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          deadlineRepositoryProvider.overrideWithValue(_MemoryRepository(snapshot)),
+          deadlineRepositoryProvider.overrideWithValue(
+            _MemoryRepository(snapshot),
+          ),
           notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
           timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
           fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
@@ -57,6 +61,9 @@ void main() {
     expect(find.text('论文终稿'), findsOneWidget);
     expect(find.textContaining('下一个节点'), findsOneWidget);
     expect(find.text('最终截止'), findsWidgets);
+    expect(find.text('剩余时间'), findsOneWidget);
+    expect(find.text('100%'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
   });
 
   testWidgets('shows empty state when no tasks exist', (tester) async {
@@ -82,6 +89,26 @@ void main() {
 
     expect(find.text('还没有任何 deadline 任务'), findsOneWidget);
     expect(find.text('立即创建'), findsOneWidget);
+  });
+
+  testWidgets('task editor keeps milestones manual only', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          deadlineRepositoryProvider.overrideWithValue(
+            _MemoryRepository(AppSnapshot.empty()),
+          ),
+          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
+          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+        ],
+        child: const MaterialApp(home: TaskEditPage()),
+      ),
+    );
+
+    expect(find.text('新增节点'), findsOneWidget);
+    expect(find.textContaining('自动生成'), findsNothing);
   });
 }
 

@@ -6,10 +6,7 @@ import '../../models/milestone.dart';
 import 'tasks_controller.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
-  const TaskEditPage({
-    this.existingTask,
-    super.key,
-  });
+  const TaskEditPage({this.existingTask, super.key});
 
   final DeadlineTask? existingTask;
 
@@ -31,11 +28,14 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     final task = widget.existingTask;
     _titleController = TextEditingController(text: task?.title ?? '');
     _noteController = TextEditingController(text: task?.note ?? '');
-    _finalDueLocal = (task?.finalDueAtUtc ??
-            DateTime.now().toUtc().add(const Duration(days: 3)))
-        .toLocal();
+    _finalDueLocal =
+        (task?.finalDueAtUtc ??
+                DateTime.now().toUtc().add(const Duration(days: 3)))
+            .toLocal();
     _milestones = [...(task?.milestones ?? const [])];
-    _reminders = [...(task?.reminderOffsetsSeconds ?? const [0])];
+    _reminders = [
+      ...(task?.reminderOffsetsSeconds ?? const [0]),
+    ];
     _notificationsEnabled = task?.notificationsEnabled ?? true;
   }
 
@@ -50,9 +50,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   Widget build(BuildContext context) {
     final isEditing = widget.existingTask != null;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? '编辑任务' : '新增任务'),
-      ),
+      appBar: AppBar(title: Text(isEditing ? '编辑任务' : '新增任务')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -103,12 +101,6 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               icon: const Icon(Icons.add),
               label: const Text('新增节点'),
             ),
-          ),
-          const SizedBox(height: 8),
-          FilledButton.tonalIcon(
-            onPressed: _generateDefaultMilestones,
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('自动生成 25% / 50% / 75%'),
           ),
           const SizedBox(height: 8),
           if (_milestones.isEmpty)
@@ -196,12 +188,12 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   List<int> get _quickReminderOptions => const [
-        0,
-        10 * 60,
-        30 * 60,
-        60 * 60,
-        24 * 60 * 60,
-      ];
+    0,
+    10 * 60,
+    30 * 60,
+    60 * 60,
+    24 * 60 * 60,
+  ];
 
   Future<void> _pickFinalDue() async {
     final picked = await _pickDateTime(_finalDueLocal);
@@ -283,8 +275,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                   Milestone(
                     id: existing?.id ?? _generateId(),
                     title: title,
-                    dueAtUtc:
-                        ref.read(timezoneAwareLocalToUtcProvider(selected)),
+                    dueAtUtc: ref.read(
+                      timezoneAwareLocalToUtcProvider(selected),
+                    ),
                     source: existing?.source ?? MilestoneSource.manual,
                   ),
                 );
@@ -299,48 +292,10 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     return result;
   }
 
-  Future<void> _generateDefaultMilestones() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('替换现有中间节点'),
-        content: const Text('自动生成会用 25% / 50% / 75% 节点替换当前所有中间节点。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('替换'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true) {
-      return;
-    }
-    final taskId = widget.existingTask?.id ?? _generateId();
-    final generated = ref
-        .read(tasksControllerProvider.notifier)
-        .generateQuarterNodes(
-          ref.read(timezoneAwareLocalToUtcProvider(_finalDueLocal)),
-          taskId,
-        );
-    setState(() {
-      _milestones = generated;
-      _sortMilestones();
-    });
-  }
-
   Future<void> _addCustomReminder() async {
     final controller = TextEditingController();
     String unit = '分钟';
-    final multiplierByUnit = {
-      '分钟': 60,
-      '小时': 60 * 60,
-      '天': 24 * 60 * 60,
-    };
+    final multiplierByUnit = {'分钟': 60, '小时': 60 * 60, '天': 24 * 60 * 60};
     final seconds = await showDialog<int>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -387,7 +342,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                 if (value == null || value <= 0) {
                   return;
                 }
-                Navigator.of(dialogContext).pop(value * multiplierByUnit[unit]!);
+                Navigator.of(
+                  dialogContext,
+                ).pop(value * multiplierByUnit[unit]!);
               },
               child: const Text('添加'),
             ),
@@ -425,7 +382,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       return;
     }
 
-    final finalDueUtc = ref.read(timezoneAwareLocalToUtcProvider(_finalDueLocal));
+    final finalDueUtc = ref.read(
+      timezoneAwareLocalToUtcProvider(_finalDueLocal),
+    );
     if (_milestones.any((item) => !item.dueAtUtc.isBefore(finalDueUtc))) {
       _showSnack('所有中间节点都必须早于最终截止');
       return;
@@ -455,9 +414,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     }
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.existingTask == null ? '任务已创建' : '任务已更新'),
-      ),
+      SnackBar(content: Text(widget.existingTask == null ? '任务已创建' : '任务已更新')),
     );
   }
 
@@ -478,13 +435,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     if (time == null) {
       return null;
     }
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
   void _sortMilestones() {
@@ -514,19 +465,16 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _generateId() => DateTime.now().microsecondsSinceEpoch.toString();
 }
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.action,
-  });
+  const _SectionHeader({required this.title, required this.action});
 
   final String title;
   final Widget action;
@@ -536,10 +484,7 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          child: Text(title, style: Theme.of(context).textTheme.titleLarge),
         ),
         action,
       ],

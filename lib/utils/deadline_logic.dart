@@ -35,10 +35,10 @@ List<DeadlineTask> sortTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
       }
     }
 
-    final leftNext = resolveNextMilestone(left, nowUtc)?.dueAtUtc ??
-        left.finalDueAtUtc;
-    final rightNext = resolveNextMilestone(right, nowUtc)?.dueAtUtc ??
-        right.finalDueAtUtc;
+    final leftNext =
+        resolveNextMilestone(left, nowUtc)?.dueAtUtc ?? left.finalDueAtUtc;
+    final rightNext =
+        resolveNextMilestone(right, nowUtc)?.dueAtUtc ?? right.finalDueAtUtc;
     final byNext = leftNext.compareTo(rightNext);
     if (byNext != 0) {
       return byNext;
@@ -61,9 +61,7 @@ List<Milestone> generateQuarterMilestones({
   return List<Milestone>.generate(percents.length, (index) {
     final percent = percents[index];
     final dueAtUtc = nowUtc.add(
-      Duration(
-        milliseconds: (total.inMilliseconds * percent).round(),
-      ),
+      Duration(milliseconds: (total.inMilliseconds * percent).round()),
     );
     return Milestone(
       id: '${taskId}_generated_$index',
@@ -84,8 +82,13 @@ TaskUrgency resolveTaskUrgency(DeadlineTask task, DateTime nowUtc) {
   return TaskUrgency.normal;
 }
 
-enum TaskUrgency {
-  normal,
-  urgent,
-  overdue,
+double resolveRemainingProgress(DeadlineTask task, DateTime nowUtc) {
+  final total = task.finalDueAtUtc.difference(task.createdAtUtc).inMilliseconds;
+  if (total <= 0) {
+    return task.finalDueAtUtc.isAfter(nowUtc) ? 1 : 0;
+  }
+  final remaining = task.finalDueAtUtc.difference(nowUtc).inMilliseconds;
+  return (remaining / total).clamp(0, 1).toDouble();
 }
+
+enum TaskUrgency { normal, urgent, overdue }

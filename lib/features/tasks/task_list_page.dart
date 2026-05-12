@@ -26,9 +26,7 @@ class TaskListPage extends ConsumerWidget {
             tooltip: '设置',
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const SettingsPage(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
               );
             },
             icon: const Icon(Icons.settings_outlined),
@@ -37,11 +35,9 @@ class TaskListPage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const TaskEditPage(),
-            ),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const TaskEditPage()));
         },
         icon: const Icon(Icons.add_task_rounded),
         label: const Text('新增任务'),
@@ -52,9 +48,7 @@ class TaskListPage extends ConsumerWidget {
             return _EmptyState(
               onCreate: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const TaskEditPage(),
-                  ),
+                  MaterialPageRoute<void>(builder: (_) => const TaskEditPage()),
                 );
               },
             );
@@ -70,11 +64,7 @@ class TaskListPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              for (final task in tasks)
-                _TaskCard(
-                  task: task,
-                  nowUtc: now,
-                ),
+              for (final task in tasks) _TaskCard(task: task, nowUtc: now),
             ],
           );
         },
@@ -91,10 +81,7 @@ class TaskListPage extends ConsumerWidget {
 }
 
 class _TaskCard extends StatelessWidget {
-  const _TaskCard({
-    required this.task,
-    required this.nowUtc,
-  });
+  const _TaskCard({required this.task, required this.nowUtc});
 
   final DeadlineTask task;
   final DateTime nowUtc;
@@ -103,11 +90,13 @@ class _TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final urgency = resolveTaskUrgency(task, nowUtc);
     final nextMilestone = resolveNextMilestone(task, nowUtc);
+    final scheme = Theme.of(context).colorScheme;
     final color = switch (urgency) {
-      TaskUrgency.normal => const Color(0xFF0F766E),
-      TaskUrgency.urgent => const Color(0xFFEA580C),
-      TaskUrgency.overdue => const Color(0xFFB91C1C),
+      TaskUrgency.normal => scheme.primary,
+      TaskUrgency.urgent => scheme.tertiary,
+      TaskUrgency.overdue => scheme.error,
     };
+    final progress = resolveRemainingProgress(task, nowUtc);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -127,7 +116,7 @@ class _TaskCard extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.75)],
+                  colors: [color, color.withValues(alpha: 0.72)],
                 ),
               ),
               child: Column(
@@ -136,17 +125,17 @@ class _TaskCard extends StatelessWidget {
                   Text(
                     task.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   if (task.note.trim().isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
                       task.note,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.88),
-                          ),
+                        color: Colors.white.withValues(alpha: 0.88),
+                      ),
                     ),
                   ],
                 ],
@@ -155,7 +144,10 @@ class _TaskCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(18),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _RemainingProgressBar(progress: progress),
+                  const SizedBox(height: 16),
                   _CountdownRow(
                     label: '下一个节点',
                     title: nextMilestone?.title ?? '无未来节点',
@@ -187,6 +179,41 @@ class _TaskCard extends StatelessWidget {
   }
 }
 
+class _RemainingProgressBar extends StatelessWidget {
+  const _RemainingProgressBar({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (progress * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('剩余时间', style: Theme.of(context).textTheme.labelLarge),
+            const Spacer(),
+            Text(
+              '$percent%',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: progress,
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ],
+    );
+  }
+}
+
 class _CountdownRow extends StatelessWidget {
   const _CountdownRow({
     required this.label,
@@ -206,11 +233,14 @@ class _CountdownRow extends StatelessWidget {
     final timeLabel = localTime == null
         ? '—'
         : '${localTime.year}-${localTime.month.toString().padLeft(2, '0')}-${localTime.day.toString().padLeft(2, '0')} '
-            '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}:${localTime.second.toString().padLeft(2, '0')}';
+              '${localTime.hour.toString().padLeft(2, '0')}:${localTime.minute.toString().padLeft(2, '0')}:${localTime.second.toString().padLeft(2, '0')}';
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.timelapse_rounded, color: Theme.of(context).colorScheme.primary),
+        Icon(
+          Icons.timelapse_rounded,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -220,17 +250,17 @@ class _CountdownRow extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
                 countdown,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 4),
               Text(timeLabel),
@@ -243,9 +273,7 @@ class _CountdownRow extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.onCreate,
-  });
+  const _EmptyState({required this.onCreate});
 
   final VoidCallback onCreate;
 
