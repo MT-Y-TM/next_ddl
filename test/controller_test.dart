@@ -37,7 +37,9 @@ void main() {
       notificationsEnabled: true,
     );
 
-    await container.read(tasksControllerProvider.notifier).addOrUpdateTask(task);
+    await container
+        .read(tasksControllerProvider.notifier)
+        .addOrUpdateTask(task);
 
     final snapshot = container.read(tasksControllerProvider).value!;
     expect(snapshot.tasks, hasLength(1));
@@ -85,16 +87,46 @@ class _FakeNotificationScheduler implements NotificationScheduler {
   }
 }
 
-class _FakeTimezoneService implements TimezoneService {
-  @override
-  String get currentTimezoneId => 'Asia/Shanghai';
+class _FakeTimezoneService extends DeviceTimezoneService {
+  String _timezoneId = 'Asia/Shanghai';
 
   @override
-  tz.Location get location => tz.getLocation('UTC');
+  String get currentTimezoneId => _timezoneId;
+
+  @override
+  tz.Location get location => tz.getLocation(_timezoneId);
+
+  @override
+  List<String> get timezoneIds => const ['Asia/Shanghai', 'UTC'];
 
   @override
   Future<void> initialize() async {}
 
   @override
-  DateTime localToUtc(DateTime value) => value.toUtc();
+  DateTime localToUtc(DateTime value) {
+    return tz.TZDateTime(
+      location,
+      value.year,
+      value.month,
+      value.day,
+      value.hour,
+      value.minute,
+      value.second,
+    ).toUtc();
+  }
+
+  @override
+  DateTime utcToConfigured(DateTime value) {
+    return tz.TZDateTime.from(value.toUtc(), location);
+  }
+
+  @override
+  Future<bool> setTimezone(String timezoneId) async {
+    if (!timezoneIds.contains(timezoneId)) {
+      return false;
+    }
+    _timezoneId = timezoneId;
+    notifyListeners();
+    return true;
+  }
 }

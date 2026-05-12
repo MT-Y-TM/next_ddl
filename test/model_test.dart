@@ -2,9 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
+import 'package:next_ddl/services/timezone_service.dart';
 import 'package:next_ddl/utils/deadline_logic.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  tz_data.initializeTimeZones();
+
   test('snapshot json round trip keeps task data', () {
     final snapshot = AppSnapshot(
       schemaVersion: 1,
@@ -99,5 +105,45 @@ void main() {
 
     expect(resolveRemainingProgress(futureTask, now), 1);
     expect(resolveRemainingProgress(overdueTask, now), 0);
+  });
+
+  test('configured timezone converts selected wall time to utc', () async {
+    SharedPreferences.setMockInitialValues({
+      DeviceTimezoneService.storageKey: 'Asia/Shanghai',
+    });
+    final service = DeviceTimezoneService();
+    await service.initialize();
+
+    final utc = service.localToUtc(DateTime(2026, 1, 1, 20));
+
+    expect(utc, DateTime.utc(2026, 1, 1, 12));
+  });
+
+  test('configured timezone converts utc to selected wall time', () async {
+    SharedPreferences.setMockInitialValues({
+      DeviceTimezoneService.storageKey: 'Asia/Shanghai',
+    });
+    final service = DeviceTimezoneService();
+    await service.initialize();
+
+    final local = service.utcToConfigured(DateTime.utc(2026, 1, 1, 12));
+
+    expect(local.year, 2026);
+    expect(local.month, 1);
+    expect(local.day, 1);
+    expect(local.hour, 20);
+  });
+
+  test('invalid configured timezone is ignored', () async {
+    SharedPreferences.setMockInitialValues({
+      DeviceTimezoneService.storageKey: 'Asia/Shanghai',
+    });
+    final service = DeviceTimezoneService();
+    await service.initialize();
+
+    final changed = await service.setTimezone('Not/A_Timezone');
+
+    expect(changed, isFalse);
+    expect(service.currentTimezoneId, 'Asia/Shanghai');
   });
 }

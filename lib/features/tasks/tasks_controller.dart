@@ -33,11 +33,29 @@ final sortedTasksProvider = Provider<List<DeadlineTask>>((ref) {
   return sortTasks(snapshot.tasks, now);
 });
 
-final timezoneAwareLocalToUtcProvider = Provider.family<DateTime, DateTime>(
-  (ref, value) {
-    return ref.read(timezoneServiceProvider).localToUtc(value);
-  },
-);
+final timezoneAwareLocalToUtcProvider = Provider.family<DateTime, DateTime>((
+  ref,
+  value,
+) {
+  ref.watch(timezoneRevisionProvider);
+  return ref.watch(timezoneServiceProvider).localToUtc(value);
+});
+
+final configuredUtcToLocalProvider = Provider.family<DateTime, DateTime>((
+  ref,
+  value,
+) {
+  ref.watch(timezoneRevisionProvider);
+  return ref.watch(timezoneServiceProvider).utcToConfigured(value);
+});
+
+final timezoneRevisionProvider = Provider<int>((ref) {
+  final timezoneService = ref.watch(timezoneServiceProvider);
+  void listener() => ref.invalidateSelf();
+  timezoneService.addListener(listener);
+  ref.onDispose(() => timezoneService.removeListener(listener));
+  return DateTime.now().microsecondsSinceEpoch;
+});
 
 class TasksController extends AsyncNotifier<AppSnapshot> {
   DeadlineRepository get _repository => ref.read(deadlineRepositoryProvider);
@@ -102,6 +120,22 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
   }
 
   String get timezoneId => _timezoneService.currentTimezoneId;
+
+  List<String> get timezoneIds => _timezoneService.timezoneIds;
+
+  Future<bool> setTimezone(String timezoneId) async {
+    final changed = await _timezoneService.setTimezone(timezoneId);
+    if (!changed) {
+      return false;
+    }
+    final snapshot = state.valueOrNull;
+    if (snapshot != null) {
+      await _notificationScheduler.removeAll();
+      await _syncAll(snapshot.tasks);
+      state = AsyncData(snapshot);
+    }
+    return true;
+  }
 
   List<Milestone> generateQuarterNodes(DateTime finalDueAtUtc, String taskId) {
     return generateQuarterMilestones(

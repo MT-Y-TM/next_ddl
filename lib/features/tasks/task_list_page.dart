@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/deadline_task.dart';
+import '../../services/timezone_service.dart';
 import '../../utils/countdown_formatter.dart';
 import '../../utils/deadline_logic.dart';
 import '../settings/settings_page.dart';
@@ -17,6 +18,8 @@ class TaskListPage extends ConsumerWidget {
     final snapshotAsync = ref.watch(tasksControllerProvider);
     final tasks = ref.watch(sortedTasksProvider);
     final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
+    ref.watch(timezoneRevisionProvider);
+    final timezoneService = ref.watch(timezoneServiceProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -64,7 +67,12 @@ class TaskListPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              for (final task in tasks) _TaskCard(task: task, nowUtc: now),
+              for (final task in tasks)
+                _TaskCard(
+                  task: task,
+                  nowUtc: now,
+                  toConfiguredTime: timezoneService.utcToConfigured,
+                ),
             ],
           );
         },
@@ -81,10 +89,15 @@ class TaskListPage extends ConsumerWidget {
 }
 
 class _TaskCard extends StatelessWidget {
-  const _TaskCard({required this.task, required this.nowUtc});
+  const _TaskCard({
+    required this.task,
+    required this.nowUtc,
+    required this.toConfiguredTime,
+  });
 
   final DeadlineTask task;
   final DateTime nowUtc;
+  final DateTime Function(DateTime value) toConfiguredTime;
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +170,9 @@ class _TaskCard extends StatelessWidget {
                             now: nowUtc,
                             target: nextMilestone.dueAtUtc,
                           ),
-                    time: nextMilestone?.dueAtUtc.toLocal(),
+                    time: nextMilestone == null
+                        ? null
+                        : toConfiguredTime(nextMilestone.dueAtUtc),
                   ),
                   const SizedBox(height: 16),
                   _CountdownRow(
@@ -167,7 +182,7 @@ class _TaskCard extends StatelessWidget {
                       now: nowUtc,
                       target: task.finalDueAtUtc,
                     ),
-                    time: task.finalDueAtUtc.toLocal(),
+                    time: toConfiguredTime(task.finalDueAtUtc),
                   ),
                 ],
               ),

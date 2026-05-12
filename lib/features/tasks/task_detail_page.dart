@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/milestone.dart';
+import '../../services/timezone_service.dart';
 import '../../utils/countdown_formatter.dart';
 import '../../utils/deadline_logic.dart';
 import 'task_edit_page.dart';
@@ -19,6 +20,8 @@ class TaskDetailPage extends ConsumerWidget {
         snapshot?.tasks.where((item) => item.id == taskId).toList() ?? const [];
     final task = matchedTasks.isEmpty ? null : matchedTasks.first;
     final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
+    ref.watch(timezoneRevisionProvider);
+    final timezoneService = ref.watch(timezoneServiceProvider);
 
     if (task == null) {
       return Scaffold(
@@ -69,7 +72,7 @@ class TaskDetailPage extends ConsumerWidget {
                   const SizedBox(height: 16),
                   _RemainingProgressBar(progress: progress),
                   const SizedBox(height: 16),
-                  Text('时区：${task.timezoneId}'),
+                  Text('时区：${timezoneService.currentTimezoneId}'),
                   const SizedBox(height: 8),
                   Text('下一个节点：${nextMilestone?.title ?? '已全部超时'}'),
                   if (nextMilestone != null) ...[
@@ -97,13 +100,17 @@ class TaskDetailPage extends ConsumerWidget {
               leading: const Icon(Icons.flag_outlined),
               title: Text(milestone.title),
               subtitle: Text(
-                '${milestone.dueAtUtc.toLocal()} · ${milestone.source == MilestoneSource.generated ? '自动生成' : '手动维护'}',
+                '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? '自动生成' : '手动维护'}',
               ),
             ),
           ListTile(
             leading: const Icon(Icons.verified_outlined),
             title: const Text('最终截止'),
-            subtitle: Text(task.finalDueAtUtc.toLocal().toString()),
+            subtitle: Text(
+              _formatDateTime(
+                timezoneService.utcToConfigured(task.finalDueAtUtc),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           Text('提醒策略', style: Theme.of(context).textTheme.titleLarge),
@@ -172,6 +179,11 @@ class TaskDetailPage extends ConsumerWidget {
       return '${duration.inMinutes}分钟';
     }
     return '${duration.inSeconds}秒';
+  }
+
+  String _formatDateTime(DateTime value) {
+    return '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')} '
+        '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}:${value.second.toString().padLeft(2, '0')}';
   }
 }
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
+import '../../services/timezone_service.dart';
 import 'tasks_controller.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
@@ -28,10 +29,11 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     final task = widget.existingTask;
     _titleController = TextEditingController(text: task?.title ?? '');
     _noteController = TextEditingController(text: task?.note ?? '');
-    _finalDueLocal =
-        (task?.finalDueAtUtc ??
-                DateTime.now().toUtc().add(const Duration(days: 3)))
-            .toLocal();
+    final timezoneService = ref.read(timezoneServiceProvider);
+    _finalDueLocal = timezoneService.utcToConfigured(
+      task?.finalDueAtUtc ??
+          DateTime.now().toUtc().add(const Duration(days: 3)),
+    );
     _milestones = [...(task?.milestones ?? const [])];
     _reminders = [
       ...(task?.reminderOffsetsSeconds ?? const [0]),
@@ -115,7 +117,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               child: ListTile(
                 title: Text(_milestones[index].title),
                 subtitle: Text(
-                  '${_formatDateTime(_milestones[index].dueAtUtc.toLocal())} · ${_milestones[index].source == MilestoneSource.generated ? '自动生成' : '手动'}',
+                  '${_formatDateTime(ref.watch(configuredUtcToLocalProvider(_milestones[index].dueAtUtc)))} · ${_milestones[index].source == MilestoneSource.generated ? '自动生成' : '手动'}',
                 ),
                 trailing: Wrap(
                   spacing: 4,
@@ -228,7 +230,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
 
   Future<Milestone?> _showMilestoneEditor({Milestone? existing}) async {
     final titleController = TextEditingController(text: existing?.title ?? '');
-    DateTime selected = (existing?.dueAtUtc ?? _finalDueLocal).toLocal();
+    DateTime selected = existing == null
+        ? _finalDueLocal
+        : ref.read(timezoneServiceProvider).utcToConfigured(existing.dueAtUtc);
     final result = await showDialog<Milestone>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(

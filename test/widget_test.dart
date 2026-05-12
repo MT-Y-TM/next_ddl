@@ -110,6 +110,42 @@ void main() {
     expect(find.text('新增节点'), findsOneWidget);
     expect(find.textContaining('自动生成'), findsNothing);
   });
+
+  testWidgets('settings page shows and searches configured timezone', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          deadlineRepositoryProvider.overrideWithValue(
+            _MemoryRepository(AppSnapshot.empty()),
+          ),
+          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
+          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+          nowProvider.overrideWith(
+            (ref) => Stream.value(DateTime.utc(2026, 1, 1, 8)),
+          ),
+        ],
+        child: const NextDdlApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('应用时区'), findsOneWidget);
+    expect(find.text('Asia/Shanghai'), findsOneWidget);
+
+    await tester.tap(find.text('应用时区'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Tokyo');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Asia/Tokyo'), findsOneWidget);
+  });
 }
 
 class _MemoryRepository implements DeadlineRepository {
@@ -133,11 +169,16 @@ class _MemoryRepository implements DeadlineRepository {
 }
 
 class _FakeNotifications implements NotificationScheduler {
+  int removeAllCount = 0;
+  final List<String> syncedTaskIds = [];
+
   @override
   Future<void> initialize() async {}
 
   @override
-  Future<void> removeAll() async {}
+  Future<void> removeAll() async {
+    removeAllCount++;
+  }
 
   @override
   Future<void> removeTask(String taskId) async {}
@@ -146,21 +187,58 @@ class _FakeNotifications implements NotificationScheduler {
   Future<void> requestPermissionIfNeeded() async {}
 
   @override
-  Future<void> syncTask(DeadlineTask task) async {}
+  Future<void> syncTask(DeadlineTask task) async {
+    syncedTaskIds.add(task.id);
+  }
 }
 
-class _FakeTimezoneService implements TimezoneService {
-  @override
-  String get currentTimezoneId => 'Asia/Shanghai';
+class _FakeTimezoneService extends DeviceTimezoneService {
+  String _timezoneId = 'Asia/Shanghai';
 
   @override
-  tz.Location get location => tz.getLocation('UTC');
+  String get currentTimezoneId => _timezoneId;
+
+  @override
+  tz.Location get location => tz.getLocation(_timezoneId);
+
+  @override
+  List<String> get timezoneIds => const [
+    'Asia/Shanghai',
+    'Asia/Tokyo',
+    'UTC',
+    'America/New_York',
+  ];
 
   @override
   Future<void> initialize() async {}
 
   @override
-  DateTime localToUtc(DateTime value) => value.toUtc();
+  DateTime localToUtc(DateTime value) {
+    return tz.TZDateTime(
+      location,
+      value.year,
+      value.month,
+      value.day,
+      value.hour,
+      value.minute,
+      value.second,
+    ).toUtc();
+  }
+
+  @override
+  DateTime utcToConfigured(DateTime value) {
+    return tz.TZDateTime.from(value.toUtc(), location);
+  }
+
+  @override
+  Future<bool> setTimezone(String timezoneId) async {
+    if (!timezoneIds.contains(timezoneId)) {
+      return false;
+    }
+    _timezoneId = timezoneId;
+    notifyListeners();
+    return true;
+  }
 }
 
 class _FakeFileExportService implements FileExportService {
