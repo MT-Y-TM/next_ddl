@@ -67,7 +67,6 @@ class LocalNotificationScheduler implements NotificationScheduler {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       await android?.requestNotificationsPermission();
-      await android?.requestExactAlarmsPermission();
     }
   }
 
@@ -124,7 +123,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
             windows: const WindowsNotificationDetails(),
           ),
           payload: task.id,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
       }
     }

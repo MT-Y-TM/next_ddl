@@ -90,7 +90,7 @@ class SettingsPage extends ConsumerWidget {
               subtitle: Text(
                 Platform.isWindows
                     ? '当前 Windows 版本使用 ZIP 形式发布而非 MSIX。已显示的系统通知可能无法被可靠取消，编辑任务后旧 toast 可能残留。'
-                    : 'Android 首次启用提醒时会请求通知权限，保存、删除或导入任务后会自动重建该任务的未来提醒。',
+                    : 'Android 首次启用提醒时只会请求普通通知权限，不再跳转“闹钟和提醒”。提醒会以更兼容 MIUI 的方式调度，保存、删除或导入任务后会自动重建未来提醒。',
               ),
             ),
           ),
