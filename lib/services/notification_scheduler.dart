@@ -7,6 +7,12 @@ abstract class NotificationScheduler {
 
   Future<void> requestPermissionIfNeeded();
 
+  Future<void> syncPersistentNotification({
+    required bool enabled,
+    required List<DeadlineTask> tasks,
+    required DateTime nowUtc,
+  });
+
   Future<void> syncTask(DeadlineTask task);
 
   Future<void> removeTask(String taskId);

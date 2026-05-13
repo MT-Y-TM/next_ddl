@@ -161,20 +161,22 @@ class _TaskCard extends StatelessWidget {
                 children: [
                   _RemainingProgressBar(progress: progress),
                   const SizedBox(height: 16),
-                  _CountdownRow(
-                    label: '下一个节点',
-                    title: nextMilestone?.title ?? '无未来节点',
-                    countdown: nextMilestone == null
-                        ? '已全部超时'
-                        : formatCountdownFromDates(
-                            now: nowUtc,
-                            target: nextMilestone.dueAtUtc,
-                          ),
-                    time: nextMilestone == null
-                        ? null
-                        : toConfiguredTime(nextMilestone.dueAtUtc),
-                  ),
-                  const SizedBox(height: 16),
+                  if (task.milestones.isNotEmpty) ...[
+                    _CountdownRow(
+                      label: '下一个节点',
+                      title: nextMilestone?.title ?? '无未来节点',
+                      countdown: nextMilestone == null
+                          ? '已全部超时'
+                          : formatCountdownFromDates(
+                              now: nowUtc,
+                              target: nextMilestone.dueAtUtc,
+                            ),
+                      time: nextMilestone == null
+                          ? null
+                          : toConfiguredTime(nextMilestone.dueAtUtc),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   _CountdownRow(
                     label: '最终截止',
                     title: '最终截止',

@@ -5,6 +5,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../models/deadline_task.dart';
+import '../utils/countdown_formatter.dart';
+import '../utils/deadline_logic.dart';
 import 'notification_scheduler.dart';
 import 'timezone_service.dart';
 
@@ -17,6 +19,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
 
   final TimezoneService _timezoneService;
   final FlutterLocalNotificationsPlugin _plugin;
+  static const int _persistentNotificationId = 10001;
 
   static final StreamController<String> _tapController =
       StreamController<String>.broadcast();
@@ -45,6 +48,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
 
   @override
   Future<void> removeAll() async {
+    await _plugin.cancel(_persistentNotificationId);
     await _plugin.cancelAll();
   }
 
@@ -67,6 +71,46 @@ class LocalNotificationScheduler implements NotificationScheduler {
           >();
       await android?.requestNotificationsPermission();
     }
+  }
+
+  @override
+  Future<void> syncPersistentNotification({
+    required bool enabled,
+    required List<DeadlineTask> tasks,
+    required DateTime nowUtc,
+  }) async {
+    if (!Platform.isAndroid) {
+      return;
+    }
+    if (!enabled) {
+      await _plugin.cancel(_persistentNotificationId);
+      return;
+    }
+
+    final sortedTasks = sortTasks(tasks, nowUtc);
+    final title = 'Next DDL';
+    final body = sortedTasks.isEmpty
+        ? '当前没有进行中的任务'
+        : _buildPersistentBody(sortedTasks.first, nowUtc);
+
+    await _plugin.show(
+      _persistentNotificationId,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'next_ddl_persistent',
+          'Next DDL Persistent',
+          channelDescription: 'Next DDL 常驻状态通知',
+          importance: Importance.low,
+          priority: Priority.low,
+          ongoing: true,
+          autoCancel: false,
+          onlyAlertOnce: true,
+          showWhen: false,
+        ),
+      ),
+    );
   }
 
   @override
@@ -140,6 +184,20 @@ class LocalNotificationScheduler implements NotificationScheduler {
       return '${duration.inMinutes}分钟';
     }
     return '${duration.inSeconds}秒';
+  }
+
+  String _buildPersistentBody(DeadlineTask task, DateTime nowUtc) {
+    final nextMilestone = resolveNextMilestone(task, nowUtc);
+    final parts = <String>[task.title];
+    if (task.milestones.isNotEmpty && nextMilestone != null) {
+      parts.add(
+        '下一个：${nextMilestone.title} ${formatCountdownFromDates(now: nowUtc, target: nextMilestone.dueAtUtc)}',
+      );
+    }
+    parts.add(
+      '最终：${formatCountdownFromDates(now: nowUtc, target: task.finalDueAtUtc)}',
+    );
+    return parts.join(' · ');
   }
 }
 

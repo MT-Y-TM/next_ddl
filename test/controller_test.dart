@@ -45,6 +45,32 @@ void main() {
     expect(snapshot.tasks, hasLength(1));
     expect(repository.saved?.tasks.single.title, '提交周报');
     expect(notifications.syncedTaskIds, contains('task_1'));
+    expect(notifications.persistentSyncCount, greaterThan(0));
+  });
+
+  test('controller persists persistent notification toggle', () async {
+    final repository = _MemoryRepository();
+    final notifications = _FakeNotificationScheduler();
+    final container = ProviderContainer(
+      overrides: [
+        deadlineRepositoryProvider.overrideWithValue(repository),
+        notificationSchedulerProvider.overrideWithValue(notifications),
+        timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(tasksControllerProvider.future);
+
+    await container
+        .read(tasksControllerProvider.notifier)
+        .setPersistentNotificationEnabled(true);
+
+    final snapshot = container.read(tasksControllerProvider).value!;
+    expect(snapshot.persistentNotificationEnabled, isTrue);
+    expect(repository.saved?.persistentNotificationEnabled, isTrue);
+    expect(notifications.permissionRequestCount, 1);
+    expect(notifications.lastPersistentEnabled, isTrue);
   });
 }
 
@@ -68,6 +94,9 @@ class _MemoryRepository implements DeadlineRepository {
 
 class _FakeNotificationScheduler implements NotificationScheduler {
   final List<String> syncedTaskIds = [];
+  int permissionRequestCount = 0;
+  int persistentSyncCount = 0;
+  bool? lastPersistentEnabled;
 
   @override
   Future<void> initialize() async {}
@@ -79,7 +108,19 @@ class _FakeNotificationScheduler implements NotificationScheduler {
   Future<void> removeTask(String taskId) async {}
 
   @override
-  Future<void> requestPermissionIfNeeded() async {}
+  Future<void> requestPermissionIfNeeded() async {
+    permissionRequestCount++;
+  }
+
+  @override
+  Future<void> syncPersistentNotification({
+    required bool enabled,
+    required List<DeadlineTask> tasks,
+    required DateTime nowUtc,
+  }) async {
+    persistentSyncCount++;
+    lastPersistentEnabled = enabled;
+  }
 
   @override
   Future<void> syncTask(DeadlineTask task) async {

@@ -5,6 +5,7 @@ import 'package:next_ddl/app/app.dart';
 import 'package:next_ddl/features/tasks/task_edit_page.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
+import 'package:next_ddl/models/milestone.dart';
 import 'package:next_ddl/services/app_info_service.dart';
 import 'package:next_ddl/services/deadline_repository.dart';
 import 'package:next_ddl/services/file_export_service.dart';
@@ -23,6 +24,7 @@ void main() {
     final snapshot = AppSnapshot(
       schemaVersion: 1,
       exportedAtUtc: now,
+      persistentNotificationEnabled: false,
       tasks: [
         DeadlineTask(
           id: '1',
@@ -59,11 +61,64 @@ void main() {
     await tester.pump();
 
     expect(find.text('论文终稿'), findsOneWidget);
-    expect(find.textContaining('下一个节点'), findsOneWidget);
+    expect(find.textContaining('下一个节点'), findsNothing);
     expect(find.text('最终截止'), findsWidgets);
     expect(find.text('剩余时间'), findsOneWidget);
     expect(find.text('100%'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
+  });
+
+  testWidgets('shows next milestone row only when task has milestones', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      tasks: [
+        DeadlineTask(
+          id: '1',
+          title: '有节点任务',
+          note: '',
+          timezoneId: 'Asia/Shanghai',
+          createdAtUtc: now,
+          updatedAtUtc: now,
+          finalDueAtUtc: now.add(const Duration(days: 2)),
+          milestones: [
+            Milestone(
+              id: 'm1',
+              title: '阶段检查',
+              dueAtUtc: now.add(const Duration(hours: 6)),
+              source: MilestoneSource.manual,
+            ),
+          ],
+          reminderOffsetsSeconds: const [0],
+          notificationsEnabled: true,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          deadlineRepositoryProvider.overrideWithValue(
+            _MemoryRepository(snapshot),
+          ),
+          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
+          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+          nowProvider.overrideWith((ref) => Stream.value(now)),
+        ],
+        child: const NextDdlApp(),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('下一个节点'), findsOneWidget);
+    expect(find.text('阶段检查'), findsOneWidget);
   });
 
   testWidgets('shows empty state when no tasks exist', (tester) async {
@@ -138,6 +193,7 @@ void main() {
 
     expect(find.text('应用时区'), findsOneWidget);
     expect(find.text('Asia/Shanghai'), findsOneWidget);
+    expect(find.text('Android 消息栏常驻提醒'), findsOneWidget);
 
     await tester.tap(find.text('应用时区'));
     await tester.pumpAndSettle();
@@ -171,6 +227,7 @@ class _MemoryRepository implements DeadlineRepository {
 class _FakeNotifications implements NotificationScheduler {
   int removeAllCount = 0;
   final List<String> syncedTaskIds = [];
+  bool? lastPersistentEnabled;
 
   @override
   Future<void> initialize() async {}
@@ -185,6 +242,15 @@ class _FakeNotifications implements NotificationScheduler {
 
   @override
   Future<void> requestPermissionIfNeeded() async {}
+
+  @override
+  Future<void> syncPersistentNotification({
+    required bool enabled,
+    required List<DeadlineTask> tasks,
+    required DateTime nowUtc,
+  }) async {
+    lastPersistentEnabled = enabled;
+  }
 
   @override
   Future<void> syncTask(DeadlineTask task) async {

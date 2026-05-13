@@ -15,6 +15,7 @@ void main() {
     final snapshot = AppSnapshot(
       schemaVersion: 1,
       exportedAtUtc: DateTime.parse('2026-01-02T00:00:00.000Z'),
+      persistentNotificationEnabled: true,
       tasks: [
         DeadlineTask(
           id: 'task_1',
@@ -41,6 +42,7 @@ void main() {
     final decoded = AppSnapshot.fromJson(snapshot.toJson());
 
     expect(decoded.schemaVersion, 1);
+    expect(decoded.persistentNotificationEnabled, isTrue);
     expect(decoded.tasks.single.title, '毕业设计');
     expect(decoded.tasks.single.reminderOffsetsSeconds, [0, 3600, 86400]);
     expect(decoded.tasks.single.milestones.single.title, '开题');

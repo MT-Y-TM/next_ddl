@@ -65,7 +65,13 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
 
   @override
   Future<AppSnapshot> build() async {
-    return _repository.loadSnapshot();
+    final snapshot = await _repository.loadSnapshot();
+    await _notificationScheduler.syncPersistentNotification(
+      enabled: snapshot.persistentNotificationEnabled,
+      tasks: snapshot.tasks,
+      nowUtc: DateTime.now().toUtc(),
+    );
+    return snapshot;
   }
 
   Future<void> addOrUpdateTask(DeadlineTask task) async {
@@ -119,6 +125,27 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     return _notificationScheduler.requestPermissionIfNeeded();
   }
 
+  Future<void> setPersistentNotificationEnabled(bool enabled) async {
+    final snapshot = state.requireValue;
+    if (snapshot.persistentNotificationEnabled == enabled) {
+      return;
+    }
+    if (enabled) {
+      await _notificationScheduler.requestPermissionIfNeeded();
+    }
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      persistentNotificationEnabled: enabled,
+    );
+    state = AsyncData(nextSnapshot);
+    await _repository.saveSnapshot(nextSnapshot);
+    await _notificationScheduler.syncPersistentNotification(
+      enabled: enabled,
+      tasks: nextSnapshot.tasks,
+      nowUtc: DateTime.now().toUtc(),
+    );
+  }
+
   String get timezoneId => _timezoneService.currentTimezoneId;
 
   List<String> get timezoneIds => _timezoneService.timezoneIds;
@@ -149,5 +176,11 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     for (final task in tasks) {
       await _notificationScheduler.syncTask(task);
     }
+    final snapshot = state.valueOrNull;
+    await _notificationScheduler.syncPersistentNotification(
+      enabled: snapshot?.persistentNotificationEnabled ?? false,
+      tasks: tasks,
+      nowUtc: DateTime.now().toUtc(),
+    );
   }
 }

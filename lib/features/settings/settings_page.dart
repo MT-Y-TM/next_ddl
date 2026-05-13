@@ -36,6 +36,35 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.notifications_active_outlined),
+              title: const Text('Android 消息栏常驻提醒'),
+              subtitle: Text(
+                Platform.isAndroid
+                    ? '开启后会在消息栏常驻显示最紧急任务摘要，并在任务或开关变化时自动更新。'
+                    : '该功能仅在 Android 生效；其他平台会保留设置值但不会显示常驻通知。',
+              ),
+              value: snapshot?.persistentNotificationEnabled ?? false,
+              onChanged: snapshot == null
+                  ? null
+                  : (value) async {
+                      await ref
+                          .read(tasksControllerProvider.notifier)
+                          .setPersistentNotificationEnabled(value);
+                      if (!context.mounted) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            value ? '已开启消息栏常驻提醒' : '已关闭消息栏常驻提醒',
+                          ),
+                        ),
+                      );
+                    },
+            ),
+          ),
+          Card(
             child: ListTile(
               leading: const Icon(Icons.public_outlined),
               title: const Text('应用时区'),
