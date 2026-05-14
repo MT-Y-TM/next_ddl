@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
 import '../../services/timezone_service.dart';
+import '../../utils/locale_utils.dart';
 import 'tasks_controller.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
@@ -35,9 +37,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           DateTime.now().toUtc().add(const Duration(days: 3)),
     );
     _milestones = [...(task?.milestones ?? const [])];
-    _reminders = [
-      ...(task?.reminderOffsetsSeconds ?? const [0]),
-    ];
+    _reminders = [...(task?.reminderOffsetsSeconds ?? const [0])];
     _notificationsEnabled = task?.notificationsEnabled ?? true;
   }
 
@@ -51,36 +51,38 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.existingTask != null;
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? '编辑任务' : '新增任务')),
+      appBar: AppBar(title: Text(isEditing ? l10n.editTask : l10n.newTask)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           TextField(
             controller: _titleController,
-            decoration: const InputDecoration(
-              labelText: '任务标题',
-              hintText: '例如：毕业设计终稿',
+            decoration: InputDecoration(
+              labelText: l10n.taskTitle,
+              hintText: l10n.taskTitleHint,
             ),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _noteController,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: '备注',
-              hintText: '可写上下文、交付要求或提醒自己关注的点。',
+            decoration: InputDecoration(
+              labelText: l10n.note,
+              hintText: l10n.noteHint,
             ),
           ),
           const SizedBox(height: 20),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.event_outlined),
-            title: const Text('最终截止'),
+            title: Text(l10n.finalDeadline),
             subtitle: Text(_formatDateTime(_finalDueLocal)),
             trailing: FilledButton.tonal(
               onPressed: _pickFinalDue,
-              child: const Text('选择时间'),
+              child: Text(l10n.pickTime),
             ),
           ),
           const SizedBox(height: 16),
@@ -92,24 +94,24 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                 _notificationsEnabled = value;
               });
             },
-            title: const Text('启用系统提醒'),
-            subtitle: const Text('Android 会请求通知权限，Windows 使用系统通知。'),
+            title: Text(l10n.enableNotifications),
+            subtitle: Text(l10n.enableNotificationsHint),
           ),
           const SizedBox(height: 16),
           _SectionHeader(
-            title: '中间节点',
+            title: l10n.milestones,
             action: FilledButton.tonalIcon(
               onPressed: _addMilestone,
               icon: const Icon(Icons.add),
-              label: const Text('新增节点'),
+              label: Text(l10n.addMilestone),
             ),
           ),
           const SizedBox(height: 8),
           if (_milestones.isEmpty)
-            const Card(
+            Card(
               child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('当前没有中间节点，应用会直接用最终截止作为最后一个关键时间点。'),
+                padding: const EdgeInsets.all(16),
+                child: Text(l10n.noMilestones),
               ),
             ),
           for (var index = 0; index < _milestones.length; index++)
@@ -117,18 +119,19 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               child: ListTile(
                 title: Text(_milestones[index].title),
                 subtitle: Text(
-                  '${_formatDateTime(ref.watch(configuredUtcToLocalProvider(_milestones[index].dueAtUtc)))} · ${_milestones[index].source == MilestoneSource.generated ? '自动生成' : '手动'}',
+                  '${_formatDateTime(ref.watch(configuredUtcToLocalProvider(_milestones[index].dueAtUtc)))} · '
+                  '${_milestones[index].source == MilestoneSource.generated ? l10n.generated : l10n.manual}',
                 ),
                 trailing: Wrap(
                   spacing: 4,
                   children: [
                     IconButton(
-                      tooltip: '编辑',
+                      tooltip: l10n.edit,
                       onPressed: () => _editMilestone(index),
                       icon: const Icon(Icons.edit_outlined),
                     ),
                     IconButton(
-                      tooltip: '删除',
+                      tooltip: l10n.delete,
                       onPressed: () {
                         setState(() {
                           _milestones.removeAt(index);
@@ -142,11 +145,11 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
             ),
           const SizedBox(height: 16),
           _SectionHeader(
-            title: '提醒规则',
+            title: l10n.reminderRules,
             action: FilledButton.tonalIcon(
               onPressed: _addCustomReminder,
               icon: const Icon(Icons.notifications_active_outlined),
-              label: const Text('自定义提醒'),
+              label: Text(l10n.customReminder),
             ),
           ),
           const SizedBox(height: 8),
@@ -182,7 +185,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           FilledButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.save_outlined),
-            label: Text(isEditing ? '保存修改' : '创建任务'),
+            label: Text(isEditing ? l10n.saveChanges : l10n.createTask),
           ),
         ],
       ),
@@ -229,26 +232,30 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<Milestone?> _showMilestoneEditor({Milestone? existing}) async {
+    final l10n = AppLocalizations.of(context)!;
     final titleController = TextEditingController(text: existing?.title ?? '');
     DateTime selected = existing == null
         ? _finalDueLocal
         : ref.read(timezoneServiceProvider).utcToConfigured(existing.dueAtUtc);
+
     final result = await showDialog<Milestone>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocalState) => AlertDialog(
-          title: Text(existing == null ? '新增节点' : '编辑节点'),
+          title: Text(
+            existing == null ? l10n.addMilestone : l10n.edit,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(labelText: '节点名称'),
+                decoration: InputDecoration(labelText: l10n.milestoneName),
               ),
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('节点时间'),
+                title: Text(l10n.milestoneTime),
                 subtitle: Text(_formatDateTime(selected)),
                 trailing: TextButton(
                   onPressed: () async {
@@ -259,7 +266,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                       });
                     }
                   },
-                  child: const Text('修改'),
+                  child: Text(l10n.change),
                 ),
               ),
             ],
@@ -267,7 +274,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('取消'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () {
@@ -286,7 +293,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                   ),
                 );
               },
-              child: const Text('确认'),
+              child: Text(l10n.confirm),
             ),
           ],
         ),
@@ -297,30 +304,36 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<void> _addCustomReminder() async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
-    String unit = '分钟';
-    final multiplierByUnit = {'分钟': 60, '小时': 60 * 60, '天': 24 * 60 * 60};
+    _ReminderUnit unit = _ReminderUnit.minutes;
+    const multiplierByUnit = {
+      _ReminderUnit.minutes: 60,
+      _ReminderUnit.hours: 60 * 60,
+      _ReminderUnit.days: 24 * 60 * 60,
+    };
+
     final seconds = await showDialog<int>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocalState) => AlertDialog(
-          title: const Text('自定义提醒'),
+          title: Text(l10n.customReminder),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: controller,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: '数量'),
+                decoration: InputDecoration(labelText: l10n.quantity),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              DropdownButtonFormField<_ReminderUnit>(
                 initialValue: unit,
-                items: multiplierByUnit.keys
+                items: _ReminderUnit.values
                     .map(
-                      (label) => DropdownMenuItem<String>(
-                        value: label,
-                        child: Text(label),
+                      (value) => DropdownMenuItem<_ReminderUnit>(
+                        value: value,
+                        child: Text(_labelForReminderUnit(value, l10n)),
                       ),
                     )
                     .toList(),
@@ -338,7 +351,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('取消'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () {
@@ -350,7 +363,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                   dialogContext,
                 ).pop(value * multiplierByUnit[unit]!);
               },
-              child: const Text('添加'),
+              child: Text(l10n.add),
             ),
           ],
         ),
@@ -380,9 +393,10 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<void> _save() async {
+    final l10n = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      _showSnack('请先填写任务标题');
+      _showSnack(l10n.fillTaskTitle);
       return;
     }
 
@@ -390,7 +404,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       timezoneAwareLocalToUtcProvider(_finalDueLocal),
     );
     if (_milestones.any((item) => !item.dueAtUtc.isBefore(finalDueUtc))) {
-      _showSnack('所有中间节点都必须早于最终截止');
+      _showSnack(l10n.milestoneBeforeFinal);
       return;
     }
 
@@ -418,16 +432,24 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     }
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(widget.existingTask == null ? '任务已创建' : '任务已更新')),
+      SnackBar(
+        content: Text(
+          widget.existingTask == null ? l10n.taskCreated : l10n.taskUpdated,
+        ),
+      ),
     );
   }
 
   Future<DateTime?> _pickDateTime(DateTime initialValue) async {
+    final preferredLocale =
+        resolvePreferredLocale(ref.read(localePreferenceProvider)) ??
+        Localizations.localeOf(context);
     final date = await showDatePicker(
       context: context,
       initialDate: initialValue,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      locale: preferredLocale,
     );
     if (date == null || !mounted) {
       return null;
@@ -435,6 +457,11 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(initialValue),
+      builder: (context, child) => Localizations.override(
+        context: context,
+        locale: preferredLocale,
+        child: child,
+      ),
     );
     if (time == null) {
       return null;
@@ -447,25 +474,40 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   String _formatDateTime(DateTime value) {
-    return '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')} '
-        '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}:${value.second.toString().padLeft(2, '0')}';
+    return '${value.year}-${value.month.toString().padLeft(2, '0')}-'
+        '${value.day.toString().padLeft(2, '0')} '
+        '${value.hour.toString().padLeft(2, '0')}:'
+        '${value.minute.toString().padLeft(2, '0')}:'
+        '${value.second.toString().padLeft(2, '0')}';
   }
 
   String _labelForOffset(int seconds) {
+    final l10n = AppLocalizations.of(context)!;
     if (seconds == 0) {
-      return '到点提醒';
+      return l10n.atTimeReminder;
     }
     final duration = Duration(seconds: seconds);
     if (duration.inDays >= 1 && duration.inHours.remainder(24) == 0) {
-      return '提前 ${duration.inDays} 天';
+      return l10n.advanceDays(duration.inDays);
     }
     if (duration.inHours >= 1 && duration.inMinutes.remainder(60) == 0) {
-      return '提前 ${duration.inHours} 小时';
+      return l10n.advanceHours(duration.inHours);
     }
     if (duration.inMinutes >= 1) {
-      return '提前 ${duration.inMinutes} 分钟';
+      return l10n.advanceMinutes(duration.inMinutes);
     }
-    return '提前 ${duration.inSeconds} 秒';
+    return l10n.advanceSeconds(duration.inSeconds);
+  }
+
+  String _labelForReminderUnit(
+    _ReminderUnit unit,
+    AppLocalizations l10n,
+  ) {
+    return switch (unit) {
+      _ReminderUnit.minutes => l10n.minutes,
+      _ReminderUnit.hours => l10n.hours,
+      _ReminderUnit.days => l10n.days,
+    };
   }
 
   void _showSnack(String message) {
@@ -476,6 +518,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
 
   String _generateId() => DateTime.now().microsecondsSinceEpoch.toString();
 }
+
+enum _ReminderUnit { minutes, hours, days }
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title, required this.action});

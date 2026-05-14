@@ -3,6 +3,7 @@ import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
 import 'package:next_ddl/services/timezone_service.dart';
+import 'package:next_ddl/utils/countdown_formatter.dart';
 import 'package:next_ddl/utils/deadline_logic.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -16,6 +17,8 @@ void main() {
       schemaVersion: 1,
       exportedAtUtc: DateTime.parse('2026-01-02T00:00:00.000Z'),
       persistentNotificationEnabled: true,
+      preferredLocale: AppLocalePreference.ja,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.hour,
       tasks: [
         DeadlineTask(
           id: 'task_1',
@@ -43,9 +46,29 @@ void main() {
 
     expect(decoded.schemaVersion, 1);
     expect(decoded.persistentNotificationEnabled, isTrue);
+    expect(decoded.preferredLocale, AppLocalePreference.ja);
+    expect(
+      decoded.persistentNotificationTimeUnit,
+      PersistentNotificationTimeUnit.hour,
+    );
     expect(decoded.tasks.single.title, '毕业设计');
     expect(decoded.tasks.single.reminderOffsetsSeconds, [0, 3600, 86400]);
     expect(decoded.tasks.single.milestones.single.title, '开题');
+  });
+
+  test('legacy snapshot json falls back to default locale and time unit', () {
+    final decoded = AppSnapshot.fromJson({
+      'schemaVersion': 1,
+      'exportedAtUtc': '2026-01-02T00:00:00.000Z',
+      'tasks': const [],
+    });
+
+    expect(decoded.preferredLocale, AppLocalePreference.system);
+    expect(
+      decoded.persistentNotificationTimeUnit,
+      PersistentNotificationTimeUnit.day,
+    );
+    expect(decoded.persistentNotificationEnabled, isFalse);
   });
 
   test('generate default milestones creates 25 50 75 markers', () {
@@ -54,12 +77,13 @@ void main() {
       nowUtc: now,
       finalDueAtUtc: DateTime.utc(2026, 1, 9),
       taskId: 'task_1',
+      titleBuilder: (percent) => '$percent% checkpoint',
     );
 
     expect(milestones.length, 3);
-    expect(milestones[0].title, '25% 节点');
-    expect(milestones[1].title, '50% 节点');
-    expect(milestones[2].title, '75% 节点');
+    expect(milestones[0].title, '25% checkpoint');
+    expect(milestones[1].title, '50% checkpoint');
+    expect(milestones[2].title, '75% checkpoint');
     expect(
       milestones.every((item) => item.source == MilestoneSource.generated),
       isTrue,
@@ -107,6 +131,129 @@ void main() {
 
     expect(resolveRemainingProgress(futureTask, now), 1);
     expect(resolveRemainingProgress(overdueTask, now), 0);
+  });
+
+  test('active deadline point prefers nearest future milestone', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final task = DeadlineTask(
+      id: 'task_1',
+      title: '论文',
+      note: '',
+      timezoneId: 'Asia/Shanghai',
+      createdAtUtc: now,
+      updatedAtUtc: now,
+      finalDueAtUtc: now.add(const Duration(days: 3)),
+      milestones: [
+        Milestone(
+          id: 'm_overdue',
+          title: '已过期节点',
+          dueAtUtc: now.subtract(const Duration(hours: 2)),
+          source: MilestoneSource.manual,
+        ),
+        Milestone(
+          id: 'm_next',
+          title: '最近节点',
+          dueAtUtc: now.add(const Duration(hours: 6)),
+          source: MilestoneSource.manual,
+        ),
+      ],
+      reminderOffsetsSeconds: const [],
+      notificationsEnabled: false,
+    );
+
+    expect(resolveActiveDeadlinePoint(task, now), now.add(const Duration(hours: 6)));
+  });
+
+  test('in progress and overdue tasks are grouped and sorted separately', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final tasks = [
+      DeadlineTask(
+        id: 'final_soon',
+        title: '最终截止更近',
+        note: '',
+        timezoneId: 'Asia/Shanghai',
+        createdAtUtc: now,
+        updatedAtUtc: now,
+        finalDueAtUtc: now.add(const Duration(hours: 8)),
+        milestones: const [],
+        reminderOffsetsSeconds: const [],
+        notificationsEnabled: false,
+      ),
+      DeadlineTask(
+        id: 'milestone_soon',
+        title: '节点更近',
+        note: '',
+        timezoneId: 'Asia/Shanghai',
+        createdAtUtc: now,
+        updatedAtUtc: now.add(const Duration(minutes: 10)),
+        finalDueAtUtc: now.add(const Duration(days: 3)),
+        milestones: [
+          Milestone(
+            id: 'm1',
+            title: '阶段检查',
+            dueAtUtc: now.add(const Duration(hours: 2)),
+            source: MilestoneSource.manual,
+          ),
+        ],
+        reminderOffsetsSeconds: const [],
+        notificationsEnabled: false,
+      ),
+      DeadlineTask(
+        id: 'overdue_old',
+        title: '更早过期',
+        note: '',
+        timezoneId: 'Asia/Shanghai',
+        createdAtUtc: now,
+        updatedAtUtc: now,
+        finalDueAtUtc: now.subtract(const Duration(days: 2)),
+        milestones: const [],
+        reminderOffsetsSeconds: const [],
+        notificationsEnabled: false,
+      ),
+      DeadlineTask(
+        id: 'overdue_new',
+        title: '刚过期',
+        note: '',
+        timezoneId: 'Asia/Shanghai',
+        createdAtUtc: now,
+        updatedAtUtc: now,
+        finalDueAtUtc: now.subtract(const Duration(hours: 1)),
+        milestones: const [],
+        reminderOffsetsSeconds: const [],
+        notificationsEnabled: false,
+      ),
+    ];
+
+    expect(
+      sortInProgressTasks(inProgressTasks(tasks, now), now)
+          .map((task) => task.id)
+          .toList(),
+      ['milestone_soon', 'final_soon'],
+    );
+    expect(
+      sortOverdueTasks(overdueTasks(tasks, now)).map((task) => task.id).toList(),
+      ['overdue_old', 'overdue_new'],
+    );
+    expect(resolveMostUrgentInProgressTask(tasks, now)?.id, 'milestone_soon');
+  });
+
+  test('compact countdown formats day and hour units for notifications', () {
+    final duration = const Duration(hours: 79);
+
+    expect(
+      formatCompactCountdown(
+        duration,
+        timeUnit: PersistentNotificationTimeUnit.day,
+      ),
+      '3.3天',
+    );
+    expect(
+      formatCompactCountdown(
+        duration,
+        timeUnit: PersistentNotificationTimeUnit.hour,
+      ),
+      '79小时',
+    );
   });
 
   test('configured timezone converts selected wall time to utc', () async {

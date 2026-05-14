@@ -23,12 +23,21 @@ class SharedPrefsDeadlineRepository implements DeadlineRepository {
     return _fileExportService.exportJson(
       suggestedName: 'next_ddl_snapshot_v1.json',
       content: payload,
+      localePreference: snapshot.preferredLocale,
     );
   }
 
   @override
   Future<AppSnapshot?> importSnapshot() async {
-    final content = await _fileExportService.importJson();
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(storageKey);
+    final existingSnapshot =
+        raw == null || raw.isEmpty
+            ? AppSnapshot.empty()
+            : AppSnapshot.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    final content = await _fileExportService.importJson(
+      localePreference: existingSnapshot.preferredLocale,
+    );
     if (content == null) {
       return null;
     }

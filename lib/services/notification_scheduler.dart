@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/app_snapshot.dart';
 import '../models/deadline_task.dart';
 
 abstract class NotificationScheduler {
@@ -11,9 +12,14 @@ abstract class NotificationScheduler {
     required bool enabled,
     required List<DeadlineTask> tasks,
     required DateTime nowUtc,
+    required AppLocalePreference localePreference,
+    required PersistentNotificationTimeUnit timeUnit,
   });
 
-  Future<void> syncTask(DeadlineTask task);
+  Future<void> syncTask(
+    DeadlineTask task, {
+    required AppLocalePreference localePreference,
+  });
 
   Future<void> removeTask(String taskId);
 

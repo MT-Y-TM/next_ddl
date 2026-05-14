@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../models/milestone.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/countdown_formatter.dart';
 import '../../utils/deadline_logic.dart';
+import '../../utils/timezone_labels.dart';
 import 'task_edit_page.dart';
 import 'tasks_controller.dart';
 
@@ -15,6 +17,7 @@ class TaskDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final snapshot = ref.watch(tasksControllerProvider).valueOrNull;
     final matchedTasks =
         snapshot?.tasks.where((item) => item.id == taskId).toList() ?? const [];
@@ -25,8 +28,8 @@ class TaskDetailPage extends ConsumerWidget {
 
     if (task == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('任务详情')),
-        body: const Center(child: Text('任务不存在或已被删除')),
+        appBar: AppBar(title: Text(l10n.taskDetails)),
+        body: Center(child: Text(l10n.taskNotFound)),
       );
     }
 
@@ -37,10 +40,10 @@ class TaskDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('任务详情'),
+        title: Text(l10n.taskDetails),
         actions: [
           IconButton(
-            tooltip: '编辑',
+            tooltip: l10n.edit,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
@@ -72,40 +75,58 @@ class TaskDetailPage extends ConsumerWidget {
                   const SizedBox(height: 16),
                   _RemainingProgressBar(progress: progress),
                   const SizedBox(height: 16),
-                  Text('时区：${timezoneService.currentTimezoneId}'),
+                  Text(
+                    l10n.timezoneLabel(
+                      localizedTimezoneLabel(
+                        l10n,
+                        timezoneService.currentTimezoneId,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('下一个节点：${nextMilestone?.title ?? '已全部超时'}'),
+                  Text(
+                    l10n.nextNodeValue(nextMilestone?.title ?? l10n.allExpired),
+                  ),
                   if (nextMilestone != null) ...[
                     const SizedBox(height: 4),
                     Text(
                       formatCountdownFromDates(
                         now: now,
                         target: nextMilestone.dueAtUtc,
+                        overduePrefix: l10n.countdownOverduePrefix,
+                        daySuffix: l10n.countdownDaySuffix,
                       ),
                     ),
                   ],
                   const SizedBox(height: 8),
                   Text(
-                    '最终截止：${formatCountdownFromDates(now: now, target: task.finalDueAtUtc)}',
+                    l10n.finalDeadlineValue(
+                      formatCountdownFromDates(
+                        now: now,
+                        target: task.finalDueAtUtc,
+                        overduePrefix: l10n.countdownOverduePrefix,
+                        daySuffix: l10n.countdownDaySuffix,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 12),
-          Text('时间线', style: Theme.of(context).textTheme.titleLarge),
+          Text(l10n.timeline, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           for (final milestone in timeline)
             ListTile(
               leading: const Icon(Icons.flag_outlined),
               title: Text(milestone.title),
               subtitle: Text(
-                '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? '自动生成' : '手动维护'}',
+                '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? l10n.generatedNode : l10n.manualNode}',
               ),
             ),
           ListTile(
             leading: const Icon(Icons.verified_outlined),
-            title: const Text('最终截止'),
+            title: Text(l10n.finalDeadline),
             subtitle: Text(
               _formatDateTime(
                 timezoneService.utcToConfigured(task.finalDueAtUtc),
@@ -113,7 +134,7 @@ class TaskDetailPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text('提醒策略', style: Theme.of(context).textTheme.titleLarge),
+          Text(l10n.reminderRules, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -122,11 +143,11 @@ class TaskDetailPage extends ConsumerWidget {
               for (final offset in task.reminderOffsetsSeconds)
                 Chip(
                   label: Text(
-                    offset == 0 ? '到点提醒' : '提前 ${_formatOffset(offset)}',
+                    offset == 0 ? l10n.remindAtTime : _formatOffset(offset, l10n),
                   ),
                 ),
               if (task.reminderOffsetsSeconds.isEmpty)
-                const Chip(label: Text('未设置提醒')),
+                Chip(label: Text(l10n.noReminder)),
             ],
           ),
           const SizedBox(height: 24),
@@ -135,16 +156,16 @@ class TaskDetailPage extends ConsumerWidget {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (dialogContext) => AlertDialog(
-                  title: const Text('删除任务'),
-                  content: const Text('删除后会同步清除该任务的待提醒通知。'),
+                  title: Text(l10n.deleteTaskTitle),
+                  content: Text(l10n.deleteTaskBody),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: const Text('取消'),
+                      child: Text(l10n.cancel),
                     ),
                     FilledButton(
                       onPressed: () => Navigator.of(dialogContext).pop(true),
-                      child: const Text('删除'),
+                      child: Text(l10n.delete),
                     ),
                   ],
                 ),
@@ -160,25 +181,25 @@ class TaskDetailPage extends ConsumerWidget {
               }
             },
             icon: const Icon(Icons.delete_outline),
-            label: const Text('删除任务'),
+            label: Text(l10n.deleteTask),
           ),
         ],
       ),
     );
   }
 
-  String _formatOffset(int seconds) {
+  String _formatOffset(int seconds, AppLocalizations l10n) {
     final duration = Duration(seconds: seconds);
     if (duration.inDays >= 1 && duration.inHours.remainder(24) == 0) {
-      return '${duration.inDays}天';
+      return l10n.advanceDays(duration.inDays);
     }
     if (duration.inHours >= 1 && duration.inMinutes.remainder(60) == 0) {
-      return '${duration.inHours}小时';
+      return l10n.advanceHours(duration.inHours);
     }
     if (duration.inMinutes >= 1) {
-      return '${duration.inMinutes}分钟';
+      return l10n.advanceMinutes(duration.inMinutes);
     }
-    return '${duration.inSeconds}秒';
+    return l10n.advanceSeconds(duration.inSeconds);
   }
 
   String _formatDateTime(DateTime value) {
@@ -194,13 +215,14 @@ class _RemainingProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final percent = (progress * 100).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text('剩余时间', style: Theme.of(context).textTheme.labelLarge),
+            Text(l10n.remainingTime, style: Theme.of(context).textTheme.labelLarge),
             const Spacer(),
             Text(
               '$percent%',

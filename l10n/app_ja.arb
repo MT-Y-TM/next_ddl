@@ -1,0 +1,227 @@
+{
+  "@@locale": "ja",
+  "appTitle": "Next DDL",
+  "settings": "設定",
+  "addTask": "タスク追加",
+  "inProgressTab": "進行中",
+  "overdueTab": "期限超過",
+  "inProgressSummary": "進行中タスク {count} 件、残り時間順",
+  "@inProgressSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overdueSummary": "期限超過タスク {count} 件、超過時間順",
+  "@overdueSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nextNode": "次のマイルストーン",
+  "finalDeadline": "最終締切",
+  "noFutureNodes": "今後のマイルストーンなし",
+  "allExpired": "すべて期限超過",
+  "remainingTime": "残り時間",
+  "noTasksTitle": "deadline タスクはまだありません",
+  "noTasksBody": "最初のタスクを作成すると、次のマイルストーン、最終締切、リアルタイムのカウントダウンがここに表示されます。",
+  "createNow": "今すぐ作成",
+  "taskDetails": "タスク詳細",
+  "taskNotFound": "タスクが存在しないか、すでに削除されています",
+  "edit": "編集",
+  "timezoneLabel": "タイムゾーン: {timezone}",
+  "@timezoneLabel": {
+    "placeholders": {
+      "timezone": {}
+    }
+  },
+  "nextNodeValue": "次のマイルストーン: {value}",
+  "@nextNodeValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "finalDeadlineValue": "最終締切: {value}",
+  "@finalDeadlineValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "timeline": "タイムライン",
+  "generatedNode": "自動生成",
+  "manualNode": "手動管理",
+  "reminderRules": "通知ルール",
+  "remindAtTime": "期限ちょうど",
+  "noReminder": "通知なし",
+  "deleteTask": "タスク削除",
+  "deleteTaskTitle": "タスク削除",
+  "deleteTaskBody": "削除すると、このタスクの今後の通知も一緒に削除されます。",
+  "cancel": "キャンセル",
+  "delete": "削除",
+  "editTask": "タスク編集",
+  "newTask": "新規タスク",
+  "taskTitle": "タスク名",
+  "taskTitleHint": "例: 卒業制作の最終提出",
+  "note": "メモ",
+  "noteHint": "背景、提出条件、注意点などを記録できます。",
+  "pickTime": "時間を選択",
+  "enableNotifications": "システム通知を有効化",
+  "enableNotificationsHint": "Android は通知権限を要求し、Windows はシステム通知を使います。",
+  "milestones": "中間マイルストーン",
+  "addMilestone": "マイルストーン追加",
+  "editMilestone": "マイルストーン編集",
+  "noMilestones": "中間マイルストーンはありません。アプリは最終締切を最後の重要時点として直接使います。",
+  "generated": "自動生成",
+  "manual": "手動",
+  "customReminder": "カスタム通知",
+  "saveChanges": "変更を保存",
+  "createTask": "タスク作成",
+  "taskCreated": "タスクを作成しました",
+  "taskUpdated": "タスクを更新しました",
+  "fillTaskTitle": "先にタスク名を入力してください",
+  "milestoneBeforeFinal": "すべての中間マイルストーンは最終締切より前である必要があります",
+  "milestoneName": "マイルストーン名",
+  "milestoneTime": "マイルストーン時刻",
+  "change": "変更",
+  "confirm": "確認",
+  "quantity": "数量",
+  "add": "追加",
+  "minutes": "分",
+  "hours": "時間",
+  "days": "日",
+  "atTimeReminder": "期限ちょうど",
+  "advanceDays": "{count}日前",
+  "@advanceDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceHours": "{count}時間前",
+  "@advanceHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceMinutes": "{count}分前",
+  "@advanceMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceSeconds": "{count}秒前",
+  "@advanceSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "currentVersion": "バージョン",
+  "loading": "読み込み中...",
+  "taskCount": "タスク数",
+  "taskCountValue": "{count} 件",
+  "@taskCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "persistentNotification": "Android 常駐通知",
+  "persistentNotificationAndroidHint": "有効にすると、最も差し迫ったタスクが通知欄に常駐し、タスクや設定の変更時に自動更新されます。",
+  "persistentNotificationOtherHint": "この機能は Android のみ有効です。他のプラットフォームでは設定値だけ保持され、常駐通知は表示されません。",
+  "persistentEnabled": "常駐通知を有効化しました",
+  "persistentDisabled": "常駐通知を無効化しました",
+  "language": "言語",
+  "followSystem": "システムに従う",
+  "messageBarUnit": "通知欄の残り時間単位",
+  "unitByDay": "日",
+  "unitByHour": "時間",
+  "appTimezone": "アプリのタイムゾーン",
+  "exportJson": "JSON をエクスポート",
+  "exportJsonHint": "現在の全タスクデータをバックアップや移行用に書き出します。",
+  "importJson": "JSON をインポート",
+  "importJsonHint": "インポートするとローカルの全タスクデータを置き換え、通知を再構築します。",
+  "exportCancelled": "エクスポートをキャンセルしました",
+  "exportSuccess": "エクスポート成功: {path}",
+  "@exportSuccess": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "importCancelled": "インポートをキャンセルしました",
+  "importSuccess": "{count} 件のタスクをインポートしました",
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationNotice": "通知メモ",
+  "windowsNotificationNotice": "現在の Windows 版は MSIX ではなく ZIP 形式で配布されています。表示済みのシステム通知は確実に取り消せない場合があり、タスク編集後に古いトーストが残ることがあります。",
+  "androidNotificationNotice": "Android では通知を有効にしても通常の通知権限のみを要求し、アラームとリマインダー画面は開きません。保存・削除・インポート後には MIUI と相性のよい方式で今後の通知を再構築します。",
+  "chooseTimezone": "アプリのタイムゾーンを選択",
+  "searchTimezone": "タイムゾーン検索",
+  "searchTimezoneHint": "例: Asia/Shanghai",
+  "timezoneUpdated": "アプリのタイムゾーンを更新しました: {timezone}",
+  "@timezoneUpdated": {
+    "placeholders": {
+      "timezone": {}
+    }
+  },
+  "timezoneInvalid": "無効なタイムゾーンです",
+  "localeSystem": "システムに従う",
+  "localeZh": "简体中文",
+  "localeEn": "English",
+  "localeJa": "日本語",
+  "timezoneAsiaShanghai": "上海",
+  "timezoneAsiaHongKong": "香港",
+  "timezoneAsiaTaipei": "台北",
+  "timezoneAsiaTokyo": "東京",
+  "timezoneAsiaSeoul": "ソウル",
+  "timezoneUtc": "UTC",
+  "timezoneEuropeLondon": "ロンドン",
+  "timezoneAmericaNewYork": "ニューヨーク",
+  "timezoneAmericaLosAngeles": "ロサンゼルス",
+  "ongoingNoTask": "進行中のタスクはありません",
+  "persistentNotificationTitle": "Next DDL",
+  "fileExportDialogTitle": "Next DDL データをエクスポート",
+  "fileImportDialogTitle": "Next DDL データをインポート",
+  "notificationPersistentChannelDescription": "Next DDL の常駐ステータス通知",
+  "notificationMessageChannelDescription": "マイルストーンと最終締切の通知",
+  "notificationNowDue": "今が期限 · {title}",
+  "@notificationNowDue": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "notificationAdvanceDue": "{offset}前 · {title}",
+  "@notificationAdvanceDue": {
+    "placeholders": {
+      "offset": {},
+      "title": {}
+    }
+  },
+  "compactDaySuffix": "日",
+  "compactHourSuffix": "時間",
+  "countdownDaySuffix": "日",
+  "countdownOverduePrefix": "期限超過",
+  "generatedMilestoneTitle": "{percent}% チェックポイント",
+  "@generatedMilestoneTitle": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
+}

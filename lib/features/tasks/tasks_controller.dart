@@ -8,6 +8,7 @@ import '../../services/deadline_repository.dart';
 import '../../services/notification_scheduler.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/deadline_logic.dart';
+import '../../utils/locale_utils.dart';
 
 final nowProvider = StreamProvider<DateTime>((ref) async* {
   yield DateTime.now().toUtc();
@@ -32,6 +33,38 @@ final sortedTasksProvider = Provider<List<DeadlineTask>>((ref) {
   }
   return sortTasks(snapshot.tasks, now);
 });
+
+final inProgressTasksProvider = Provider<List<DeadlineTask>>((ref) {
+  final snapshot = ref.watch(tasksControllerProvider).valueOrNull;
+  final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
+  if (snapshot == null) {
+    return const [];
+  }
+  return sortInProgressTasks(inProgressTasks(snapshot.tasks, now), now);
+});
+
+final overdueTasksProvider = Provider<List<DeadlineTask>>((ref) {
+  final snapshot = ref.watch(tasksControllerProvider).valueOrNull;
+  final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
+  if (snapshot == null) {
+    return const [];
+  }
+  return sortOverdueTasks(overdueTasks(snapshot.tasks, now));
+});
+
+final localePreferenceProvider = Provider<AppLocalePreference>((ref) {
+  return ref.watch(tasksControllerProvider).valueOrNull?.preferredLocale ??
+      AppLocalePreference.system;
+});
+
+final persistentNotificationTimeUnitProvider =
+    Provider<PersistentNotificationTimeUnit>((ref) {
+      return ref
+              .watch(tasksControllerProvider)
+              .valueOrNull
+              ?.persistentNotificationTimeUnit ??
+          PersistentNotificationTimeUnit.day;
+    });
 
 final timezoneAwareLocalToUtcProvider = Provider.family<DateTime, DateTime>((
   ref,
@@ -70,6 +103,8 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
       enabled: snapshot.persistentNotificationEnabled,
       tasks: snapshot.tasks,
       nowUtc: DateTime.now().toUtc(),
+      localePreference: snapshot.preferredLocale,
+      timeUnit: snapshot.persistentNotificationTimeUnit,
     );
     return snapshot;
   }
@@ -90,7 +125,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
     await _notificationScheduler.removeAll();
-    await _syncAll(nextSnapshot.tasks);
+    await _syncAll(nextSnapshot);
   }
 
   Future<void> deleteTask(String taskId) async {
@@ -102,7 +137,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
     await _notificationScheduler.removeAll();
-    await _syncAll(nextSnapshot.tasks);
+    await _syncAll(nextSnapshot);
   }
 
   Future<AppSnapshot?> importSnapshot() async {
@@ -113,7 +148,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(imported);
     await _repository.saveSnapshot(imported);
     await _notificationScheduler.removeAll();
-    await _syncAll(imported.tasks);
+    await _syncAll(imported);
     return imported;
   }
 
@@ -143,6 +178,50 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
       enabled: enabled,
       tasks: nextSnapshot.tasks,
       nowUtc: DateTime.now().toUtc(),
+      localePreference: nextSnapshot.preferredLocale,
+      timeUnit: nextSnapshot.persistentNotificationTimeUnit,
+    );
+  }
+
+  Future<void> setPreferredLocale(AppLocalePreference preferredLocale) async {
+    final snapshot = state.requireValue;
+    if (snapshot.preferredLocale == preferredLocale) {
+      return;
+    }
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      preferredLocale: preferredLocale,
+    );
+    state = AsyncData(nextSnapshot);
+    await _repository.saveSnapshot(nextSnapshot);
+    await _notificationScheduler.syncPersistentNotification(
+      enabled: nextSnapshot.persistentNotificationEnabled,
+      tasks: nextSnapshot.tasks,
+      nowUtc: DateTime.now().toUtc(),
+      localePreference: preferredLocale,
+      timeUnit: nextSnapshot.persistentNotificationTimeUnit,
+    );
+  }
+
+  Future<void> setPersistentNotificationTimeUnit(
+    PersistentNotificationTimeUnit timeUnit,
+  ) async {
+    final snapshot = state.requireValue;
+    if (snapshot.persistentNotificationTimeUnit == timeUnit) {
+      return;
+    }
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      persistentNotificationTimeUnit: timeUnit,
+    );
+    state = AsyncData(nextSnapshot);
+    await _repository.saveSnapshot(nextSnapshot);
+    await _notificationScheduler.syncPersistentNotification(
+      enabled: nextSnapshot.persistentNotificationEnabled,
+      tasks: nextSnapshot.tasks,
+      nowUtc: DateTime.now().toUtc(),
+      localePreference: nextSnapshot.preferredLocale,
+      timeUnit: timeUnit,
     );
   }
 
@@ -158,29 +237,41 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     final snapshot = state.valueOrNull;
     if (snapshot != null) {
       await _notificationScheduler.removeAll();
-      await _syncAll(snapshot.tasks);
+      await _syncAll(snapshot);
       state = AsyncData(snapshot);
     }
     return true;
   }
 
-  List<Milestone> generateQuarterNodes(DateTime finalDueAtUtc, String taskId) {
+  List<Milestone> generateQuarterNodes(
+    DateTime finalDueAtUtc,
+    String taskId, {
+    AppLocalePreference localePreference = AppLocalePreference.system,
+  }) {
     return generateQuarterMilestones(
       nowUtc: DateTime.now().toUtc(),
       finalDueAtUtc: finalDueAtUtc,
       taskId: taskId,
+      titleBuilder: (percent) {
+        final l10n = resolveAppLocalizations(localePreference);
+        return l10n.generatedMilestoneTitle(percent);
+      },
     );
   }
 
-  Future<void> _syncAll(List<DeadlineTask> tasks) async {
-    for (final task in tasks) {
-      await _notificationScheduler.syncTask(task);
+  Future<void> _syncAll(AppSnapshot snapshot) async {
+    for (final task in snapshot.tasks) {
+      await _notificationScheduler.syncTask(
+        task,
+        localePreference: snapshot.preferredLocale,
+      );
     }
-    final snapshot = state.valueOrNull;
     await _notificationScheduler.syncPersistentNotification(
-      enabled: snapshot?.persistentNotificationEnabled ?? false,
-      tasks: tasks,
+      enabled: snapshot.persistentNotificationEnabled,
+      tasks: snapshot.tasks,
       nowUtc: DateTime.now().toUtc(),
+      localePreference: snapshot.preferredLocale,
+      timeUnit: snapshot.persistentNotificationTimeUnit,
     );
   }
 }

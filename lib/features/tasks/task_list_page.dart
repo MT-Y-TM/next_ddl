@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../models/deadline_task.dart';
 import '../../services/timezone_service.dart';
@@ -16,74 +17,117 @@ class TaskListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshotAsync = ref.watch(tasksControllerProvider);
-    final tasks = ref.watch(sortedTasksProvider);
+    final inProgress = ref.watch(inProgressTasksProvider);
+    final overdue = ref.watch(overdueTasksProvider);
     final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
     ref.watch(timezoneRevisionProvider);
     final timezoneService = ref.watch(timezoneServiceProvider);
+    final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Next DDL'),
-        actions: [
-          IconButton(
-            tooltip: '设置',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
-              );
-            },
-            icon: const Icon(Icons.settings_outlined),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.appTitle),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: l10n.inProgressTab),
+              Tab(text: l10n.overdueTab),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const TaskEditPage()));
-        },
-        icon: const Icon(Icons.add_task_rounded),
-        label: const Text('新增任务'),
-      ),
-      body: snapshotAsync.when(
-        data: (_) {
-          if (tasks.isEmpty) {
-            return _EmptyState(
-              onCreate: () {
+          actions: [
+            IconButton(
+              tooltip: l10n.settings,
+              onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const TaskEditPage()),
+                  MaterialPageRoute<void>(builder: (_) => const SettingsPage()),
                 );
               },
+              icon: const Icon(Icons.settings_outlined),
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const TaskEditPage()),
             );
-          }
-          return ListView(
-            padding: const EdgeInsets.only(bottom: 120, top: 8),
+          },
+          icon: const Icon(Icons.add_task_rounded),
+          label: Text(l10n.addTask),
+        ),
+        body: snapshotAsync.when(
+          data: (_) => TabBarView(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  '共 ${tasks.length} 个任务，按紧急程度排序',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+              _TaskTabView(
+                tasks: inProgress,
+                nowUtc: now,
+                summary: l10n.inProgressSummary(inProgress.length),
+                toConfiguredTime: timezoneService.utcToConfigured,
               ),
-              const SizedBox(height: 8),
-              for (final task in tasks)
-                _TaskCard(
-                  task: task,
-                  nowUtc: now,
-                  toConfiguredTime: timezoneService.utcToConfigured,
-                ),
+              _TaskTabView(
+                tasks: overdue,
+                nowUtc: now,
+                summary: l10n.overdueSummary(overdue.length),
+                toConfiguredTime: timezoneService.utcToConfigured,
+              ),
             ],
+          ),
+          error: (error, stackTrace) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(error.toString()),
+            ),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
+  }
+}
+
+class _TaskTabView extends StatelessWidget {
+  const _TaskTabView({
+    required this.tasks,
+    required this.nowUtc,
+    required this.summary,
+    required this.toConfiguredTime,
+  });
+
+  final List<DeadlineTask> tasks;
+  final DateTime nowUtc;
+  final String summary;
+  final DateTime Function(DateTime value) toConfiguredTime;
+
+  @override
+  Widget build(BuildContext context) {
+    if (tasks.isEmpty) {
+      return _EmptyState(
+        onCreate: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const TaskEditPage()),
           );
         },
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text('加载任务失败：$error'),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 120, top: 8),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            summary,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-      ),
+        const SizedBox(height: 8),
+        for (final task in tasks)
+          _TaskCard(
+            task: task,
+            nowUtc: nowUtc,
+            toConfiguredTime: toConfiguredTime,
+          ),
+      ],
     );
   }
 }
@@ -101,6 +145,7 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final urgency = resolveTaskUrgency(task, nowUtc);
     final nextMilestone = resolveNextMilestone(task, nowUtc);
     final scheme = Theme.of(context).colorScheme;
@@ -162,14 +207,16 @@ class _TaskCard extends StatelessWidget {
                   _RemainingProgressBar(progress: progress),
                   const SizedBox(height: 16),
                   if (task.milestones.isNotEmpty) ...[
-                    _CountdownRow(
-                      label: '下一个节点',
-                      title: nextMilestone?.title ?? '无未来节点',
+                _CountdownRow(
+                      label: l10n.nextNode,
+                      title: nextMilestone?.title ?? l10n.noFutureNodes,
                       countdown: nextMilestone == null
-                          ? '已全部超时'
+                          ? l10n.allExpired
                           : formatCountdownFromDates(
                               now: nowUtc,
                               target: nextMilestone.dueAtUtc,
+                              overduePrefix: l10n.countdownOverduePrefix,
+                              daySuffix: l10n.countdownDaySuffix,
                             ),
                       time: nextMilestone == null
                           ? null
@@ -178,11 +225,13 @@ class _TaskCard extends StatelessWidget {
                     const SizedBox(height: 16),
                   ],
                   _CountdownRow(
-                    label: '最终截止',
-                    title: '最终截止',
+                    label: l10n.finalDeadline,
+                    title: null,
                     countdown: formatCountdownFromDates(
                       now: nowUtc,
                       target: task.finalDueAtUtc,
+                      overduePrefix: l10n.countdownOverduePrefix,
+                      daySuffix: l10n.countdownDaySuffix,
                     ),
                     time: toConfiguredTime(task.finalDueAtUtc),
                   ),
@@ -203,13 +252,14 @@ class _RemainingProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final percent = (progress * 100).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text('剩余时间', style: Theme.of(context).textTheme.labelLarge),
+            Text(l10n.remainingTime, style: Theme.of(context).textTheme.labelLarge),
             const Spacer(),
             Text(
               '$percent%',
@@ -240,7 +290,7 @@ class _CountdownRow extends StatelessWidget {
   });
 
   final String label;
-  final String title;
+  final String? title;
   final String countdown;
   final DateTime? time;
 
@@ -264,13 +314,15 @@ class _CountdownRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
+              if (title != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  title!,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
               const SizedBox(height: 4),
               Text(
                 countdown,
@@ -296,6 +348,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -309,12 +362,12 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '还没有任何 deadline 任务',
+              l10n.noTasksTitle,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              '创建第一个任务后，这里会显示下一个节点、最终截止和实时倒计时。',
+              l10n.noTasksBody,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -322,7 +375,7 @@ class _EmptyState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add),
-              label: const Text('立即创建'),
+              label: Text(l10n.createNow),
             ),
           ],
         ),

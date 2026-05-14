@@ -1,7 +1,7 @@
 import '../models/deadline_task.dart';
 import '../models/milestone.dart';
 
-Milestone? resolveNextMilestone(DeadlineTask task, DateTime nowUtc) {
+Milestone? resolveFutureMilestone(DeadlineTask task, DateTime nowUtc) {
   final milestones = [...task.milestones]
     ..sort((left, right) => left.dueAtUtc.compareTo(right.dueAtUtc));
   for (final milestone in milestones) {
@@ -9,49 +9,85 @@ Milestone? resolveNextMilestone(DeadlineTask task, DateTime nowUtc) {
       return milestone;
     }
   }
-  if (!task.finalDueAtUtc.isBefore(nowUtc)) {
-    return Milestone(
-      id: '${task.id}_final',
-      title: '最终截止',
-      dueAtUtc: task.finalDueAtUtc,
-      source: MilestoneSource.manual,
-    );
+  return null;
+}
+
+Milestone? resolveNextMilestone(DeadlineTask task, DateTime nowUtc) {
+  final futureMilestone = resolveFutureMilestone(task, nowUtc);
+  if (futureMilestone != null) {
+    return futureMilestone;
   }
   return null;
 }
 
-List<DeadlineTask> sortTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
+DateTime resolveActiveDeadlinePoint(DeadlineTask task, DateTime nowUtc) {
+  return resolveFutureMilestone(task, nowUtc)?.dueAtUtc ?? task.finalDueAtUtc;
+}
+
+List<DeadlineTask> inProgressTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
+  return [
+    for (final task in tasks)
+      if (!task.finalDueAtUtc.isBefore(nowUtc)) task,
+  ];
+}
+
+List<DeadlineTask> overdueTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
+  return [
+    for (final task in tasks)
+      if (task.finalDueAtUtc.isBefore(nowUtc)) task,
+  ];
+}
+
+List<DeadlineTask> sortInProgressTasks(
+  List<DeadlineTask> tasks,
+  DateTime nowUtc,
+) {
   final sorted = [...tasks];
   sorted.sort((left, right) {
-    final leftExpired = left.finalDueAtUtc.isBefore(nowUtc);
-    final rightExpired = right.finalDueAtUtc.isBefore(nowUtc);
-    if (leftExpired != rightExpired) {
-      return leftExpired ? -1 : 1;
-    }
-    if (leftExpired && rightExpired) {
-      final byFinal = left.finalDueAtUtc.compareTo(right.finalDueAtUtc);
-      if (byFinal != 0) {
-        return byFinal;
-      }
-    }
-
-    final leftNext =
-        resolveNextMilestone(left, nowUtc)?.dueAtUtc ?? left.finalDueAtUtc;
-    final rightNext =
-        resolveNextMilestone(right, nowUtc)?.dueAtUtc ?? right.finalDueAtUtc;
-    final byNext = leftNext.compareTo(rightNext);
-    if (byNext != 0) {
-      return byNext;
+    final byActivePoint = resolveActiveDeadlinePoint(
+      left,
+      nowUtc,
+    ).compareTo(resolveActiveDeadlinePoint(right, nowUtc));
+    if (byActivePoint != 0) {
+      return byActivePoint;
     }
     return right.updatedAtUtc.compareTo(left.updatedAtUtc);
   });
   return sorted;
 }
 
+DeadlineTask? resolveMostUrgentInProgressTask(
+  List<DeadlineTask> tasks,
+  DateTime nowUtc,
+) {
+  final sorted = sortInProgressTasks(inProgressTasks(tasks, nowUtc), nowUtc);
+  return sorted.isEmpty ? null : sorted.first;
+}
+
+List<DeadlineTask> sortOverdueTasks(List<DeadlineTask> tasks) {
+  final sorted = [...tasks];
+  sorted.sort((left, right) {
+    final byFinalDue = left.finalDueAtUtc.compareTo(right.finalDueAtUtc);
+    if (byFinalDue != 0) {
+      return byFinalDue;
+    }
+    return right.updatedAtUtc.compareTo(left.updatedAtUtc);
+  });
+  return sorted;
+}
+
+List<DeadlineTask> sortTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
+  return [
+    ...sortInProgressTasks(inProgressTasks(tasks, nowUtc), nowUtc),
+    ...sortOverdueTasks(overdueTasks(tasks, nowUtc)),
+  ];
+}
+
 List<Milestone> generateQuarterMilestones({
   required DateTime nowUtc,
   required DateTime finalDueAtUtc,
   required String taskId,
+  required String Function(int percent) titleBuilder,
 }) {
   final total = finalDueAtUtc.difference(nowUtc);
   if (total.inSeconds <= 0) {
@@ -65,7 +101,7 @@ List<Milestone> generateQuarterMilestones({
     );
     return Milestone(
       id: '${taskId}_generated_$index',
-      title: '${(percent * 100).round()}% 节点',
+      title: titleBuilder((percent * 100).round()),
       dueAtUtc: dueAtUtc,
       source: MilestoneSource.generated,
     );
@@ -76,7 +112,8 @@ TaskUrgency resolveTaskUrgency(DeadlineTask task, DateTime nowUtc) {
   if (task.finalDueAtUtc.isBefore(nowUtc)) {
     return TaskUrgency.overdue;
   }
-  if (task.finalDueAtUtc.difference(nowUtc) <= const Duration(hours: 24)) {
+  if (resolveActiveDeadlinePoint(task, nowUtc).difference(nowUtc) <=
+      const Duration(hours: 24)) {
     return TaskUrgency.urgent;
   }
   return TaskUrgency.normal;

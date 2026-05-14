@@ -2,8 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 
+import '../../models/app_snapshot.dart';
 import '../../services/timezone_service.dart';
+import '../../utils/timezone_labels.dart';
 import '../tasks/tasks_controller.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -15,34 +18,64 @@ class SettingsPage extends ConsumerWidget {
     final versionAsync = ref.watch(appVersionProvider);
     ref.watch(timezoneRevisionProvider);
     final timezoneId = ref.watch(timezoneServiceProvider).currentTimezoneId;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
             child: ListTile(
               leading: const Icon(Icons.info_outline),
-              title: const Text('当前版本'),
-              subtitle: Text(versionAsync.valueOrNull ?? '读取中...'),
+              title: Text(l10n.currentVersion),
+              subtitle: Text(versionAsync.valueOrNull ?? l10n.loading),
             ),
           ),
           Card(
             child: ListTile(
               leading: const Icon(Icons.storage_outlined),
-              title: const Text('任务总数'),
-              subtitle: Text('${snapshot?.tasks.length ?? 0} 个'),
+              title: Text(l10n.taskCount),
+              subtitle: Text(l10n.taskCountValue(snapshot?.tasks.length ?? 0)),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.translate_outlined),
+              title: Text(l10n.language),
+              subtitle: Text(_localeLabel(l10n, snapshot?.preferredLocale)),
+              trailing: DropdownButtonHideUnderline(
+                child: DropdownButton<AppLocalePreference>(
+                  value: snapshot?.preferredLocale ?? AppLocalePreference.system,
+                  onChanged: snapshot == null
+                      ? null
+                      : (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          ref
+                              .read(tasksControllerProvider.notifier)
+                              .setPreferredLocale(value);
+                        },
+                  items: [
+                    for (final item in AppLocalePreference.values)
+                      DropdownMenuItem<AppLocalePreference>(
+                        value: item,
+                        child: Text(_localeLabel(l10n, item)),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
           Card(
             child: SwitchListTile(
               secondary: const Icon(Icons.notifications_active_outlined),
-              title: const Text('Android 消息栏常驻提醒'),
+              title: Text(l10n.persistentNotification),
               subtitle: Text(
                 Platform.isAndroid
-                    ? '开启后会在消息栏常驻显示最紧急任务摘要，并在任务或开关变化时自动更新。'
-                    : '该功能仅在 Android 生效；其他平台会保留设置值但不会显示常驻通知。',
+                    ? l10n.persistentNotificationAndroidHint
+                    : l10n.persistentNotificationOtherHint,
               ),
               value: snapshot?.persistentNotificationEnabled ?? false,
               onChanged: snapshot == null
@@ -57,7 +90,9 @@ class SettingsPage extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            value ? '已开启消息栏常驻提醒' : '已关闭消息栏常驻提醒',
+                            value
+                                ? l10n.persistentEnabled
+                                : l10n.persistentDisabled,
                           ),
                         ),
                       );
@@ -66,9 +101,49 @@ class SettingsPage extends ConsumerWidget {
           ),
           Card(
             child: ListTile(
+              leading: const Icon(Icons.straighten_outlined),
+              title: Text(l10n.messageBarUnit),
+              subtitle: Text(
+                (snapshot?.persistentNotificationTimeUnit ??
+                            PersistentNotificationTimeUnit.day) ==
+                        PersistentNotificationTimeUnit.day
+                    ? l10n.unitByDay
+                    : l10n.unitByHour,
+              ),
+              trailing: DropdownButtonHideUnderline(
+                child: DropdownButton<PersistentNotificationTimeUnit>(
+                  value:
+                      snapshot?.persistentNotificationTimeUnit ??
+                      PersistentNotificationTimeUnit.day,
+                  onChanged: snapshot == null
+                      ? null
+                      : (value) {
+                          if (value == null) {
+                            return;
+                          }
+                          ref
+                              .read(tasksControllerProvider.notifier)
+                              .setPersistentNotificationTimeUnit(value);
+                        },
+                  items: [
+                    DropdownMenuItem(
+                      value: PersistentNotificationTimeUnit.day,
+                      child: Text(l10n.unitByDay),
+                    ),
+                    DropdownMenuItem(
+                      value: PersistentNotificationTimeUnit.hour,
+                      child: Text(l10n.unitByHour),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Card(
+            child: ListTile(
               leading: const Icon(Icons.public_outlined),
-              title: const Text('应用时区'),
-              subtitle: Text(timezoneId),
+              title: Text(l10n.appTimezone),
+              subtitle: Text(localizedTimezoneLabel(l10n, timezoneId)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _pickTimezone(context, ref),
             ),
@@ -78,8 +153,8 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: const Icon(Icons.file_upload_outlined),
-                  title: const Text('导出 JSON'),
-                  subtitle: const Text('导出当前全部任务数据，用于备份或迁移。'),
+                  title: Text(l10n.exportJson),
+                  subtitle: Text(l10n.exportJsonHint),
                   onTap: () async {
                     final path = await ref
                         .read(tasksControllerProvider.notifier)
@@ -89,7 +164,11 @@ class SettingsPage extends ConsumerWidget {
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(path == null ? '已取消导出' : '导出成功：$path'),
+                        content: Text(
+                          path == null
+                              ? l10n.exportCancelled
+                              : l10n.exportSuccess(path),
+                        ),
                       ),
                     );
                   },
@@ -97,8 +176,8 @@ class SettingsPage extends ConsumerWidget {
                 const Divider(height: 0),
                 ListTile(
                   leading: const Icon(Icons.file_download_outlined),
-                  title: const Text('导入 JSON'),
-                  subtitle: const Text('导入会替换本地全部任务数据，并重新同步通知。'),
+                  title: Text(l10n.importJson),
+                  subtitle: Text(l10n.importJsonHint),
                   onTap: () async {
                     final imported = await ref
                         .read(tasksControllerProvider.notifier)
@@ -110,8 +189,8 @@ class SettingsPage extends ConsumerWidget {
                       SnackBar(
                         content: Text(
                           imported == null
-                              ? '已取消导入'
-                              : '导入成功：${imported.tasks.length} 个任务',
+                              ? l10n.importCancelled
+                              : l10n.importSuccess(imported.tasks.length),
                         ),
                       ),
                     );
@@ -123,11 +202,11 @@ class SettingsPage extends ConsumerWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.notifications_outlined),
-              title: const Text('通知说明'),
+              title: Text(l10n.notificationNotice),
               subtitle: Text(
                 Platform.isWindows
-                    ? '当前 Windows 版本使用 ZIP 形式发布而非 MSIX。已显示的系统通知可能无法被可靠取消，编辑任务后旧 toast 可能残留。'
-                    : 'Android 首次启用提醒时只会请求普通通知权限，不再跳转“闹钟和提醒”。提醒会以更兼容 MIUI 的方式调度，保存、删除或导入任务后会自动重建未来提醒。',
+                    ? l10n.windowsNotificationNotice
+                    : l10n.androidNotificationNotice,
               ),
             ),
           ),
@@ -137,6 +216,7 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Future<void> _pickTimezone(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = ref.read(tasksControllerProvider.notifier);
     final selected = await showDialog<String>(
       context: context,
@@ -153,8 +233,21 @@ class SettingsPage extends ConsumerWidget {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(changed ? '应用时区已更新：$selected' : '时区无效')),
+      SnackBar(
+        content: Text(
+          changed ? l10n.timezoneUpdated(selected) : l10n.timezoneInvalid,
+        ),
+      ),
     );
+  }
+
+  String _localeLabel(AppLocalizations l10n, AppLocalePreference? preference) {
+    return switch (preference ?? AppLocalePreference.system) {
+      AppLocalePreference.system => l10n.localeSystem,
+      AppLocalePreference.zh => l10n.localeZh,
+      AppLocalePreference.en => l10n.localeEn,
+      AppLocalePreference.ja => l10n.localeJa,
+    };
   }
 }
 
@@ -195,9 +288,10 @@ class _TimezonePickerDialogState extends State<_TimezonePickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final items = _filteredTimezoneIds();
     return AlertDialog(
-      title: const Text('选择应用时区'),
+      title: Text(l10n.chooseTimezone),
       content: SizedBox(
         width: 520,
         child: Column(
@@ -206,10 +300,10 @@ class _TimezonePickerDialogState extends State<_TimezonePickerDialog> {
             TextField(
               controller: _searchController,
               autofocus: true,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                labelText: '搜索时区',
-                hintText: '例如 Asia/Shanghai',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                labelText: l10n.searchTimezone,
+                hintText: l10n.searchTimezoneHint,
               ),
               onChanged: (value) {
                 setState(() {
@@ -230,7 +324,8 @@ class _TimezonePickerDialogState extends State<_TimezonePickerDialog> {
                     leading: selected
                         ? const Icon(Icons.check)
                         : const SizedBox(width: 24),
-                    title: Text(timezoneId),
+                    title: Text(localizedTimezoneDisplayName(l10n, timezoneId)),
+                    subtitle: Text(timezoneId),
                     onTap: () => Navigator.of(context).pop(timezoneId),
                   );
                 },
@@ -242,13 +337,14 @@ class _TimezonePickerDialogState extends State<_TimezonePickerDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
       ],
     );
   }
 
   List<String> _filteredTimezoneIds() {
+    final l10n = AppLocalizations.of(context)!;
     final known = widget.timezoneIds.toSet();
     final common = [
       for (final timezoneId in _commonTimezoneIds)
@@ -264,7 +360,13 @@ class _TimezonePickerDialogState extends State<_TimezonePickerDialog> {
     }
     return [
       for (final timezoneId in ordered)
-        if (timezoneId.toLowerCase().contains(_query)) timezoneId,
+        if (timezoneId.toLowerCase().contains(_query) ||
+            localizedTimezoneDisplayName(l10n, timezoneId)
+                .toLowerCase()
+                .contains(
+              _query,
+            ))
+          timezoneId,
     ];
   }
 }

@@ -1,0 +1,227 @@
+{
+  "@@locale": "zh",
+  "appTitle": "Next DDL",
+  "settings": "设置",
+  "addTask": "新增任务",
+  "inProgressTab": "进行中",
+  "overdueTab": "已过期",
+  "inProgressSummary": "共 {count} 个进行中任务，按剩余时间排序",
+  "@inProgressSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overdueSummary": "共 {count} 个已过期任务，按超时先后排序",
+  "@overdueSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nextNode": "下一个节点",
+  "finalDeadline": "最终截止",
+  "noFutureNodes": "无未来节点",
+  "allExpired": "已全部超时",
+  "remainingTime": "剩余时间",
+  "noTasksTitle": "还没有任何 deadline 任务",
+  "noTasksBody": "创建第一个任务后，这里会显示下一个节点、最终截止和实时倒计时。",
+  "createNow": "立即创建",
+  "taskDetails": "任务详情",
+  "taskNotFound": "任务不存在或已被删除",
+  "edit": "编辑",
+  "timezoneLabel": "时区：{timezone}",
+  "@timezoneLabel": {
+    "placeholders": {
+      "timezone": {}
+    }
+  },
+  "nextNodeValue": "下一个节点：{value}",
+  "@nextNodeValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "finalDeadlineValue": "最终截止：{value}",
+  "@finalDeadlineValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "timeline": "时间线",
+  "generatedNode": "自动生成",
+  "manualNode": "手动维护",
+  "reminderRules": "提醒策略",
+  "remindAtTime": "到点提醒",
+  "noReminder": "未设置提醒",
+  "deleteTask": "删除任务",
+  "deleteTaskTitle": "删除任务",
+  "deleteTaskBody": "删除后会同步清除该任务的待提醒通知。",
+  "cancel": "取消",
+  "delete": "删除",
+  "editTask": "编辑任务",
+  "newTask": "新增任务",
+  "taskTitle": "任务标题",
+  "taskTitleHint": "例如：毕业设计终稿",
+  "note": "备注",
+  "noteHint": "可写上下文、交付要求或提醒自己关注的点。",
+  "pickTime": "选择时间",
+  "enableNotifications": "启用系统提醒",
+  "enableNotificationsHint": "Android 会请求通知权限，Windows 使用系统通知。",
+  "milestones": "中间节点",
+  "addMilestone": "新增节点",
+  "editMilestone": "编辑节点",
+  "noMilestones": "当前没有中间节点，应用会直接用最终截止作为最后一个关键时间点。",
+  "generated": "自动生成",
+  "manual": "手动",
+  "customReminder": "自定义提醒",
+  "saveChanges": "保存修改",
+  "createTask": "创建任务",
+  "taskCreated": "任务已创建",
+  "taskUpdated": "任务已更新",
+  "fillTaskTitle": "请先填写任务标题",
+  "milestoneBeforeFinal": "所有中间节点都必须早于最终截止",
+  "milestoneName": "节点名称",
+  "milestoneTime": "节点时间",
+  "change": "修改",
+  "confirm": "确认",
+  "quantity": "数量",
+  "add": "添加",
+  "minutes": "分钟",
+  "hours": "小时",
+  "days": "天",
+  "atTimeReminder": "到点提醒",
+  "advanceDays": "提前 {count} 天",
+  "@advanceDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceHours": "提前 {count} 小时",
+  "@advanceHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceMinutes": "提前 {count} 分钟",
+  "@advanceMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceSeconds": "提前 {count} 秒",
+  "@advanceSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "currentVersion": "当前版本",
+  "loading": "读取中...",
+  "taskCount": "任务总数",
+  "taskCountValue": "{count} 个",
+  "@taskCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "persistentNotification": "Android 消息栏常驻提醒",
+  "persistentNotificationAndroidHint": "开启后会在消息栏常驻显示最紧急任务摘要，并在任务或开关变化时自动更新。",
+  "persistentNotificationOtherHint": "该功能仅在 Android 生效；其他平台会保留设置值但不会显示常驻通知。",
+  "persistentEnabled": "已开启消息栏常驻提醒",
+  "persistentDisabled": "已关闭消息栏常驻提醒",
+  "language": "语言",
+  "followSystem": "跟随系统",
+  "messageBarUnit": "消息栏剩余时间单位",
+  "unitByDay": "按天",
+  "unitByHour": "按小时",
+  "appTimezone": "应用时区",
+  "exportJson": "导出 JSON",
+  "exportJsonHint": "导出当前全部任务数据，用于备份或迁移。",
+  "importJson": "导入 JSON",
+  "importJsonHint": "导入会替换本地全部任务数据，并重新同步通知。",
+  "exportCancelled": "已取消导出",
+  "exportSuccess": "导出成功：{path}",
+  "@exportSuccess": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "importCancelled": "已取消导入",
+  "importSuccess": "导入成功：{count} 个任务",
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationNotice": "通知说明",
+  "windowsNotificationNotice": "当前 Windows 版本使用 ZIP 形式发布而非 MSIX。已显示的系统通知可能无法被可靠取消，编辑任务后旧 toast 可能残留。",
+  "androidNotificationNotice": "Android 首次启用提醒时只会请求普通通知权限，不再跳转“闹钟和提醒”。提醒会以更兼容 MIUI 的方式调度，保存、删除或导入任务后会自动重建未来提醒。",
+  "chooseTimezone": "选择应用时区",
+  "searchTimezone": "搜索时区",
+  "searchTimezoneHint": "例如 Asia/Shanghai",
+  "timezoneUpdated": "应用时区已更新：{timezone}",
+  "@timezoneUpdated": {
+    "placeholders": {
+      "timezone": {}
+    }
+  },
+  "timezoneInvalid": "时区无效",
+  "localeSystem": "跟随系统",
+  "localeZh": "简体中文",
+  "localeEn": "English",
+  "localeJa": "日本語",
+  "timezoneAsiaShanghai": "上海",
+  "timezoneAsiaHongKong": "香港",
+  "timezoneAsiaTaipei": "台北",
+  "timezoneAsiaTokyo": "东京",
+  "timezoneAsiaSeoul": "首尔",
+  "timezoneUtc": "协调世界时",
+  "timezoneEuropeLondon": "伦敦",
+  "timezoneAmericaNewYork": "纽约",
+  "timezoneAmericaLosAngeles": "洛杉矶",
+  "ongoingNoTask": "当前没有进行中的任务",
+  "persistentNotificationTitle": "Next DDL",
+  "fileExportDialogTitle": "导出 Next DDL 数据",
+  "fileImportDialogTitle": "导入 Next DDL 数据",
+  "notificationPersistentChannelDescription": "Next DDL 常驻状态通知",
+  "notificationMessageChannelDescription": "任务节点与最终截止消息通知",
+  "notificationNowDue": "现在到点 · {title}",
+  "@notificationNowDue": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "notificationAdvanceDue": "提前{offset} · {title}",
+  "@notificationAdvanceDue": {
+    "placeholders": {
+      "offset": {},
+      "title": {}
+    }
+  },
+  "compactDaySuffix": "天",
+  "compactHourSuffix": "小时",
+  "countdownDaySuffix": "天",
+  "countdownOverduePrefix": "已超时",
+  "generatedMilestoneTitle": "{percent}% 节点",
+  "@generatedMilestoneTitle": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
+}

@@ -9,7 +9,7 @@ class PackageInfoAppInfoService implements AppInfoService {
   @override
   Future<String> getVersionLabel() async {
     final info = await PackageInfo.fromPlatform();
-    return '${info.version}+${info.buildNumber}';
+    return info.version;
   }
 }
 

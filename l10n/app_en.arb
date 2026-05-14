@@ -1,0 +1,227 @@
+{
+  "@@locale": "en",
+  "appTitle": "Next DDL",
+  "settings": "Settings",
+  "addTask": "Add Task",
+  "inProgressTab": "In Progress",
+  "overdueTab": "Overdue",
+  "inProgressSummary": "{count} in-progress tasks, sorted by remaining time",
+  "@inProgressSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "overdueSummary": "{count} overdue tasks, sorted by how long they have been overdue",
+  "@overdueSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "nextNode": "Next milestone",
+  "finalDeadline": "Final deadline",
+  "noFutureNodes": "No future milestones",
+  "allExpired": "All expired",
+  "remainingTime": "Remaining time",
+  "noTasksTitle": "No deadline tasks yet",
+  "noTasksBody": "Create your first task to see the next milestone, final deadline, and live countdown here.",
+  "createNow": "Create now",
+  "taskDetails": "Task details",
+  "taskNotFound": "Task not found or already deleted",
+  "edit": "Edit",
+  "timezoneLabel": "Timezone: {timezone}",
+  "@timezoneLabel": {
+    "placeholders": {
+      "timezone": {}
+    }
+  },
+  "nextNodeValue": "Next milestone: {value}",
+  "@nextNodeValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "finalDeadlineValue": "Final deadline: {value}",
+  "@finalDeadlineValue": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "timeline": "Timeline",
+  "generatedNode": "Generated",
+  "manualNode": "Manual",
+  "reminderRules": "Reminder rules",
+  "remindAtTime": "At time",
+  "noReminder": "No reminders",
+  "deleteTask": "Delete task",
+  "deleteTaskTitle": "Delete task",
+  "deleteTaskBody": "Deleting will also remove future scheduled reminders for this task.",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "editTask": "Edit task",
+  "newTask": "New task",
+  "taskTitle": "Task title",
+  "taskTitleHint": "For example: Final thesis submission",
+  "note": "Note",
+  "noteHint": "Add context, deliverables, or anything you want to remember.",
+  "pickTime": "Pick time",
+  "enableNotifications": "Enable reminders",
+  "enableNotificationsHint": "Android requests notification permission; Windows uses system notifications.",
+  "milestones": "Milestones",
+  "addMilestone": "Add milestone",
+  "editMilestone": "Edit milestone",
+  "noMilestones": "There are no milestones yet. The app will use the final deadline as the last key point directly.",
+  "generated": "Generated",
+  "manual": "Manual",
+  "customReminder": "Custom reminder",
+  "saveChanges": "Save changes",
+  "createTask": "Create task",
+  "taskCreated": "Task created",
+  "taskUpdated": "Task updated",
+  "fillTaskTitle": "Please enter a task title",
+  "milestoneBeforeFinal": "All milestones must be earlier than the final deadline",
+  "milestoneName": "Milestone name",
+  "milestoneTime": "Milestone time",
+  "change": "Change",
+  "confirm": "Confirm",
+  "quantity": "Quantity",
+  "add": "Add",
+  "minutes": "Minutes",
+  "hours": "Hours",
+  "days": "Days",
+  "atTimeReminder": "At time",
+  "advanceDays": "{count} day(s) early",
+  "@advanceDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceHours": "{count} hour(s) early",
+  "@advanceHours": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceMinutes": "{count} minute(s) early",
+  "@advanceMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "advanceSeconds": "{count} second(s) early",
+  "@advanceSeconds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "currentVersion": "Version",
+  "loading": "Loading...",
+  "taskCount": "Task count",
+  "taskCountValue": "{count} task(s)",
+  "@taskCountValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "persistentNotification": "Android persistent notification",
+  "persistentNotificationAndroidHint": "When enabled, the most urgent task stays in the notification shade and updates automatically when tasks or settings change.",
+  "persistentNotificationOtherHint": "This only works on Android. Other platforms keep the setting but do not show a persistent notification.",
+  "persistentEnabled": "Persistent notification enabled",
+  "persistentDisabled": "Persistent notification disabled",
+  "language": "Language",
+  "followSystem": "Follow system",
+  "messageBarUnit": "Notification time unit",
+  "unitByDay": "Days",
+  "unitByHour": "Hours",
+  "appTimezone": "App timezone",
+  "exportJson": "Export JSON",
+  "exportJsonHint": "Export all current task data for backup or migration.",
+  "importJson": "Import JSON",
+  "importJsonHint": "Import replaces all local task data and rebuilds notifications.",
+  "exportCancelled": "Export cancelled",
+  "exportSuccess": "Exported: {path}",
+  "@exportSuccess": {
+    "placeholders": {
+      "path": {}
+    }
+  },
+  "importCancelled": "Import cancelled",
+  "importSuccess": "Imported: {count} task(s)",
+  "@importSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationNotice": "Notification notes",
+  "windowsNotificationNotice": "The current Windows build is distributed as a ZIP instead of MSIX. Displayed system notifications may not be cancelled reliably, and old toasts may remain after editing tasks.",
+  "androidNotificationNotice": "On Android, enabling reminders only requests standard notification permission and no longer opens the Alarms & reminders page. Reminders are scheduled in a MIUI-friendlier way and rebuild automatically after saving, deleting, or importing tasks.",
+  "chooseTimezone": "Choose app timezone",
+  "searchTimezone": "Search timezones",
+  "searchTimezoneHint": "For example Asia/Shanghai",
+  "timezoneUpdated": "App timezone updated: {timezone}",
+  "@timezoneUpdated": {
+    "placeholders": {
+      "timezone": {}
+    }
+  },
+  "timezoneInvalid": "Invalid timezone",
+  "localeSystem": "Follow system",
+  "localeZh": "简体中文",
+  "localeEn": "English",
+  "localeJa": "日本語",
+  "timezoneAsiaShanghai": "Shanghai",
+  "timezoneAsiaHongKong": "Hong Kong",
+  "timezoneAsiaTaipei": "Taipei",
+  "timezoneAsiaTokyo": "Tokyo",
+  "timezoneAsiaSeoul": "Seoul",
+  "timezoneUtc": "UTC",
+  "timezoneEuropeLondon": "London",
+  "timezoneAmericaNewYork": "New York",
+  "timezoneAmericaLosAngeles": "Los Angeles",
+  "ongoingNoTask": "No in-progress tasks right now",
+  "persistentNotificationTitle": "Next DDL",
+  "fileExportDialogTitle": "Export Next DDL data",
+  "fileImportDialogTitle": "Import Next DDL data",
+  "notificationPersistentChannelDescription": "Persistent status notification for Next DDL",
+  "notificationMessageChannelDescription": "Deadline milestone and final deadline reminders",
+  "notificationNowDue": "Due now · {title}",
+  "@notificationNowDue": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "notificationAdvanceDue": "{offset} early · {title}",
+  "@notificationAdvanceDue": {
+    "placeholders": {
+      "offset": {},
+      "title": {}
+    }
+  },
+  "compactDaySuffix": " days",
+  "compactHourSuffix": " hours",
+  "countdownDaySuffix": "d",
+  "countdownOverduePrefix": "Overdue",
+  "generatedMilestoneTitle": "{percent}% checkpoint",
+  "@generatedMilestoneTitle": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  }
+}

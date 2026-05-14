@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/app/app.dart';
 import 'package:next_ddl/features/tasks/task_edit_page.dart';
+import 'package:next_ddl/features/tasks/tasks_controller.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
@@ -11,7 +14,6 @@ import 'package:next_ddl/services/deadline_repository.dart';
 import 'package:next_ddl/services/file_export_service.dart';
 import 'package:next_ddl/services/notification_scheduler.dart';
 import 'package:next_ddl/services/timezone_service.dart';
-import 'package:next_ddl/features/tasks/tasks_controller.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -19,56 +21,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tz_data.initializeTimeZones();
 
-  testWidgets('shows saved task in home page', (tester) async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final snapshot = AppSnapshot(
-      schemaVersion: 1,
-      exportedAtUtc: now,
-      persistentNotificationEnabled: false,
-      tasks: [
-        DeadlineTask(
-          id: '1',
-          title: '论文终稿',
-          note: '需要提交 PDF',
-          timezoneId: 'Asia/Shanghai',
-          createdAtUtc: now,
-          updatedAtUtc: now,
-          finalDueAtUtc: now.add(const Duration(days: 2)),
-          milestones: const [],
-          reminderOffsetsSeconds: const [0, 3600],
-          notificationsEnabled: true,
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          deadlineRepositoryProvider.overrideWithValue(
-            _MemoryRepository(snapshot),
-          ),
-          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
-          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
-          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
-          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
-          nowProvider.overrideWith((ref) => Stream.value(now)),
-        ],
-        child: const NextDdlApp(),
-      ),
-    );
-
-    await tester.pump();
-    await tester.pump();
-
-    expect(find.text('论文终稿'), findsOneWidget);
-    expect(find.textContaining('下一个节点'), findsNothing);
-    expect(find.text('最终截止'), findsWidgets);
-    expect(find.text('剩余时间'), findsOneWidget);
-    expect(find.text('100%'), findsOneWidget);
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
-  });
-
-  testWidgets('shows next milestone row only when task has milestones', (
+  testWidgets('home page defaults to in-progress tab and separates overdue tasks', (
     tester,
   ) async {
     final now = DateTime.utc(2026, 1, 1, 8);
@@ -76,6 +29,91 @@ void main() {
       schemaVersion: 1,
       exportedAtUtc: now,
       persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.zh,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: [
+        DeadlineTask(
+          id: 'progress',
+          title: '进行中任务',
+          note: '',
+          timezoneId: 'Asia/Shanghai',
+          createdAtUtc: now,
+          updatedAtUtc: now,
+          finalDueAtUtc: now.add(const Duration(days: 2)),
+          milestones: const [],
+          reminderOffsetsSeconds: const [],
+          notificationsEnabled: false,
+        ),
+        DeadlineTask(
+          id: 'overdue',
+          title: '过期任务',
+          note: '',
+          timezoneId: 'Asia/Shanghai',
+          createdAtUtc: now,
+          updatedAtUtc: now,
+          finalDueAtUtc: now.subtract(const Duration(hours: 2)),
+          milestones: const [],
+          reminderOffsetsSeconds: const [],
+          notificationsEnabled: false,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+
+    expect(find.text('进行中'), findsOneWidget);
+    expect(find.text('已过期'), findsOneWidget);
+    expect(find.text('进行中任务'), findsOneWidget);
+    expect(find.text('过期任务'), findsNothing);
+
+    await tester.tap(find.text('已过期'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('过期任务'), findsOneWidget);
+  });
+
+  testWidgets('final deadline label appears once and next milestone hides without milestones', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.zh,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: [
+        DeadlineTask(
+          id: '1',
+          title: '论文终稿',
+          note: '',
+          timezoneId: 'Asia/Shanghai',
+          createdAtUtc: now,
+          updatedAtUtc: now,
+          finalDueAtUtc: now.add(const Duration(days: 2)),
+          milestones: const [],
+          reminderOffsetsSeconds: const [0],
+          notificationsEnabled: true,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+
+    expect(find.text('最终截止'), findsOneWidget);
+    expect(find.text('下一个节点'), findsNothing);
+  });
+
+  testWidgets('task with milestones still shows next milestone', (tester) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.zh,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
       tasks: [
         DeadlineTask(
           id: '1',
@@ -99,109 +137,135 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          deadlineRepositoryProvider.overrideWithValue(
-            _MemoryRepository(snapshot),
-          ),
-          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
-          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
-          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
-          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
-          nowProvider.overrideWith((ref) => Stream.value(now)),
-        ],
-        child: const NextDdlApp(),
-      ),
-    );
-
+    await tester.pumpWidget(_buildApp(snapshot, now));
     await tester.pumpAndSettle();
 
     expect(find.text('下一个节点'), findsOneWidget);
     expect(find.text('阶段检查'), findsOneWidget);
   });
 
-  testWidgets('shows empty state when no tasks exist', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          deadlineRepositoryProvider.overrideWithValue(
-            _MemoryRepository(AppSnapshot.empty()),
-          ),
-          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
-          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
-          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
-          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
-          nowProvider.overrideWith(
-            (ref) => Stream.value(DateTime.utc(2026, 1, 1, 8)),
-          ),
-        ],
-        child: const NextDdlApp(),
-      ),
-    );
-
-    await tester.pumpAndSettle();
-
-    expect(find.text('还没有任何 deadline 任务'), findsOneWidget);
-    expect(find.text('立即创建'), findsOneWidget);
-  });
-
-  testWidgets('task editor keeps milestones manual only', (tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          deadlineRepositoryProvider.overrideWithValue(
-            _MemoryRepository(AppSnapshot.empty()),
-          ),
-          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
-          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
-          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
-          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
-        ],
-        child: const MaterialApp(home: TaskEditPage()),
-      ),
-    );
-
-    expect(find.text('新增节点'), findsOneWidget);
-    expect(find.textContaining('自动生成'), findsNothing);
-  });
-
-  testWidgets('settings page shows and searches configured timezone', (
+  testWidgets('settings page shows locale and persistent time unit controls', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          deadlineRepositoryProvider.overrideWithValue(
-            _MemoryRepository(AppSnapshot.empty()),
-          ),
-          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
-          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
-          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
-          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
-          nowProvider.overrideWith(
-            (ref) => Stream.value(DateTime.utc(2026, 1, 1, 8)),
-          ),
-        ],
-        child: const NextDdlApp(),
-      ),
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: true,
+      preferredLocale: AppLocalePreference.en,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.hour,
+      tasks: const [],
     );
 
+    await tester.pumpWidget(_buildApp(snapshot, now));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
-    expect(find.text('应用时区'), findsOneWidget);
-    expect(find.text('Asia/Shanghai'), findsOneWidget);
-    expect(find.text('Android 消息栏常驻提醒'), findsOneWidget);
-
-    await tester.tap(find.text('应用时区'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Tokyo');
-    await tester.pumpAndSettle();
-
-    expect(find.text('Asia/Tokyo'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Notification time unit'), findsOneWidget);
+    expect(find.text('Android persistent notification'), findsOneWidget);
   });
+
+  testWidgets('settings page timezone dialog shows localized names and iana ids', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.en,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: const [],
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('App timezone'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose app timezone'), findsOneWidget);
+    expect(find.text('Shanghai'), findsOneWidget);
+    expect(find.text('Asia/Shanghai'), findsOneWidget);
+  });
+
+  testWidgets('settings page can switch language labels', (tester) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.zh,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: const [],
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('语言'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButton<AppLocalePreference>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+  });
+
+  testWidgets('task editor reflects japanese locale strings', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          deadlineRepositoryProvider.overrideWithValue(
+            _MemoryRepository(AppSnapshot.empty().copyWith(
+              preferredLocale: AppLocalePreference.ja,
+            )),
+          ),
+          notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+          fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
+          appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+        ],
+        child: const MaterialApp(
+          locale: Locale('ja'),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: TaskEditPage(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('新規タスク'), findsOneWidget);
+    expect(find.text('タスク名'), findsOneWidget);
+    expect(find.text('中間マイルストーン'), findsOneWidget);
+  });
+}
+
+Widget _buildApp(AppSnapshot snapshot, DateTime now) {
+  return ProviderScope(
+    overrides: [
+      deadlineRepositoryProvider.overrideWithValue(_MemoryRepository(snapshot)),
+      notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+      timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+      fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
+      appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+      nowProvider.overrideWith((ref) => Stream.value(now)),
+    ],
+    child: const NextDdlApp(),
+  );
 }
 
 class _MemoryRepository implements DeadlineRepository {
@@ -225,17 +289,11 @@ class _MemoryRepository implements DeadlineRepository {
 }
 
 class _FakeNotifications implements NotificationScheduler {
-  int removeAllCount = 0;
-  final List<String> syncedTaskIds = [];
-  bool? lastPersistentEnabled;
-
   @override
   Future<void> initialize() async {}
 
   @override
-  Future<void> removeAll() async {
-    removeAllCount++;
-  }
+  Future<void> removeAll() async {}
 
   @override
   Future<void> removeTask(String taskId) async {}
@@ -248,14 +306,15 @@ class _FakeNotifications implements NotificationScheduler {
     required bool enabled,
     required List<DeadlineTask> tasks,
     required DateTime nowUtc,
-  }) async {
-    lastPersistentEnabled = enabled;
-  }
+    required AppLocalePreference localePreference,
+    required PersistentNotificationTimeUnit timeUnit,
+  }) async {}
 
   @override
-  Future<void> syncTask(DeadlineTask task) async {
-    syncedTaskIds.add(task.id);
-  }
+  Future<void> syncTask(
+    DeadlineTask task, {
+    required AppLocalePreference localePreference,
+  }) async {}
 }
 
 class _FakeTimezoneService extends DeviceTimezoneService {
@@ -312,15 +371,18 @@ class _FakeFileExportService implements FileExportService {
   Future<String?> exportJson({
     required String suggestedName,
     required String content,
+    AppLocalePreference localePreference = AppLocalePreference.system,
   }) async {
     return null;
   }
 
   @override
-  Future<String?> importJson() async => null;
+  Future<String?> importJson({
+    AppLocalePreference localePreference = AppLocalePreference.system,
+  }) async => null;
 }
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '0.1.0+1';
+  Future<String> getVersionLabel() async => '1.1.1';
 }

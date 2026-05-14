@@ -2,11 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/widgets.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../models/app_snapshot.dart';
 import '../models/deadline_task.dart';
 import '../utils/countdown_formatter.dart';
 import '../utils/deadline_logic.dart';
+import '../utils/locale_utils.dart';
 import 'notification_scheduler.dart';
 import 'timezone_service.dart';
 
@@ -78,6 +82,8 @@ class LocalNotificationScheduler implements NotificationScheduler {
     required bool enabled,
     required List<DeadlineTask> tasks,
     required DateTime nowUtc,
+    required AppLocalePreference localePreference,
+    required PersistentNotificationTimeUnit timeUnit,
   }) async {
     if (!Platform.isAndroid) {
       return;
@@ -87,21 +93,27 @@ class LocalNotificationScheduler implements NotificationScheduler {
       return;
     }
 
-    final sortedTasks = sortTasks(tasks, nowUtc);
-    final title = 'Next DDL';
-    final body = sortedTasks.isEmpty
-        ? '当前没有进行中的任务'
-        : _buildPersistentBody(sortedTasks.first, nowUtc);
+    final targetTask = resolveMostUrgentInProgressTask(tasks, nowUtc);
+    final l10n = resolveAppLocalizations(localePreference);
+    final title = l10n.persistentNotificationTitle;
+    final body = targetTask == null
+        ? l10n.ongoingNoTask
+        : _buildPersistentBody(
+            targetTask,
+            nowUtc,
+            localePreference: localePreference,
+            timeUnit: timeUnit,
+          );
 
     await _plugin.show(
       _persistentNotificationId,
       title,
       body,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'next_ddl_persistent',
           'Next DDL Persistent',
-          channelDescription: 'Next DDL 常驻状态通知',
+          channelDescription: l10n.notificationPersistentChannelDescription,
           importance: Importance.low,
           priority: Priority.low,
           ongoing: true,
@@ -114,12 +126,19 @@ class LocalNotificationScheduler implements NotificationScheduler {
   }
 
   @override
-  Future<void> syncTask(DeadlineTask task) async {
+  Future<void> syncTask(
+    DeadlineTask task, {
+    required AppLocalePreference localePreference,
+  }) async {
     if (!task.notificationsEnabled) {
       return;
     }
 
     await removeTask(task.id);
+    final l10n = resolveAppLocalizations(
+      localePreference,
+      systemLocale: WidgetsBinding.instance.platformDispatcher.locale,
+    );
     final targets = <_NotificationTarget>[
       for (final milestone in task.milestones)
         _NotificationTarget(
@@ -129,7 +148,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
         ),
       _NotificationTarget(
         idSeed: '${task.id}:final',
-        title: '最终截止',
+        title: l10n.finalDeadline,
         dueAtUtc: task.finalDueAtUtc,
       ),
     ];
@@ -148,18 +167,21 @@ class LocalNotificationScheduler implements NotificationScheduler {
         );
         final notificationId = '${target.idSeed}:$offset'.hashCode & 0x7fffffff;
         final message = offset == 0
-            ? '现在到点 · ${target.title}'
-            : '提前${_formatOffset(offset)} · ${target.title}';
+            ? l10n.notificationNowDue(target.title)
+            : l10n.notificationAdvanceDue(
+                _formatOffset(offset, l10n),
+                target.title,
+              );
         await _plugin.zonedSchedule(
           notificationId,
           task.title,
           message,
           scheduleTime,
           NotificationDetails(
-            android: const AndroidNotificationDetails(
+            android: AndroidNotificationDetails(
               'next_ddl_messages',
               'Next DDL Messages',
-              channelDescription: '任务节点与最终截止消息通知',
+              channelDescription: l10n.notificationMessageChannelDescription,
               importance: Importance.defaultImportance,
               priority: Priority.defaultPriority,
             ),
@@ -172,32 +194,35 @@ class LocalNotificationScheduler implements NotificationScheduler {
     }
   }
 
-  String _formatOffset(int seconds) {
+  String _formatOffset(int seconds, AppLocalizations l10n) {
     final duration = Duration(seconds: seconds);
     if (duration.inDays >= 1 && duration.inHours.remainder(24) == 0) {
-      return '${duration.inDays}天';
+      return l10n.advanceDays(duration.inDays);
     }
     if (duration.inHours >= 1 && duration.inMinutes.remainder(60) == 0) {
-      return '${duration.inHours}小时';
+      return l10n.advanceHours(duration.inHours);
     }
     if (duration.inMinutes >= 1) {
-      return '${duration.inMinutes}分钟';
+      return l10n.advanceMinutes(duration.inMinutes);
     }
-    return '${duration.inSeconds}秒';
+    return l10n.advanceSeconds(duration.inSeconds);
   }
 
-  String _buildPersistentBody(DeadlineTask task, DateTime nowUtc) {
-    final nextMilestone = resolveNextMilestone(task, nowUtc);
-    final parts = <String>[task.title];
-    if (task.milestones.isNotEmpty && nextMilestone != null) {
-      parts.add(
-        '下一个：${nextMilestone.title} ${formatCountdownFromDates(now: nowUtc, target: nextMilestone.dueAtUtc)}',
-      );
-    }
-    parts.add(
-      '最终：${formatCountdownFromDates(now: nowUtc, target: task.finalDueAtUtc)}',
+  String _buildPersistentBody(
+    DeadlineTask task,
+    DateTime nowUtc, {
+    required AppLocalePreference localePreference,
+    required PersistentNotificationTimeUnit timeUnit,
+  }) {
+    final remaining = resolveActiveDeadlinePoint(task, nowUtc).difference(nowUtc);
+    final l10n = resolveAppLocalizations(localePreference);
+    final countdown = formatCompactCountdown(
+      remaining,
+      timeUnit: timeUnit,
+      daySuffix: l10n.compactDaySuffix,
+      hourSuffix: l10n.compactHourSuffix,
     );
-    return parts.join(' · ');
+    return '${task.title} · $countdown';
   }
 }
 
