@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
 import 'services/app_info_service.dart';
+import 'services/app_update_service.dart';
 import 'services/bootstrap_service.dart';
 import 'services/deadline_repository.dart';
 import 'services/file_export_service.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
   final repository = SharedPrefsDeadlineRepository(
     fileExportService: fileExportService,
   );
+  final appUpdateService = GithubAppUpdateService();
   final notificationScheduler = LocalNotificationScheduler(
     timezoneService: timezoneService,
   );
@@ -36,6 +38,7 @@ Future<void> main() async {
         timezoneServiceProvider.overrideWithValue(timezoneService),
         fileExportServiceProvider.overrideWithValue(fileExportService),
         appInfoServiceProvider.overrideWithValue(PackageInfoAppInfoService()),
+        appUpdateServiceProvider.overrideWithValue(appUpdateService),
       ],
       child: const NextDdlApp(),
     ),

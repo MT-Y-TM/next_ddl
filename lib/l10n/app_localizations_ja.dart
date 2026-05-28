@@ -420,4 +420,74 @@ class AppLocalizationsJa extends AppLocalizations {
   String generatedMilestoneTitle(int percent) {
     return '$percent% チェックポイント';
   }
+
+  @override
+  String get unnamedMilestone => '名称未設定のノード';
+
+  @override
+  String get updates => 'アプリ更新';
+
+  @override
+  String get checkForUpdates => '更新を確認';
+
+  @override
+  String get checkingForUpdates => '更新を確認しています...';
+
+  @override
+  String get appUpToDate => '現在のバージョンは最新です';
+
+  @override
+  String updateAvailableStatus(Object version) {
+    return '新しいバージョンがあります: $version';
+  }
+
+  @override
+  String get updateDownloading => '更新をダウンロードしています...';
+
+  @override
+  String get updateInstallReady => 'インストーラーの準備ができました';
+
+  @override
+  String updateError(Object message) {
+    return '更新に失敗しました: $message';
+  }
+
+  @override
+  String get updateNow => '今すぐ更新';
+
+  @override
+  String get openReleasePage => 'Release ページを開く';
+
+  @override
+  String get updateReleaseNotes => '更新内容';
+
+  @override
+  String get noReleaseNotes => '更新内容はありません';
+
+  @override
+  String get updatePermissionRequired =>
+      'このアプリに未知のアプリのインストールを許可してから、戻ってインストールを続けてください。';
+
+  @override
+  String get openInstallPermission => 'インストール権限を開く';
+
+  @override
+  String get windowsUpdateNotice =>
+      'Windows 版は現在 GitHub Release ページを開くことのみ対応しており、ZIP の自動インストールには対応していません。';
+
+  @override
+  String get updateDialogTitle => '新しいバージョンがあります';
+
+  @override
+  String updateDialogMessage(Object version) {
+    return '$version にアップデートできます。';
+  }
+
+  @override
+  String publishedAtLabel(Object value) {
+    return '公開日: $value';
+  }
+
+  @override
+  String get later => 'あとで';
 }

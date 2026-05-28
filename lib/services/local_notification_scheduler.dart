@@ -11,6 +11,7 @@ import '../models/deadline_task.dart';
 import '../utils/countdown_formatter.dart';
 import '../utils/deadline_logic.dart';
 import '../utils/locale_utils.dart';
+import '../utils/milestone_utils.dart';
 import 'notification_scheduler.dart';
 import 'timezone_service.dart';
 
@@ -143,7 +144,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
       for (final milestone in task.milestones)
         _NotificationTarget(
           idSeed: '${task.id}:${milestone.id}',
-          title: milestone.title,
+          title: resolveMilestoneDisplayTitle(milestone.title, l10n),
           dueAtUtc: milestone.dueAtUtc,
         ),
       _NotificationTarget(

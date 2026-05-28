@@ -3,13 +3,16 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/app/app.dart';
+import 'package:next_ddl/features/settings/settings_page.dart';
 import 'package:next_ddl/features/tasks/task_edit_page.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
+import 'package:next_ddl/models/update_release.dart';
 import 'package:next_ddl/services/app_info_service.dart';
+import 'package:next_ddl/services/app_update_service.dart';
 import 'package:next_ddl/services/deadline_repository.dart';
 import 'package:next_ddl/services/file_export_service.dart';
 import 'package:next_ddl/services/notification_scheduler.dart';
@@ -144,6 +147,50 @@ void main() {
     expect(find.text('阶段检查'), findsOneWidget);
   });
 
+  testWidgets('empty milestone titles fall back to localized placeholder', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.zh,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: [
+        DeadlineTask(
+          id: '1',
+          title: '空节点任务',
+          note: '',
+          timezoneId: 'Asia/Shanghai',
+          createdAtUtc: now,
+          updatedAtUtc: now,
+          finalDueAtUtc: now.add(const Duration(days: 2)),
+          milestones: [
+            Milestone(
+              id: 'm1',
+              title: '',
+              dueAtUtc: now.add(const Duration(hours: 6)),
+              source: MilestoneSource.manual,
+            ),
+          ],
+          reminderOffsetsSeconds: const [0],
+          notificationsEnabled: true,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+
+    expect(find.text('未命名节点'), findsOneWidget);
+
+    await tester.tap(find.text('空节点任务'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('未命名节点'), findsWidgets);
+  });
+
   testWidgets('settings page shows locale and persistent time unit controls', (
     tester,
   ) async {
@@ -161,10 +208,69 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Notification time unit'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
 
     expect(find.text('Language'), findsOneWidget);
     expect(find.text('Notification time unit'), findsOneWidget);
     expect(find.text('Android persistent notification'), findsOneWidget);
+    expect(find.text('Updates'), findsOneWidget);
+  });
+
+  testWidgets('settings page checks updates and shows up-to-date state', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final updateService = _FakeAppUpdateService();
+
+    await tester.pumpWidget(
+      _buildSettingsApp(snapshot, updateService: updateService),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Check for updates'), findsWidgets);
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Check for updates').first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text("You're on the latest version"), findsOneWidget);
+  });
+
+  testWidgets('settings page shows update available state', (tester) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final updateService = _FakeAppUpdateService(
+      release: UpdateRelease(
+        tagName: 'v1.1.2',
+        version: '1.1.2',
+        publishedAtUtc: now,
+        body: 'New build available.',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.2',
+        assets: const [],
+      ),
+    );
+
+    await tester.pumpWidget(
+      _buildSettingsApp(snapshot, updateService: updateService),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Check for updates').first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('New version available: 1.1.2'), findsOneWidget);
   });
 
   testWidgets('settings page timezone dialog shows localized names and iana ids', (
@@ -184,6 +290,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('App timezone'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('App timezone'));
     await tester.pumpAndSettle();
 
@@ -231,6 +342,7 @@ void main() {
           timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
           fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
           appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+          appUpdateServiceProvider.overrideWithValue(_FakeAppUpdateService()),
         ],
         child: const MaterialApp(
           locale: Locale('ja'),
@@ -262,9 +374,42 @@ Widget _buildApp(AppSnapshot snapshot, DateTime now) {
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+      appUpdateServiceProvider.overrideWithValue(_FakeAppUpdateService()),
       nowProvider.overrideWith((ref) => Stream.value(now)),
     ],
     child: const NextDdlApp(),
+  );
+}
+
+Widget _buildSettingsApp(
+  AppSnapshot snapshot, {
+  required AppUpdateService updateService,
+}) {
+  return ProviderScope(
+    overrides: [
+      deadlineRepositoryProvider.overrideWithValue(_MemoryRepository(snapshot)),
+      notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+      timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+      fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
+      appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+      appUpdateServiceProvider.overrideWithValue(updateService),
+    ],
+    child: MaterialApp(
+      locale: switch (snapshot.preferredLocale) {
+        AppLocalePreference.zh => const Locale('zh'),
+        AppLocalePreference.en => const Locale('en'),
+        AppLocalePreference.ja => const Locale('ja'),
+        AppLocalePreference.system => const Locale('en'),
+      },
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const SettingsPage(),
+    ),
   );
 }
 
@@ -382,7 +527,34 @@ class _FakeFileExportService implements FileExportService {
   }) async => null;
 }
 
+class _FakeAppUpdateService implements AppUpdateService {
+  _FakeAppUpdateService({this.release});
+
+  final UpdateRelease? release;
+
+  @override
+  Future<UpdateRelease?> checkForUpdate({required String currentVersion}) async {
+    return release;
+  }
+
+  @override
+  Future<AppUpdateInstallResult> downloadAndInstall(UpdateRelease release) async {
+    return const AppUpdateInstallResult(
+      status: AppUpdateInstallStatus.openedReleasePage,
+    );
+  }
+
+  @override
+  Future<void> openInstallPermissionSettings() async {}
+
+  @override
+  Future<void> openReleasePage(UpdateRelease release) async {}
+
+  @override
+  Future<bool> resumePendingInstall(String filePath) async => false;
+}
+
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.1';
+  Future<String> getVersionLabel() async => '1.1.2';
 }

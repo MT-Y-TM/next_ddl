@@ -428,4 +428,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String generatedMilestoneTitle(int percent) {
     return '$percent% checkpoint';
   }
+
+  @override
+  String get unnamedMilestone => 'Untitled milestone';
+
+  @override
+  String get updates => 'Updates';
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates...';
+
+  @override
+  String get appUpToDate => 'You\'re on the latest version';
+
+  @override
+  String updateAvailableStatus(Object version) {
+    return 'New version available: $version';
+  }
+
+  @override
+  String get updateDownloading => 'Downloading update...';
+
+  @override
+  String get updateInstallReady => 'Installer is ready';
+
+  @override
+  String updateError(Object message) {
+    return 'Update failed: $message';
+  }
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get openReleasePage => 'Open Release page';
+
+  @override
+  String get updateReleaseNotes => 'Release notes';
+
+  @override
+  String get noReleaseNotes => 'No release notes';
+
+  @override
+  String get updatePermissionRequired =>
+      'Allow this app to install unknown apps, then return to continue installation.';
+
+  @override
+  String get openInstallPermission => 'Open install permission';
+
+  @override
+  String get windowsUpdateNotice =>
+      'Windows can open the GitHub Release page only. ZIP self-install is not supported in this version.';
+
+  @override
+  String get updateDialogTitle => 'New version available';
+
+  @override
+  String updateDialogMessage(Object version) {
+    return 'Version $version is available.';
+  }
+
+  @override
+  String publishedAtLabel(Object value) {
+    return 'Published: $value';
+  }
+
+  @override
+  String get later => 'Later';
 }

@@ -6,6 +6,7 @@ import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/locale_utils.dart';
+import '../../utils/milestone_utils.dart';
 import 'tasks_controller.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
@@ -117,7 +118,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           for (var index = 0; index < _milestones.length; index++)
             Card(
               child: ListTile(
-                title: Text(_milestones[index].title),
+                title: Text(
+                  resolveMilestoneDisplayTitle(_milestones[index].title, l10n),
+                ),
                 subtitle: Text(
                   '${_formatDateTime(ref.watch(configuredUtcToLocalProvider(_milestones[index].dueAtUtc)))} · '
                   '${_milestones[index].source == MilestoneSource.generated ? l10n.generated : l10n.manual}',
@@ -279,9 +282,6 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
             FilledButton(
               onPressed: () {
                 final title = titleController.text.trim();
-                if (title.isEmpty) {
-                  return;
-                }
                 Navigator.of(dialogContext).pop(
                   Milestone(
                     id: existing?.id ?? _generateId(),

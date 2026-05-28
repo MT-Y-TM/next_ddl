@@ -418,4 +418,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String generatedMilestoneTitle(int percent) {
     return '$percent% 节点';
   }
+
+  @override
+  String get unnamedMilestone => '未命名节点';
+
+  @override
+  String get updates => '应用更新';
+
+  @override
+  String get checkForUpdates => '检查更新';
+
+  @override
+  String get checkingForUpdates => '正在检查更新...';
+
+  @override
+  String get appUpToDate => '当前已是最新版本';
+
+  @override
+  String updateAvailableStatus(Object version) {
+    return '发现新版本：$version';
+  }
+
+  @override
+  String get updateDownloading => '正在下载更新包...';
+
+  @override
+  String get updateInstallReady => '安装包已准备就绪';
+
+  @override
+  String updateError(Object message) {
+    return '更新失败：$message';
+  }
+
+  @override
+  String get updateNow => '立即更新';
+
+  @override
+  String get openReleasePage => '打开 Release 页面';
+
+  @override
+  String get updateReleaseNotes => '更新说明';
+
+  @override
+  String get noReleaseNotes => '暂无更新说明';
+
+  @override
+  String get updatePermissionRequired => '请先允许此应用安装未知来源应用，返回后会继续安装。';
+
+  @override
+  String get openInstallPermission => '打开安装权限';
+
+  @override
+  String get windowsUpdateNotice =>
+      'Windows 端当前仅支持打开 GitHub Release 页面，不支持 ZIP 自安装。';
+
+  @override
+  String get updateDialogTitle => '发现新版本';
+
+  @override
+  String updateDialogMessage(Object version) {
+    return '当前可升级到 $version。';
+  }
+
+  @override
+  String publishedAtLabel(Object value) {
+    return '发布时间：$value';
+  }
+
+  @override
+  String get later => '稍后';
 }

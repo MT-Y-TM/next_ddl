@@ -2,9 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
+import 'package:next_ddl/models/update_release.dart';
+import 'package:next_ddl/l10n/app_localizations_en.dart';
+import 'package:next_ddl/l10n/app_localizations_zh.dart';
 import 'package:next_ddl/services/timezone_service.dart';
 import 'package:next_ddl/utils/countdown_formatter.dart';
 import 'package:next_ddl/utils/deadline_logic.dart';
+import 'package:next_ddl/utils/milestone_utils.dart';
+import 'package:next_ddl/utils/version_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 
@@ -253,6 +258,59 @@ void main() {
         timeUnit: PersistentNotificationTimeUnit.hour,
       ),
       '79小时',
+    );
+  });
+
+  test('empty milestone title falls back to localized placeholder', () {
+    expect(
+      resolveMilestoneDisplayTitle('', AppLocalizationsEn()),
+      'Untitled milestone',
+    );
+    expect(
+      resolveMilestoneDisplayTitle('  ', AppLocalizationsZh()),
+      '未命名节点',
+    );
+  });
+
+  test('semantic version comparison ignores leading v', () {
+    expect(isNewerSemanticVersion('v1.1.2', '1.1.1'), isTrue);
+    expect(isNewerSemanticVersion('v1.1.2', '1.1.2'), isFalse);
+  });
+
+  test('update release parses github latest release payload', () {
+    final release = UpdateRelease.fromJson({
+      'tag_name': 'v1.1.2',
+      'published_at': '2026-01-02T00:00:00.000Z',
+      'body': 'Release notes',
+      'html_url': 'https://example.com/release',
+      'assets': [
+        {
+          'name': 'app-release.apk',
+          'browser_download_url': 'https://example.com/app-release.apk',
+          'content_type': 'application/vnd.android.package-archive',
+          'size': 123,
+        },
+      ],
+    });
+
+    expect(release.version, '1.1.2');
+    expect(release.androidApkAsset?.name, 'app-release.apk');
+    expect(release.htmlUrl, 'https://example.com/release');
+  });
+
+  test('windows update branch uses release html url', () {
+    final release = UpdateRelease(
+      tagName: 'v1.1.2',
+      version: '1.1.2',
+      publishedAtUtc: DateTime.utc(2026, 1, 2),
+      body: '',
+      htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.2',
+      assets: const [],
+    );
+
+    expect(
+      release.htmlUrl,
+      'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.2',
     );
   });
 

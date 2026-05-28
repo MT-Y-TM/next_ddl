@@ -223,5 +223,45 @@
         "type": "int"
       }
     }
-  }
+  },
+  "unnamedMilestone": "Untitled milestone",
+  "updates": "Updates",
+  "checkForUpdates": "Check for updates",
+  "checkingForUpdates": "Checking for updates...",
+  "appUpToDate": "You're on the latest version",
+  "updateAvailableStatus": "New version available: {version}",
+  "@updateAvailableStatus": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateDownloading": "Downloading update...",
+  "updateInstallReady": "Installer is ready",
+  "updateError": "Update failed: {message}",
+  "@updateError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "updateNow": "Update now",
+  "openReleasePage": "Open Release page",
+  "updateReleaseNotes": "Release notes",
+  "noReleaseNotes": "No release notes",
+  "updatePermissionRequired": "Allow this app to install unknown apps, then return to continue installation.",
+  "openInstallPermission": "Open install permission",
+  "windowsUpdateNotice": "Windows can open the GitHub Release page only. ZIP self-install is not supported in this version.",
+  "updateDialogTitle": "New version available",
+  "updateDialogMessage": "Version {version} is available.",
+  "@updateDialogMessage": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "publishedAtLabel": "Published: {value}",
+  "@publishedAtLabel": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "later": "Later"
 }

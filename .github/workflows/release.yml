@@ -24,6 +24,21 @@ jobs:
           cache: true
           pub-cache: true
 
+      - name: Prepare Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/next_ddl-upload.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/next_ddl-upload.jks"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > android/key.properties
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -146,6 +161,11 @@ jobs:
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          body: |
+            Compatibility note:
+            - Android 1.1.2 switches from debug signing to the first formal release keystore.
+            - If you installed 1.1.1 or earlier with the old debug signature, Android cannot upgrade it directly.
+            - Please uninstall the old app once, then install 1.1.2. Future formally signed versions can upgrade normally after that.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

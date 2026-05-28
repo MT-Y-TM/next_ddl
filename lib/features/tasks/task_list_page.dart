@@ -6,6 +6,7 @@ import '../../models/deadline_task.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/countdown_formatter.dart';
 import '../../utils/deadline_logic.dart';
+import '../../utils/milestone_utils.dart';
 import '../settings/settings_page.dart';
 import 'task_detail_page.dart';
 import 'task_edit_page.dart';
@@ -209,7 +210,12 @@ class _TaskCard extends StatelessWidget {
                   if (task.milestones.isNotEmpty) ...[
                 _CountdownRow(
                       label: l10n.nextNode,
-                      title: nextMilestone?.title ?? l10n.noFutureNodes,
+                      title: nextMilestone == null
+                          ? l10n.noFutureNodes
+                          : resolveMilestoneDisplayTitle(
+                              nextMilestone.title,
+                              l10n,
+                            ),
                       countdown: nextMilestone == null
                           ? l10n.allExpired
                           : formatCountdownFromDates(

@@ -849,6 +849,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{percent}% checkpoint'**
   String generatedMilestoneTitle(int percent);
+
+  /// No description provided for @unnamedMilestone.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled milestone'**
+  String get unnamedMilestone;
+
+  /// No description provided for @updates.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get updates;
+
+  /// No description provided for @checkForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get checkForUpdates;
+
+  /// No description provided for @checkingForUpdates.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get checkingForUpdates;
+
+  /// No description provided for @appUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re on the latest version'**
+  String get appUpToDate;
+
+  /// No description provided for @updateAvailableStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available: {version}'**
+  String updateAvailableStatus(Object version);
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update...'**
+  String get updateDownloading;
+
+  /// No description provided for @updateInstallReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Installer is ready'**
+  String get updateInstallReady;
+
+  /// No description provided for @updateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Update failed: {message}'**
+  String updateError(Object message);
+
+  /// No description provided for @updateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get updateNow;
+
+  /// No description provided for @openReleasePage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Release page'**
+  String get openReleasePage;
+
+  /// No description provided for @updateReleaseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Release notes'**
+  String get updateReleaseNotes;
+
+  /// No description provided for @noReleaseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No release notes'**
+  String get noReleaseNotes;
+
+  /// No description provided for @updatePermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow this app to install unknown apps, then return to continue installation.'**
+  String get updatePermissionRequired;
+
+  /// No description provided for @openInstallPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Open install permission'**
+  String get openInstallPermission;
+
+  /// No description provided for @windowsUpdateNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows can open the GitHub Release page only. ZIP self-install is not supported in this version.'**
+  String get windowsUpdateNotice;
+
+  /// No description provided for @updateDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New version available'**
+  String get updateDialogTitle;
+
+  /// No description provided for @updateDialogMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available.'**
+  String updateDialogMessage(Object version);
+
+  /// No description provided for @publishedAtLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Published: {value}'**
+  String publishedAtLabel(Object value);
+
+  /// No description provided for @later.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get later;
 }
 
 class _AppLocalizationsDelegate

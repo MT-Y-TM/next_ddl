@@ -6,6 +6,7 @@ import '../../models/milestone.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/countdown_formatter.dart';
 import '../../utils/deadline_logic.dart';
+import '../../utils/milestone_utils.dart';
 import '../../utils/timezone_labels.dart';
 import 'task_edit_page.dart';
 import 'tasks_controller.dart';
@@ -85,7 +86,11 @@ class TaskDetailPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    l10n.nextNodeValue(nextMilestone?.title ?? l10n.allExpired),
+                    l10n.nextNodeValue(
+                      nextMilestone == null
+                          ? l10n.allExpired
+                          : resolveMilestoneDisplayTitle(nextMilestone.title, l10n),
+                    ),
                   ),
                   if (nextMilestone != null) ...[
                     const SizedBox(height: 4),
@@ -119,7 +124,9 @@ class TaskDetailPage extends ConsumerWidget {
           for (final milestone in timeline)
             ListTile(
               leading: const Icon(Icons.flag_outlined),
-              title: Text(milestone.title),
+              title: Text(
+                resolveMilestoneDisplayTitle(milestone.title, l10n),
+              ),
               subtitle: Text(
                 '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? l10n.generatedNode : l10n.manualNode}',
               ),

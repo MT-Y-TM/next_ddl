@@ -223,5 +223,45 @@
         "type": "int"
       }
     }
-  }
+  },
+  "unnamedMilestone": "名称未設定のノード",
+  "updates": "アプリ更新",
+  "checkForUpdates": "更新を確認",
+  "checkingForUpdates": "更新を確認しています...",
+  "appUpToDate": "現在のバージョンは最新です",
+  "updateAvailableStatus": "新しいバージョンがあります: {version}",
+  "@updateAvailableStatus": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "updateDownloading": "更新をダウンロードしています...",
+  "updateInstallReady": "インストーラーの準備ができました",
+  "updateError": "更新に失敗しました: {message}",
+  "@updateError": {
+    "placeholders": {
+      "message": {}
+    }
+  },
+  "updateNow": "今すぐ更新",
+  "openReleasePage": "Release ページを開く",
+  "updateReleaseNotes": "更新内容",
+  "noReleaseNotes": "更新内容はありません",
+  "updatePermissionRequired": "このアプリに未知のアプリのインストールを許可してから、戻ってインストールを続けてください。",
+  "openInstallPermission": "インストール権限を開く",
+  "windowsUpdateNotice": "Windows 版は現在 GitHub Release ページを開くことのみ対応しており、ZIP の自動インストールには対応していません。",
+  "updateDialogTitle": "新しいバージョンがあります",
+  "updateDialogMessage": "{version} にアップデートできます。",
+  "@updateDialogMessage": {
+    "placeholders": {
+      "version": {}
+    }
+  },
+  "publishedAtLabel": "公開日: {value}",
+  "@publishedAtLabel": {
+    "placeholders": {
+      "value": {}
+    }
+  },
+  "later": "あとで"
 }
