@@ -556,5 +556,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.2';
+  Future<String> getVersionLabel() async => '1.1.3';
 }

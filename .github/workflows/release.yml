@@ -163,9 +163,9 @@ jobs:
         with:
           body: |
             Compatibility note:
-            - Android 1.1.2 switches from debug signing to the first formal release keystore.
+            - Android 1.1.3 uses the first formal release keystore.
             - If you installed 1.1.1 or earlier with the old debug signature, Android cannot upgrade it directly.
-            - Please uninstall the old app once, then install 1.1.2. Future formally signed versions can upgrade normally after that.
+            - Please uninstall the old app once, then install 1.1.3. Future formally signed versions can upgrade normally after that.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk
