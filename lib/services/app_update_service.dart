@@ -11,6 +11,30 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/update_release.dart';
 import '../utils/version_utils.dart';
 
+enum AppUpdateErrorType {
+  noPublishedRelease,
+  networkUnavailable,
+  serviceUnavailable,
+  missingAndroidAsset,
+  downloadFailed,
+  installerOpenFailed,
+  openReleasePageFailed,
+  openInstallPermissionFailed,
+  unknown,
+}
+
+class AppUpdateException implements Exception {
+  const AppUpdateException(
+    this.type, {
+    this.statusCode,
+    this.details,
+  });
+
+  final AppUpdateErrorType type;
+  final int? statusCode;
+  final String? details;
+}
+
 enum AppUpdateInstallStatus {
   installerOpened,
   permissionRequired,
@@ -55,18 +79,32 @@ class GithubAppUpdateService implements AppUpdateService {
 
   @override
   Future<UpdateRelease?> checkForUpdate({required String currentVersion}) async {
-    final response = await _client.get(
-      Uri.https('api.github.com', '/repos/$_owner/$_repo/releases/latest'),
-      headers: const {
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'Next-DDL-App',
-      },
-    );
+    late final http.Response response;
+    try {
+      response = await _client.get(
+        Uri.https('api.github.com', '/repos/$_owner/$_repo/releases/latest'),
+        headers: const {
+          'Accept': 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'User-Agent': 'Next-DDL-App',
+        },
+      );
+    } on SocketException catch (error) {
+      throw AppUpdateException(
+        AppUpdateErrorType.networkUnavailable,
+        details: error.message,
+      );
+    }
+    if (response.statusCode == 404) {
+      throw const AppUpdateException(
+        AppUpdateErrorType.noPublishedRelease,
+        statusCode: 404,
+      );
+    }
     if (response.statusCode != 200) {
-      throw HttpException(
-        'GitHub API returned ${response.statusCode}',
-        uri: Uri.parse('https://api.github.com/repos/$_owner/$_repo/releases/latest'),
+      throw AppUpdateException(
+        AppUpdateErrorType.serviceUnavailable,
+        statusCode: response.statusCode,
       );
     }
     final release = UpdateRelease.fromJson(
@@ -89,7 +127,7 @@ class GithubAppUpdateService implements AppUpdateService {
 
     final asset = release.androidApkAsset;
     if (asset == null) {
-      throw StateError('Missing app-release.apk asset');
+      throw const AppUpdateException(AppUpdateErrorType.missingAndroidAsset);
     }
 
     final directory = await getTemporaryDirectory();
@@ -106,11 +144,19 @@ class GithubAppUpdateService implements AppUpdateService {
       'Accept': 'application/octet-stream',
       'User-Agent': 'Next-DDL-App',
     });
-    final streamed = await _client.send(request);
+    late final http.StreamedResponse streamed;
+    try {
+      streamed = await _client.send(request);
+    } on SocketException catch (error) {
+      throw AppUpdateException(
+        AppUpdateErrorType.networkUnavailable,
+        details: error.message,
+      );
+    }
     if (streamed.statusCode != 200) {
-      throw HttpException(
-        'Asset download returned ${streamed.statusCode}',
-        uri: Uri.parse(asset.browserDownloadUrl),
+      throw AppUpdateException(
+        AppUpdateErrorType.downloadFailed,
+        statusCode: streamed.statusCode,
       );
     }
 
@@ -136,7 +182,7 @@ class GithubAppUpdateService implements AppUpdateService {
     final uri = Uri.parse(release.htmlUrl);
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched) {
-      throw StateError('Failed to open release page');
+      throw const AppUpdateException(AppUpdateErrorType.openReleasePageFailed);
     }
   }
 
@@ -174,13 +220,23 @@ class GithubAppUpdateService implements AppUpdateService {
     if (!Platform.isAndroid) {
       return;
     }
-    await _methodChannel.invokeMethod('openManageUnknownAppSources');
+    try {
+      await _methodChannel.invokeMethod('openManageUnknownAppSources');
+    } on PlatformException catch (error) {
+      throw AppUpdateException(
+        AppUpdateErrorType.openInstallPermissionFailed,
+        details: error.message,
+      );
+    }
   }
 
   Future<void> _openInstallerFile(String path) async {
     final result = await OpenFilex.open(path);
     if (result.type != ResultType.done) {
-      throw StateError(result.message);
+      throw AppUpdateException(
+        AppUpdateErrorType.installerOpenFailed,
+        details: result.message,
+      );
     }
   }
 }

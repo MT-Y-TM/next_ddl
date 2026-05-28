@@ -8,6 +8,7 @@ import '../update/app_update_controller.dart';
 import '../update/app_update_state.dart';
 import '../../models/app_snapshot.dart';
 import '../../services/timezone_service.dart';
+import '../../services/app_update_service.dart';
 import '../../utils/timezone_labels.dart';
 import '../tasks/tasks_controller.dart';
 
@@ -372,7 +373,25 @@ class SettingsPage extends ConsumerWidget {
         state.requiresInstallPermission
             ? l10n.updatePermissionRequired
             : l10n.updateInstallReady,
-      AppUpdateStatus.error => l10n.updateError(state.errorMessage ?? 'unknown'),
+      AppUpdateStatus.error => _updateErrorText(l10n, state.error),
+    };
+  }
+
+  String _updateErrorText(
+    AppLocalizations l10n,
+    AppUpdateException? error,
+  ) {
+    return switch (error?.type ?? AppUpdateErrorType.unknown) {
+      AppUpdateErrorType.noPublishedRelease => l10n.updateNoPublishedRelease,
+      AppUpdateErrorType.networkUnavailable => l10n.updateErrorNetworkUnavailable,
+      AppUpdateErrorType.serviceUnavailable => l10n.updateErrorServiceUnavailable,
+      AppUpdateErrorType.missingAndroidAsset => l10n.updateErrorMissingAndroidAsset,
+      AppUpdateErrorType.downloadFailed => l10n.updateErrorDownloadFailed,
+      AppUpdateErrorType.installerOpenFailed => l10n.updateErrorInstallerOpenFailed,
+      AppUpdateErrorType.openReleasePageFailed => l10n.updateErrorOpenReleasePageFailed,
+      AppUpdateErrorType.openInstallPermissionFailed =>
+        l10n.updateErrorOpenInstallPermissionFailed,
+      AppUpdateErrorType.unknown => l10n.updateErrorUnexpected,
     };
   }
 

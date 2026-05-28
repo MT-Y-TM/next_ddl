@@ -49,7 +49,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     } catch (error) {
       state = state.copyWith(
         status: AppUpdateStatus.error,
-        errorMessage: error.toString(),
+        error: _normalizeError(error),
         userInitiated: userInitiated,
       );
     }
@@ -88,7 +88,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     } catch (error) {
       state = state.copyWith(
         status: AppUpdateStatus.error,
-        errorMessage: error.toString(),
+        error: _normalizeError(error),
       );
     }
   }
@@ -103,7 +103,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     } catch (error) {
       state = state.copyWith(
         status: AppUpdateStatus.error,
-        errorMessage: error.toString(),
+        error: _normalizeError(error),
       );
     }
   }
@@ -114,7 +114,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     } catch (error) {
       state = state.copyWith(
         status: AppUpdateStatus.error,
-        errorMessage: error.toString(),
+        error: _normalizeError(error),
       );
     }
   }
@@ -138,8 +138,24 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     } catch (error) {
       state = state.copyWith(
         status: AppUpdateStatus.error,
-        errorMessage: error.toString(),
+        error: _normalizeError(error),
       );
     }
+  }
+
+  AppUpdateException _normalizeError(Object error) {
+    if (error is AppUpdateException) {
+      return error;
+    }
+    if (error is SocketException) {
+      return AppUpdateException(
+        AppUpdateErrorType.networkUnavailable,
+        details: error.message,
+      );
+    }
+    return AppUpdateException(
+      AppUpdateErrorType.unknown,
+      details: error.toString(),
+    );
   }
 }

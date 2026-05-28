@@ -229,6 +229,7 @@
   "checkForUpdates": "更新を確認",
   "checkingForUpdates": "更新を確認しています...",
   "appUpToDate": "現在のバージョンは最新です",
+  "updateNoPublishedRelease": "現在利用できる正式 Release はまだありません。",
   "updateAvailableStatus": "新しいバージョンがあります: {version}",
   "@updateAvailableStatus": {
     "placeholders": {
@@ -237,6 +238,14 @@
   },
   "updateDownloading": "更新をダウンロードしています...",
   "updateInstallReady": "インストーラーの準備ができました",
+  "updateErrorNetworkUnavailable": "現在、更新サービスに接続できません。ネットワークを確認してもう一度お試しください。",
+  "updateErrorServiceUnavailable": "更新サービスは一時的に利用できません。しばらくしてからもう一度お試しください。",
+  "updateErrorMissingAndroidAsset": "新しい Release にダウンロード可能な Android パッケージが含まれていません。",
+  "updateErrorDownloadFailed": "更新パッケージのダウンロードに失敗しました。しばらくしてからもう一度お試しください。",
+  "updateErrorInstallerOpenFailed": "更新パッケージはダウンロードされましたが、システムのインストーラーを開けませんでした。",
+  "updateErrorOpenReleasePageFailed": "現在 Release ページを開けません。",
+  "updateErrorOpenInstallPermissionFailed": "現在「不明なアプリのインストール」権限ページを開けません。",
+  "updateErrorUnexpected": "更新の確認に失敗しました。しばらくしてからもう一度お試しください。",
   "updateError": "更新に失敗しました: {message}",
   "@updateError": {
     "placeholders": {

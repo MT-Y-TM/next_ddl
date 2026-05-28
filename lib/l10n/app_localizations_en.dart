@@ -445,6 +445,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appUpToDate => 'You\'re on the latest version';
 
   @override
+  String get updateNoPublishedRelease =>
+      'There is no published release available yet.';
+
+  @override
   String updateAvailableStatus(Object version) {
     return 'New version available: $version';
   }
@@ -454,6 +458,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateInstallReady => 'Installer is ready';
+
+  @override
+  String get updateErrorNetworkUnavailable =>
+      'Can\'t reach the update service right now. Check your connection and try again.';
+
+  @override
+  String get updateErrorServiceUnavailable =>
+      'The update service is temporarily unavailable. Please try again later.';
+
+  @override
+  String get updateErrorMissingAndroidAsset =>
+      'The new release does not include a downloadable Android package.';
+
+  @override
+  String get updateErrorDownloadFailed =>
+      'Failed to download the update package. Please try again later.';
+
+  @override
+  String get updateErrorInstallerOpenFailed =>
+      'The update package was downloaded, but the system installer could not be opened.';
+
+  @override
+  String get updateErrorOpenReleasePageFailed =>
+      'Couldn\'t open the Release page right now.';
+
+  @override
+  String get updateErrorOpenInstallPermissionFailed =>
+      'Couldn\'t open the install unknown apps permission page right now.';
+
+  @override
+  String get updateErrorUnexpected =>
+      'Update check failed. Please try again later.';
 
   @override
   String updateError(Object message) {

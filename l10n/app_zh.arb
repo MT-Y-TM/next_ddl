@@ -229,6 +229,7 @@
   "checkForUpdates": "检查更新",
   "checkingForUpdates": "正在检查更新...",
   "appUpToDate": "当前已是最新版本",
+  "updateNoPublishedRelease": "当前还没有可用的正式发布版本。",
   "updateAvailableStatus": "发现新版本：{version}",
   "@updateAvailableStatus": {
     "placeholders": {
@@ -237,6 +238,14 @@
   },
   "updateDownloading": "正在下载更新包...",
   "updateInstallReady": "安装包已准备就绪",
+  "updateErrorNetworkUnavailable": "暂时无法连接更新服务，请检查网络后重试。",
+  "updateErrorServiceUnavailable": "更新服务暂时不可用，请稍后重试。",
+  "updateErrorMissingAndroidAsset": "新版本缺少可下载的安装包。",
+  "updateErrorDownloadFailed": "下载更新包失败，请稍后重试。",
+  "updateErrorInstallerOpenFailed": "安装包已下载，但暂时无法打开系统安装器。",
+  "updateErrorOpenReleasePageFailed": "暂时无法打开 Release 页面。",
+  "updateErrorOpenInstallPermissionFailed": "暂时无法打开安装未知应用权限页面。",
+  "updateErrorUnexpected": "更新失败，请稍后重试。",
   "updateError": "更新失败：{message}",
   "@updateError": {
     "placeholders": {

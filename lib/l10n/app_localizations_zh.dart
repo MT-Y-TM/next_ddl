@@ -435,6 +435,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appUpToDate => '当前已是最新版本';
 
   @override
+  String get updateNoPublishedRelease => '当前还没有可用的正式发布版本。';
+
+  @override
   String updateAvailableStatus(Object version) {
     return '发现新版本：$version';
   }
@@ -444,6 +447,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get updateInstallReady => '安装包已准备就绪';
+
+  @override
+  String get updateErrorNetworkUnavailable => '暂时无法连接更新服务，请检查网络后重试。';
+
+  @override
+  String get updateErrorServiceUnavailable => '更新服务暂时不可用，请稍后重试。';
+
+  @override
+  String get updateErrorMissingAndroidAsset => '新版本缺少可下载的安装包。';
+
+  @override
+  String get updateErrorDownloadFailed => '下载更新包失败，请稍后重试。';
+
+  @override
+  String get updateErrorInstallerOpenFailed => '安装包已下载，但暂时无法打开系统安装器。';
+
+  @override
+  String get updateErrorOpenReleasePageFailed => '暂时无法打开 Release 页面。';
+
+  @override
+  String get updateErrorOpenInstallPermissionFailed => '暂时无法打开安装未知应用权限页面。';
+
+  @override
+  String get updateErrorUnexpected => '更新失败，请稍后重试。';
 
   @override
   String updateError(Object message) {

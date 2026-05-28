@@ -437,6 +437,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appUpToDate => '現在のバージョンは最新です';
 
   @override
+  String get updateNoPublishedRelease => '現在利用できる正式 Release はまだありません。';
+
+  @override
   String updateAvailableStatus(Object version) {
     return '新しいバージョンがあります: $version';
   }
@@ -446,6 +449,36 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get updateInstallReady => 'インストーラーの準備ができました';
+
+  @override
+  String get updateErrorNetworkUnavailable =>
+      '現在、更新サービスに接続できません。ネットワークを確認してもう一度お試しください。';
+
+  @override
+  String get updateErrorServiceUnavailable =>
+      '更新サービスは一時的に利用できません。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get updateErrorMissingAndroidAsset =>
+      '新しい Release にダウンロード可能な Android パッケージが含まれていません。';
+
+  @override
+  String get updateErrorDownloadFailed =>
+      '更新パッケージのダウンロードに失敗しました。しばらくしてからもう一度お試しください。';
+
+  @override
+  String get updateErrorInstallerOpenFailed =>
+      '更新パッケージはダウンロードされましたが、システムのインストーラーを開けませんでした。';
+
+  @override
+  String get updateErrorOpenReleasePageFailed => '現在 Release ページを開けません。';
+
+  @override
+  String get updateErrorOpenInstallPermissionFailed =>
+      '現在「不明なアプリのインストール」権限ページを開けません。';
+
+  @override
+  String get updateErrorUnexpected => '更新の確認に失敗しました。しばらくしてからもう一度お試しください。';
 
   @override
   String updateError(Object message) {

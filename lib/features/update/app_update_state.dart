@@ -1,4 +1,5 @@
 import '../../models/update_release.dart';
+import '../../services/app_update_service.dart';
 
 enum AppUpdateStatus {
   idle,
@@ -14,7 +15,7 @@ class AppUpdateState {
   const AppUpdateState({
     required this.status,
     this.release,
-    this.errorMessage,
+    this.error,
     this.userInitiated = false,
     this.downloadedFilePath,
     this.requiresInstallPermission = false,
@@ -24,7 +25,7 @@ class AppUpdateState {
 
   final AppUpdateStatus status;
   final UpdateRelease? release;
-  final String? errorMessage;
+  final AppUpdateException? error;
   final bool userInitiated;
   final String? downloadedFilePath;
   final bool requiresInstallPermission;
@@ -33,7 +34,7 @@ class AppUpdateState {
     AppUpdateStatus? status,
     UpdateRelease? release,
     bool clearRelease = false,
-    String? errorMessage,
+    AppUpdateException? error,
     bool clearErrorMessage = false,
     bool? userInitiated,
     String? downloadedFilePath,
@@ -43,8 +44,7 @@ class AppUpdateState {
     return AppUpdateState(
       status: status ?? this.status,
       release: clearRelease ? null : (release ?? this.release),
-      errorMessage:
-          clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
+      error: clearErrorMessage ? null : (error ?? this.error),
       userInitiated: userInitiated ?? this.userInitiated,
       downloadedFilePath:
           clearDownloadedFilePath

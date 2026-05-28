@@ -229,6 +229,7 @@
   "checkForUpdates": "Check for updates",
   "checkingForUpdates": "Checking for updates...",
   "appUpToDate": "You're on the latest version",
+  "updateNoPublishedRelease": "There is no published release available yet.",
   "updateAvailableStatus": "New version available: {version}",
   "@updateAvailableStatus": {
     "placeholders": {
@@ -237,6 +238,14 @@
   },
   "updateDownloading": "Downloading update...",
   "updateInstallReady": "Installer is ready",
+  "updateErrorNetworkUnavailable": "Can't reach the update service right now. Check your connection and try again.",
+  "updateErrorServiceUnavailable": "The update service is temporarily unavailable. Please try again later.",
+  "updateErrorMissingAndroidAsset": "The new release does not include a downloadable Android package.",
+  "updateErrorDownloadFailed": "Failed to download the update package. Please try again later.",
+  "updateErrorInstallerOpenFailed": "The update package was downloaded, but the system installer could not be opened.",
+  "updateErrorOpenReleasePageFailed": "Couldn't open the Release page right now.",
+  "updateErrorOpenInstallPermissionFailed": "Couldn't open the install unknown apps permission page right now.",
+  "updateErrorUnexpected": "Update check failed. Please try again later.",
   "updateError": "Update failed: {message}",
   "@updateError": {
     "placeholders": {

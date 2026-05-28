@@ -880,6 +880,12 @@ abstract class AppLocalizations {
   /// **'You\'re on the latest version'**
   String get appUpToDate;
 
+  /// No description provided for @updateNoPublishedRelease.
+  ///
+  /// In en, this message translates to:
+  /// **'There is no published release available yet.'**
+  String get updateNoPublishedRelease;
+
   /// No description provided for @updateAvailableStatus.
   ///
   /// In en, this message translates to:
@@ -897,6 +903,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Installer is ready'**
   String get updateInstallReady;
+
+  /// No description provided for @updateErrorNetworkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the update service right now. Check your connection and try again.'**
+  String get updateErrorNetworkUnavailable;
+
+  /// No description provided for @updateErrorServiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The update service is temporarily unavailable. Please try again later.'**
+  String get updateErrorServiceUnavailable;
+
+  /// No description provided for @updateErrorMissingAndroidAsset.
+  ///
+  /// In en, this message translates to:
+  /// **'The new release does not include a downloadable Android package.'**
+  String get updateErrorMissingAndroidAsset;
+
+  /// No description provided for @updateErrorDownloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to download the update package. Please try again later.'**
+  String get updateErrorDownloadFailed;
+
+  /// No description provided for @updateErrorInstallerOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The update package was downloaded, but the system installer could not be opened.'**
+  String get updateErrorInstallerOpenFailed;
+
+  /// No description provided for @updateErrorOpenReleasePageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the Release page right now.'**
+  String get updateErrorOpenReleasePageFailed;
+
+  /// No description provided for @updateErrorOpenInstallPermissionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the install unknown apps permission page right now.'**
+  String get updateErrorOpenInstallPermissionFailed;
+
+  /// No description provided for @updateErrorUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Update check failed. Please try again later.'**
+  String get updateErrorUnexpected;
 
   /// No description provided for @updateError.
   ///

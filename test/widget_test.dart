@@ -273,6 +273,33 @@ void main() {
     expect(find.text('New version available: 1.1.2'), findsOneWidget);
   });
 
+  testWidgets('settings page shows friendly message when no published release exists', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final updateService = _FakeAppUpdateService(
+      error: const AppUpdateException(AppUpdateErrorType.noPublishedRelease),
+    );
+
+    await tester.pumpWidget(
+      _buildSettingsApp(snapshot, updateService: updateService),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Check for updates').first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('There is no published release available yet.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('settings page timezone dialog shows localized names and iana ids', (
     tester,
   ) async {
@@ -528,12 +555,16 @@ class _FakeFileExportService implements FileExportService {
 }
 
 class _FakeAppUpdateService implements AppUpdateService {
-  _FakeAppUpdateService({this.release});
+  _FakeAppUpdateService({this.release, this.error});
 
   final UpdateRelease? release;
+  final Object? error;
 
   @override
   Future<UpdateRelease?> checkForUpdate({required String currentVersion}) async {
+    if (error != null) {
+      throw error!;
+    }
     return release;
   }
 
@@ -556,5 +587,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.3';
+  Future<String> getVersionLabel() async => '1.1.4';
 }
