@@ -502,7 +502,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get updateDownloading => '正在下载更新包...';
 
   @override
+  String updateUsingCachedInstaller(Object version) {
+    return '正在使用已缓存的 $version 安装包';
+  }
+
+  @override
   String get updateInstallReady => '安装包已准备就绪';
+
+  @override
+  String downloadPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get downloadProgressUnknown => '下载进度暂不可用';
+
+  @override
+  String downloadSpeed(Object speed) {
+    return '$speed';
+  }
+
+  @override
+  String get downloadSpeedUnknown => '下载速度暂不可用';
 
   @override
   String get updateErrorNetworkUnavailable => '暂时无法连接更新服务，请检查网络后重试。';
@@ -538,6 +559,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openReleasePage => '打开 Release 页面';
+
+  @override
+  String get clearCachedInstallers => '清理本地安装包';
+
+  @override
+  String cachedInstallersCleared(int count) {
+    return '已清理 $count 个本地安装包';
+  }
+
+  @override
+  String get noCachedInstallers => '当前没有可清理的本地安装包';
 
   @override
   String get updateReleaseNotes => '更新说明';

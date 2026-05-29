@@ -59,6 +59,27 @@ class SettingsPage extends ConsumerWidget {
                     _updateStatusText(l10n, updateState),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
+                  if (updateState.hasReusableLocalInstaller &&
+                      updateState.status != AppUpdateStatus.downloading) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.updateUsingCachedInstaller(
+                        updateState.localInstallerVersion ??
+                            updateState.release?.version ??
+                            '',
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  if (updateState.status == AppUpdateStatus.downloading) ...[
+                    const SizedBox(height: 12),
+                    LinearProgressIndicator(value: updateState.downloadProgress),
+                    const SizedBox(height: 8),
+                    Text(
+                      _downloadProgressText(l10n, updateState),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
                   if (updateState.release case final release?) ...[
                     const SizedBox(height: 8),
                     Text(
@@ -110,7 +131,10 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       if (updateState.release != null)
                         FilledButton(
-                          onPressed: () {
+                          onPressed:
+                              updateState.status == AppUpdateStatus.downloading
+                                  ? null
+                                  : () {
                             if (Platform.isAndroid) {
                               ref
                                   .read(appUpdateControllerProvider.notifier)
@@ -136,6 +160,26 @@ class SettingsPage extends ConsumerWidget {
                           },
                           child: Text(l10n.openInstallPermission),
                         ),
+                      OutlinedButton(
+                        onPressed: () async {
+                          final removed = await ref
+                              .read(appUpdateControllerProvider.notifier)
+                              .clearCachedInstallers();
+                          if (!context.mounted) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                removed == 0
+                                    ? l10n.noCachedInstallers
+                                    : l10n.cachedInstallersCleared(removed),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Text(l10n.clearCachedInstallers),
+                      ),
                     ],
                   ),
                 ],
@@ -368,13 +412,28 @@ class SettingsPage extends ConsumerWidget {
       AppUpdateStatus.updateAvailable => l10n.updateAvailableStatus(
         state.release?.version ?? '',
       ),
-      AppUpdateStatus.downloading => l10n.updateDownloading,
+      AppUpdateStatus.downloading => state.isUsingCachedInstaller
+          ? l10n.updateUsingCachedInstaller(
+              state.localInstallerVersion ?? state.release?.version ?? '',
+            )
+          : l10n.updateDownloading,
       AppUpdateStatus.installReady =>
         state.requiresInstallPermission
             ? l10n.updatePermissionRequired
             : l10n.updateInstallReady,
       AppUpdateStatus.error => _updateErrorText(l10n, state.error),
     };
+  }
+
+  String _downloadProgressText(AppLocalizations l10n, AppUpdateState state) {
+    final percent = state.downloadPercent;
+    final speed = state.downloadSpeedBytesPerSecond;
+    final percentText =
+        percent == null ? l10n.downloadProgressUnknown : l10n.downloadPercent(percent);
+    final speedText = speed == null || speed <= 0
+        ? l10n.downloadSpeedUnknown
+        : l10n.downloadSpeed(_formatSpeed(speed));
+    return '$percentText · $speedText';
   }
 
   String _updateErrorText(
@@ -401,6 +460,13 @@ class SettingsPage extends ConsumerWidget {
         '${value.hour.toString().padLeft(2, '0')}:'
         '${value.minute.toString().padLeft(2, '0')}:'
         '${value.second.toString().padLeft(2, '0')}';
+  }
+
+  String _formatSpeed(double bytesPerSecond) {
+    if (bytesPerSecond >= 1024 * 1024) {
+      return '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB/s';
+    }
+    return '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB/s';
   }
 }
 

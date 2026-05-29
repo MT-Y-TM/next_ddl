@@ -11,6 +11,44 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/update_release.dart';
 import '../utils/version_utils.dart';
 
+class DownloadProgress {
+  const DownloadProgress({
+    required this.receivedBytes,
+    this.totalBytes,
+    required this.speedBytesPerSecond,
+  });
+
+  final int receivedBytes;
+  final int? totalBytes;
+  final double speedBytesPerSecond;
+
+  double? get progress {
+    final total = totalBytes;
+    if (total == null || total <= 0) {
+      return null;
+    }
+    return (receivedBytes / total).clamp(0, 1).toDouble();
+  }
+
+  int? get percent {
+    final value = progress;
+    if (value == null) {
+      return null;
+    }
+    return (value * 100).round();
+  }
+}
+
+class CachedUpdateInstaller {
+  const CachedUpdateInstaller({
+    required this.version,
+    required this.filePath,
+  });
+
+  final String version;
+  final String filePath;
+}
+
 enum AppUpdateErrorType {
   noPublishedRelease,
   networkUnavailable,
@@ -45,22 +83,36 @@ class AppUpdateInstallResult {
   const AppUpdateInstallResult({
     required this.status,
     this.filePath,
+    this.installerVersion,
+    this.usedCachedInstaller = false,
   });
 
   final AppUpdateInstallStatus status;
   final String? filePath;
+  final String? installerVersion;
+  final bool usedCachedInstaller;
 }
 
 abstract class AppUpdateService {
   Future<UpdateRelease?> checkForUpdate({required String currentVersion});
 
-  Future<AppUpdateInstallResult> downloadAndInstall(UpdateRelease release);
+  Future<CachedUpdateInstaller?> findReusableInstaller({
+    required UpdateRelease release,
+    required String currentVersion,
+  });
+
+  Future<AppUpdateInstallResult> downloadAndInstall(
+    UpdateRelease release, {
+    void Function(DownloadProgress progress)? onProgress,
+  });
 
   Future<void> openReleasePage(UpdateRelease release);
 
   Future<bool> resumePendingInstall(String filePath);
 
   Future<void> openInstallPermissionSettings();
+
+  Future<int> clearCachedInstallers();
 }
 
 class GithubAppUpdateService implements AppUpdateService {
@@ -73,6 +125,7 @@ class GithubAppUpdateService implements AppUpdateService {
   static const _owner = 'MT-Y-TM';
   static const _repo = 'next_ddl';
   static const _channelName = 'next_ddl/app_update';
+  static final RegExp _installerPattern = RegExp(r'^app-release-v(.+)\.apk$');
 
   final http.Client _client;
   final MethodChannel _methodChannel;
@@ -117,7 +170,34 @@ class GithubAppUpdateService implements AppUpdateService {
   }
 
   @override
-  Future<AppUpdateInstallResult> downloadAndInstall(UpdateRelease release) async {
+  Future<CachedUpdateInstaller?> findReusableInstaller({
+    required UpdateRelease release,
+    required String currentVersion,
+  }) async {
+    if (!Platform.isAndroid) {
+      return null;
+    }
+    final installers = await _listCachedInstallers();
+    final matching = [
+      for (final installer in installers)
+        if (compareSemanticVersions(installer.version, currentVersion) > 0 &&
+            compareSemanticVersions(installer.version, release.version) == 0)
+          installer,
+    ];
+    if (matching.isEmpty) {
+      return null;
+    }
+    matching.sort(
+      (left, right) => compareSemanticVersions(right.version, left.version),
+    );
+    return matching.first;
+  }
+
+  @override
+  Future<AppUpdateInstallResult> downloadAndInstall(
+    UpdateRelease release, {
+    void Function(DownloadProgress progress)? onProgress,
+  }) async {
     if (!Platform.isAndroid) {
       await openReleasePage(release);
       return const AppUpdateInstallResult(
@@ -159,14 +239,34 @@ class GithubAppUpdateService implements AppUpdateService {
         statusCode: streamed.statusCode,
       );
     }
-
-    await apkFile.writeAsBytes(await streamed.stream.toBytes());
+    final sink = apkFile.openWrite();
+    var receivedBytes = 0;
+    final totalBytes = streamed.contentLength;
+    final startedAt = DateTime.now();
+    await for (final chunk in streamed.stream) {
+      sink.add(chunk);
+      receivedBytes += chunk.length;
+      final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
+      final speed = elapsedMs <= 0
+          ? 0.0
+          : (receivedBytes / (elapsedMs / 1000.0)).toDouble();
+      onProgress?.call(
+        DownloadProgress(
+          receivedBytes: receivedBytes,
+          totalBytes: totalBytes,
+          speedBytesPerSecond: speed,
+        ),
+      );
+    }
+    await sink.flush();
+    await sink.close();
 
     if (!await _canRequestPackageInstalls()) {
       await _openManageUnknownAppSources();
       return AppUpdateInstallResult(
         status: AppUpdateInstallStatus.permissionRequired,
         filePath: apkFile.path,
+        installerVersion: release.version,
       );
     }
 
@@ -174,6 +274,7 @@ class GithubAppUpdateService implements AppUpdateService {
     return AppUpdateInstallResult(
       status: AppUpdateInstallStatus.installerOpened,
       filePath: apkFile.path,
+      installerVersion: release.version,
     );
   }
 
@@ -207,6 +308,29 @@ class GithubAppUpdateService implements AppUpdateService {
     await _openManageUnknownAppSources();
   }
 
+  @override
+  Future<int> clearCachedInstallers() async {
+    if (!Platform.isAndroid) {
+      return 0;
+    }
+    final directory = await _updatesDirectory();
+    if (!await directory.exists()) {
+      return 0;
+    }
+    var removed = 0;
+    await for (final entity in directory.list()) {
+      if (entity is! File) {
+        continue;
+      }
+      if (!_installerPattern.hasMatch(entity.uri.pathSegments.last)) {
+        continue;
+      }
+      await entity.delete();
+      removed++;
+    }
+    return removed;
+  }
+
   Future<bool> _canRequestPackageInstalls() async {
     if (!Platform.isAndroid) {
       return false;
@@ -238,6 +362,39 @@ class GithubAppUpdateService implements AppUpdateService {
         details: result.message,
       );
     }
+  }
+
+  Future<Directory> _updatesDirectory() async {
+    final directory = await getTemporaryDirectory();
+    return Directory(
+      '${directory.path}${Platform.pathSeparator}updates',
+    );
+  }
+
+  Future<List<CachedUpdateInstaller>> _listCachedInstallers() async {
+    final directory = await _updatesDirectory();
+    if (!await directory.exists()) {
+      return const [];
+    }
+    final installers = <CachedUpdateInstaller>[];
+    await for (final entity in directory.list()) {
+      if (entity is! File) {
+        continue;
+      }
+      final name = entity.uri.pathSegments.last;
+      final match = _installerPattern.firstMatch(name);
+      if (match == null) {
+        continue;
+      }
+      final version = match.group(1);
+      if (version == null || version.isEmpty) {
+        continue;
+      }
+      installers.add(
+        CachedUpdateInstaller(version: version, filePath: entity.path),
+      );
+    }
+    return installers;
   }
 }
 

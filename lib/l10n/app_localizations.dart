@@ -1006,11 +1006,41 @@ abstract class AppLocalizations {
   /// **'Downloading update...'**
   String get updateDownloading;
 
+  /// No description provided for @updateUsingCachedInstaller.
+  ///
+  /// In en, this message translates to:
+  /// **'Using cached installer for {version}'**
+  String updateUsingCachedInstaller(Object version);
+
   /// No description provided for @updateInstallReady.
   ///
   /// In en, this message translates to:
   /// **'Installer is ready'**
   String get updateInstallReady;
+
+  /// No description provided for @downloadPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}%'**
+  String downloadPercent(int percent);
+
+  /// No description provided for @downloadProgressUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress unavailable'**
+  String get downloadProgressUnknown;
+
+  /// No description provided for @downloadSpeed.
+  ///
+  /// In en, this message translates to:
+  /// **'{speed}'**
+  String downloadSpeed(Object speed);
+
+  /// No description provided for @downloadSpeedUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed unavailable'**
+  String get downloadSpeedUnknown;
 
   /// No description provided for @updateErrorNetworkUnavailable.
   ///
@@ -1077,6 +1107,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open Release page'**
   String get openReleasePage;
+
+  /// No description provided for @clearCachedInstallers.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear cached installers'**
+  String get clearCachedInstallers;
+
+  /// No description provided for @cachedInstallersCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleared {count} cached installer(s)'**
+  String cachedInstallersCleared(int count);
+
+  /// No description provided for @noCachedInstallers.
+  ///
+  /// In en, this message translates to:
+  /// **'No cached installers to clear'**
+  String get noCachedInstallers;
 
   /// No description provided for @updateReleaseNotes.
   ///

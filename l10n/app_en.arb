@@ -260,7 +260,29 @@
     }
   },
   "updateDownloading": "Downloading update...",
+  "updateUsingCachedInstaller": "Using cached installer for {version}",
+  "@updateUsingCachedInstaller": {
+    "placeholders": {
+      "version": {}
+    }
+  },
   "updateInstallReady": "Installer is ready",
+  "downloadPercent": "{percent}%",
+  "@downloadPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadProgressUnknown": "Progress unavailable",
+  "downloadSpeed": "{speed}",
+  "@downloadSpeed": {
+    "placeholders": {
+      "speed": {}
+    }
+  },
+  "downloadSpeedUnknown": "Speed unavailable",
   "updateErrorNetworkUnavailable": "Can't reach the update service right now. Check your connection and try again.",
   "updateErrorServiceUnavailable": "The update service is temporarily unavailable. Please try again later.",
   "updateErrorMissingAndroidAsset": "The new release does not include a downloadable Android package.",
@@ -277,6 +299,16 @@
   },
   "updateNow": "Update now",
   "openReleasePage": "Open Release page",
+  "clearCachedInstallers": "Clear cached installers",
+  "cachedInstallersCleared": "Cleared {count} cached installer(s)",
+  "@cachedInstallersCleared": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noCachedInstallers": "No cached installers to clear",
   "updateReleaseNotes": "Release notes",
   "noReleaseNotes": "No release notes",
   "updatePermissionRequired": "Allow this app to install unknown apps, then return to continue installation.",

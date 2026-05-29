@@ -513,7 +513,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateDownloading => 'Downloading update...';
 
   @override
+  String updateUsingCachedInstaller(Object version) {
+    return 'Using cached installer for $version';
+  }
+
+  @override
   String get updateInstallReady => 'Installer is ready';
+
+  @override
+  String downloadPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get downloadProgressUnknown => 'Progress unavailable';
+
+  @override
+  String downloadSpeed(Object speed) {
+    return '$speed';
+  }
+
+  @override
+  String get downloadSpeedUnknown => 'Speed unavailable';
 
   @override
   String get updateErrorNetworkUnavailable =>
@@ -557,6 +578,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openReleasePage => 'Open Release page';
+
+  @override
+  String get clearCachedInstallers => 'Clear cached installers';
+
+  @override
+  String cachedInstallersCleared(int count) {
+    return 'Cleared $count cached installer(s)';
+  }
+
+  @override
+  String get noCachedInstallers => 'No cached installers to clear';
 
   @override
   String get updateReleaseNotes => 'Release notes';

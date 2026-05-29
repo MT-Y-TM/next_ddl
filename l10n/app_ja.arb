@@ -260,7 +260,29 @@
     }
   },
   "updateDownloading": "更新をダウンロードしています...",
+  "updateUsingCachedInstaller": "キャッシュ済みの {version} インストーラーを使用しています",
+  "@updateUsingCachedInstaller": {
+    "placeholders": {
+      "version": {}
+    }
+  },
   "updateInstallReady": "インストーラーの準備ができました",
+  "downloadPercent": "{percent}%",
+  "@downloadPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadProgressUnknown": "ダウンロード進捗は取得できません",
+  "downloadSpeed": "{speed}",
+  "@downloadSpeed": {
+    "placeholders": {
+      "speed": {}
+    }
+  },
+  "downloadSpeedUnknown": "ダウンロード速度は取得できません",
   "updateErrorNetworkUnavailable": "現在、更新サービスに接続できません。ネットワークを確認してもう一度お試しください。",
   "updateErrorServiceUnavailable": "更新サービスは一時的に利用できません。しばらくしてからもう一度お試しください。",
   "updateErrorMissingAndroidAsset": "新しい Release にダウンロード可能な Android パッケージが含まれていません。",
@@ -277,6 +299,16 @@
   },
   "updateNow": "今すぐ更新",
   "openReleasePage": "Release ページを開く",
+  "clearCachedInstallers": "ダウンロード済み APK を削除",
+  "cachedInstallersCleared": "{count} 個のローカルインストーラーを削除しました",
+  "@cachedInstallersCleared": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noCachedInstallers": "削除できるローカルインストーラーはありません",
   "updateReleaseNotes": "更新内容",
   "noReleaseNotes": "更新内容はありません",
   "updatePermissionRequired": "このアプリに未知のアプリのインストールを許可してから、戻ってインストールを続けてください。",

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/app/app.dart';
 import 'package:next_ddl/features/settings/settings_page.dart';
 import 'package:next_ddl/features/tasks/task_edit_page.dart';
+import 'package:next_ddl/features/tasks/task_list_page.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
+import 'package:next_ddl/features/update/app_update_controller.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
@@ -273,6 +277,112 @@ void main() {
     expect(find.text('New version available: 1.1.2'), findsOneWidget);
   });
 
+  testWidgets('settings page shows update download progress and speed', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final blocker = Completer<void>();
+    final updateService = _FakeAppUpdateService(
+      release: UpdateRelease(
+        tagName: 'v1.1.6',
+        version: '1.1.6',
+        publishedAtUtc: now,
+        body: 'New build available.',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.6',
+        assets: const [],
+      ),
+      progress: const DownloadProgress(
+        receivedBytes: 512,
+        totalBytes: 1024,
+        speedBytesPerSecond: 2048,
+      ),
+      downloadBlocker: blocker,
+    );
+
+    await tester.pumpWidget(
+      _buildSettingsApp(snapshot, updateService: updateService),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SettingsPage)),
+    );
+    await container
+        .read(appUpdateControllerProvider.notifier)
+        .checkForUpdate(userInitiated: true);
+    await tester.pumpAndSettle();
+    unawaited(
+      container.read(appUpdateControllerProvider.notifier).downloadAndInstall(),
+    );
+    await tester.pump();
+
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.textContaining('50%'), findsOneWidget);
+    expect(find.textContaining('2.0 KB/s'), findsOneWidget);
+
+    blocker.complete();
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('settings page can clear cached installers', (tester) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final updateService = _FakeAppUpdateService(clearCount: 2);
+
+    await tester.pumpWidget(
+      _buildSettingsApp(snapshot, updateService: updateService),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Clear cached installers'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cleared 2 cached installer(s)'), findsOneWidget);
+  });
+
+  testWidgets('settings page shows cached installer hint when reusable apk exists', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final updateService = _FakeAppUpdateService(
+      release: UpdateRelease(
+        tagName: 'v1.1.6',
+        version: '1.1.6',
+        publishedAtUtc: now,
+        body: 'New build available.',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.6',
+        assets: const [],
+      ),
+      cachedInstaller: const CachedUpdateInstaller(
+        version: '1.1.6',
+        filePath: 'C:/temp/app-release-v1.1.6.apk',
+      ),
+    );
+
+    await tester.pumpWidget(
+      _buildSettingsApp(snapshot, updateService: updateService),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SettingsPage)),
+    );
+    await container
+        .read(appUpdateControllerProvider.notifier)
+        .checkForUpdate(userInitiated: true);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Using cached installer for 1.1.6'), findsOneWidget);
+  });
+
   testWidgets('settings page shows friendly message when no published release exists', (
     tester,
   ) async {
@@ -424,9 +534,56 @@ void main() {
     expect(find.text('タスク名'), findsOneWidget);
     expect(find.text('中間マイルストーン'), findsOneWidget);
   });
+
+  testWidgets('startup update dialog shows download progress', (tester) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+    final blocker = Completer<void>();
+    final updateService = _FakeAppUpdateService(
+      release: UpdateRelease(
+        tagName: 'v1.1.6',
+        version: '1.1.6',
+        publishedAtUtc: now,
+        body: 'New build available.',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.6',
+        assets: const [],
+      ),
+      progress: const DownloadProgress(
+        receivedBytes: 512,
+        totalBytes: 1024,
+        speedBytesPerSecond: 2048,
+      ),
+      downloadBlocker: blocker,
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now, updateService: updateService));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New version available'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(TaskListPage)),
+    );
+    unawaited(
+      container.read(appUpdateControllerProvider.notifier).downloadAndInstall(),
+    );
+    await tester.pump();
+
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.textContaining('50%'), findsOneWidget);
+
+    blocker.complete();
+    await tester.pumpAndSettle();
+  });
 }
 
-Widget _buildApp(AppSnapshot snapshot, DateTime now) {
+Widget _buildApp(
+  AppSnapshot snapshot,
+  DateTime now, {
+  AppUpdateService? updateService,
+}) {
   return ProviderScope(
     overrides: [
       deadlineRepositoryProvider.overrideWithValue(_MemoryRepository(snapshot)),
@@ -434,7 +591,9 @@ Widget _buildApp(AppSnapshot snapshot, DateTime now) {
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
-      appUpdateServiceProvider.overrideWithValue(_FakeAppUpdateService()),
+      appUpdateServiceProvider.overrideWithValue(
+        updateService ?? _FakeAppUpdateService(),
+      ),
       nowProvider.overrideWith((ref) => Stream.value(now)),
     ],
     child: const NextDdlApp(),
@@ -589,10 +748,21 @@ class _FakeFileExportService implements FileExportService {
 }
 
 class _FakeAppUpdateService implements AppUpdateService {
-  _FakeAppUpdateService({this.release, this.error});
+  _FakeAppUpdateService({
+    this.release,
+    this.error,
+    this.cachedInstaller,
+    this.clearCount = 0,
+    this.progress,
+    this.downloadBlocker,
+  });
 
   final UpdateRelease? release;
   final Object? error;
+  final CachedUpdateInstaller? cachedInstaller;
+  final int clearCount;
+  final DownloadProgress? progress;
+  final Completer<void>? downloadBlocker;
 
   @override
   Future<UpdateRelease?> checkForUpdate({required String currentVersion}) async {
@@ -603,11 +773,31 @@ class _FakeAppUpdateService implements AppUpdateService {
   }
 
   @override
-  Future<AppUpdateInstallResult> downloadAndInstall(UpdateRelease release) async {
+  Future<CachedUpdateInstaller?> findReusableInstaller({
+    required UpdateRelease release,
+    required String currentVersion,
+  }) async {
+    return cachedInstaller;
+  }
+
+  @override
+  Future<AppUpdateInstallResult> downloadAndInstall(
+    UpdateRelease release, {
+    void Function(DownloadProgress progress)? onProgress,
+  }) async {
+    if (progress != null) {
+      onProgress?.call(progress!);
+    }
+    if (downloadBlocker != null) {
+      await downloadBlocker!.future;
+    }
     return const AppUpdateInstallResult(
       status: AppUpdateInstallStatus.openedReleasePage,
     );
   }
+
+  @override
+  Future<int> clearCachedInstallers() async => clearCount;
 
   @override
   Future<void> openInstallPermissionSettings() async {}
@@ -621,5 +811,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.5';
+  Future<String> getVersionLabel() async => '1.1.6';
 }

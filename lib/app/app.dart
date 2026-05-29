@@ -109,47 +109,106 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     final l10n = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.updateDialogTitle),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.updateDialogMessage(release.version)),
-            const SizedBox(height: 8),
-            Text(
-              l10n.publishedAtLabel(
-                '${release.publishedAtUtc.toLocal().year}-${release.publishedAtUtc.toLocal().month.toString().padLeft(2, '0')}-${release.publishedAtUtc.toLocal().day.toString().padLeft(2, '0')}',
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              release.body.isEmpty ? l10n.noReleaseNotes : release.body,
-              maxLines: 6,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.later),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              if (Platform.isAndroid) {
-                ref.read(appUpdateControllerProvider.notifier).downloadAndInstall();
-                return;
+      barrierDismissible: false,
+      builder: (dialogContext) => Consumer(
+        builder: (context, ref, child) {
+          final state = ref.watch(appUpdateControllerProvider);
+          final isDownloading = state.status == AppUpdateStatus.downloading;
+          if (state.status == AppUpdateStatus.installReady &&
+              !state.requiresInstallPermission) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop();
               }
-              ref.read(appUpdateControllerProvider.notifier).openReleasePage();
-            },
-            child: Text(
-              Platform.isAndroid ? l10n.updateNow : l10n.openReleasePage,
+            });
+          }
+          return AlertDialog(
+            title: Text(l10n.updateDialogTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.updateDialogMessage(release.version)),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.publishedAtLabel(
+                    '${release.publishedAtUtc.toLocal().year}-${release.publishedAtUtc.toLocal().month.toString().padLeft(2, '0')}-${release.publishedAtUtc.toLocal().day.toString().padLeft(2, '0')}',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  release.body.isEmpty ? l10n.noReleaseNotes : release.body,
+                  maxLines: 6,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (state.hasReusableLocalInstaller) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.updateUsingCachedInstaller(
+                      state.localInstallerVersion ?? release.version,
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                if (isDownloading) ...[
+                  const SizedBox(height: 16),
+                  LinearProgressIndicator(value: state.downloadProgress),
+                  const SizedBox(height: 8),
+                  Text(
+                    _downloadProgressText(l10n, state),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
             ),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: isDownloading
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: Text(l10n.later),
+              ),
+              FilledButton(
+                onPressed: isDownloading
+                    ? null
+                    : () {
+                        if (Platform.isAndroid) {
+                          ref
+                              .read(appUpdateControllerProvider.notifier)
+                              .downloadAndInstall();
+                          return;
+                        }
+                        Navigator.of(dialogContext).pop();
+                        ref
+                            .read(appUpdateControllerProvider.notifier)
+                            .openReleasePage();
+                      },
+                child: Text(
+                  Platform.isAndroid ? l10n.updateNow : l10n.openReleasePage,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
+  }
+
+  String _downloadProgressText(AppLocalizations l10n, AppUpdateState state) {
+    final percent = state.downloadPercent;
+    final speed = state.downloadSpeedBytesPerSecond;
+    final percentText =
+        percent == null ? l10n.downloadProgressUnknown : l10n.downloadPercent(percent);
+    final speedText = speed == null || speed <= 0
+        ? l10n.downloadSpeedUnknown
+        : l10n.downloadSpeed(_formatSpeed(speed));
+    return '$percentText · $speedText';
+  }
+
+  String _formatSpeed(double bytesPerSecond) {
+    if (bytesPerSecond >= 1024 * 1024) {
+      return '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB/s';
+    }
+    return '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB/s';
   }
 }

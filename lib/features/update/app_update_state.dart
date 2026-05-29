@@ -18,6 +18,12 @@ class AppUpdateState {
     this.error,
     this.userInitiated = false,
     this.downloadedFilePath,
+    this.downloadProgress,
+    this.downloadPercent,
+    this.downloadSpeedBytesPerSecond,
+    this.isUsingCachedInstaller = false,
+    this.hasReusableLocalInstaller = false,
+    this.localInstallerVersion,
     this.requiresInstallPermission = false,
   });
 
@@ -28,6 +34,12 @@ class AppUpdateState {
   final AppUpdateException? error;
   final bool userInitiated;
   final String? downloadedFilePath;
+  final double? downloadProgress;
+  final int? downloadPercent;
+  final double? downloadSpeedBytesPerSecond;
+  final bool isUsingCachedInstaller;
+  final bool hasReusableLocalInstaller;
+  final String? localInstallerVersion;
   final bool requiresInstallPermission;
 
   AppUpdateState copyWith({
@@ -39,6 +51,16 @@ class AppUpdateState {
     bool? userInitiated,
     String? downloadedFilePath,
     bool clearDownloadedFilePath = false,
+    double? downloadProgress,
+    bool clearDownloadProgress = false,
+    int? downloadPercent,
+    bool clearDownloadPercent = false,
+    double? downloadSpeedBytesPerSecond,
+    bool clearDownloadSpeed = false,
+    bool? isUsingCachedInstaller,
+    bool? hasReusableLocalInstaller,
+    String? localInstallerVersion,
+    bool clearLocalInstallerVersion = false,
     bool? requiresInstallPermission,
   }) {
     return AppUpdateState(
@@ -50,6 +72,22 @@ class AppUpdateState {
           clearDownloadedFilePath
               ? null
               : (downloadedFilePath ?? this.downloadedFilePath),
+      downloadProgress:
+          clearDownloadProgress ? null : (downloadProgress ?? this.downloadProgress),
+      downloadPercent:
+          clearDownloadPercent ? null : (downloadPercent ?? this.downloadPercent),
+      downloadSpeedBytesPerSecond:
+          clearDownloadSpeed
+              ? null
+              : (downloadSpeedBytesPerSecond ?? this.downloadSpeedBytesPerSecond),
+      isUsingCachedInstaller:
+          isUsingCachedInstaller ?? this.isUsingCachedInstaller,
+      hasReusableLocalInstaller:
+          hasReusableLocalInstaller ?? this.hasReusableLocalInstaller,
+      localInstallerVersion:
+          clearLocalInstallerVersion
+              ? null
+              : (localInstallerVersion ?? this.localInstallerVersion),
       requiresInstallPermission:
           requiresInstallPermission ?? this.requiresInstallPermission,
     );

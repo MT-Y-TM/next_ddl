@@ -504,7 +504,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get updateDownloading => '更新をダウンロードしています...';
 
   @override
+  String updateUsingCachedInstaller(Object version) {
+    return 'キャッシュ済みの $version インストーラーを使用しています';
+  }
+
+  @override
   String get updateInstallReady => 'インストーラーの準備ができました';
+
+  @override
+  String downloadPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get downloadProgressUnknown => 'ダウンロード進捗は取得できません';
+
+  @override
+  String downloadSpeed(Object speed) {
+    return '$speed';
+  }
+
+  @override
+  String get downloadSpeedUnknown => 'ダウンロード速度は取得できません';
 
   @override
   String get updateErrorNetworkUnavailable =>
@@ -546,6 +567,17 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get openReleasePage => 'Release ページを開く';
+
+  @override
+  String get clearCachedInstallers => 'ダウンロード済み APK を削除';
+
+  @override
+  String cachedInstallersCleared(int count) {
+    return '$count 個のローカルインストーラーを削除しました';
+  }
+
+  @override
+  String get noCachedInstallers => '削除できるローカルインストーラーはありません';
 
   @override
   String get updateReleaseNotes => '更新内容';
