@@ -24,6 +24,17 @@ DateTime resolveActiveDeadlinePoint(DeadlineTask task, DateTime nowUtc) {
   return resolveFutureMilestone(task, nowUtc)?.dueAtUtc ?? task.finalDueAtUtc;
 }
 
+String resolvePersistentNotificationTargetTitle(
+  DeadlineTask task,
+  DateTime nowUtc,
+) {
+  final milestoneTitle = resolveFutureMilestone(task, nowUtc)?.title.trim();
+  if (milestoneTitle != null) {
+    return milestoneTitle;
+  }
+  return task.title.trim();
+}
+
 List<DeadlineTask> inProgressTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
   return [
     for (final task in tasks)

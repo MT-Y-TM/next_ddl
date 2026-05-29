@@ -147,7 +147,7 @@ void main() {
     expect(find.text('阶段检查'), findsOneWidget);
   });
 
-  testWidgets('empty milestone titles fall back to localized placeholder', (
+  testWidgets('empty milestone titles stay blank without placeholder text', (
     tester,
   ) async {
     final now = DateTime.utc(2026, 1, 1, 8);
@@ -183,12 +183,12 @@ void main() {
     await tester.pumpWidget(_buildApp(snapshot, now));
     await tester.pumpAndSettle();
 
-    expect(find.text('未命名节点'), findsOneWidget);
+    expect(find.text('未命名节点'), findsNothing);
 
     await tester.tap(find.text('空节点任务'));
     await tester.pumpAndSettle();
 
-    expect(find.text('未命名节点'), findsWidgets);
+    expect(find.text('未命名节点'), findsNothing);
   });
 
   testWidgets('settings page shows locale and persistent time unit controls', (
@@ -328,6 +328,39 @@ void main() {
     expect(find.text('Choose app timezone'), findsOneWidget);
     expect(find.text('Shanghai'), findsOneWidget);
     expect(find.text('Asia/Shanghai'), findsOneWidget);
+    expect(find.text('Buenos Aires (America / Argentina)'), findsOneWidget);
+    expect(find.text('America/Argentina/Buenos_Aires'), findsOneWidget);
+  });
+
+  testWidgets('timezone dialog search matches localized fallback names', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.en,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: const [],
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('App timezone'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('App timezone'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'buenos');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buenos Aires (America / Argentina)'), findsOneWidget);
+    expect(find.text('America/Argentina/Buenos_Aires'), findsOneWidget);
   });
 
   testWidgets('settings page can switch language labels', (tester) async {
@@ -504,6 +537,7 @@ class _FakeTimezoneService extends DeviceTimezoneService {
     'Asia/Tokyo',
     'UTC',
     'America/New_York',
+    'America/Argentina/Buenos_Aires',
   ];
 
   @override
@@ -587,5 +621,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.4';
+  Future<String> getVersionLabel() async => '1.1.5';
 }

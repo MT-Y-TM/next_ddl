@@ -772,6 +772,102 @@ abstract class AppLocalizations {
   /// **'Los Angeles'**
   String get timezoneAmericaLosAngeles;
 
+  /// No description provided for @timezoneRegionAfrica.
+  ///
+  /// In en, this message translates to:
+  /// **'Africa'**
+  String get timezoneRegionAfrica;
+
+  /// No description provided for @timezoneRegionAmerica.
+  ///
+  /// In en, this message translates to:
+  /// **'America'**
+  String get timezoneRegionAmerica;
+
+  /// No description provided for @timezoneRegionAntarctica.
+  ///
+  /// In en, this message translates to:
+  /// **'Antarctica'**
+  String get timezoneRegionAntarctica;
+
+  /// No description provided for @timezoneRegionArctic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arctic'**
+  String get timezoneRegionArctic;
+
+  /// No description provided for @timezoneRegionAsia.
+  ///
+  /// In en, this message translates to:
+  /// **'Asia'**
+  String get timezoneRegionAsia;
+
+  /// No description provided for @timezoneRegionAtlantic.
+  ///
+  /// In en, this message translates to:
+  /// **'Atlantic'**
+  String get timezoneRegionAtlantic;
+
+  /// No description provided for @timezoneRegionAustralia.
+  ///
+  /// In en, this message translates to:
+  /// **'Australia'**
+  String get timezoneRegionAustralia;
+
+  /// No description provided for @timezoneRegionBrazil.
+  ///
+  /// In en, this message translates to:
+  /// **'Brazil'**
+  String get timezoneRegionBrazil;
+
+  /// No description provided for @timezoneRegionCanada.
+  ///
+  /// In en, this message translates to:
+  /// **'Canada'**
+  String get timezoneRegionCanada;
+
+  /// No description provided for @timezoneRegionChile.
+  ///
+  /// In en, this message translates to:
+  /// **'Chile'**
+  String get timezoneRegionChile;
+
+  /// No description provided for @timezoneRegionEtc.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get timezoneRegionEtc;
+
+  /// No description provided for @timezoneRegionEurope.
+  ///
+  /// In en, this message translates to:
+  /// **'Europe'**
+  String get timezoneRegionEurope;
+
+  /// No description provided for @timezoneRegionIndian.
+  ///
+  /// In en, this message translates to:
+  /// **'Indian Ocean'**
+  String get timezoneRegionIndian;
+
+  /// No description provided for @timezoneRegionMexico.
+  ///
+  /// In en, this message translates to:
+  /// **'Mexico'**
+  String get timezoneRegionMexico;
+
+  /// No description provided for @timezoneRegionPacific.
+  ///
+  /// In en, this message translates to:
+  /// **'Pacific'**
+  String get timezoneRegionPacific;
+
+  /// No description provided for @timezoneRegionUs.
+  ///
+  /// In en, this message translates to:
+  /// **'United States'**
+  String get timezoneRegionUs;
+
   /// No description provided for @ongoingNoTask.
   ///
   /// In en, this message translates to:
@@ -814,11 +910,23 @@ abstract class AppLocalizations {
   /// **'Due now · {title}'**
   String notificationNowDue(Object title);
 
+  /// No description provided for @notificationNowDueNoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Due now'**
+  String get notificationNowDueNoTitle;
+
   /// No description provided for @notificationAdvanceDue.
   ///
   /// In en, this message translates to:
   /// **'{offset} early · {title}'**
   String notificationAdvanceDue(Object offset, Object title);
+
+  /// No description provided for @notificationAdvanceDueNoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{offset} early'**
+  String notificationAdvanceDueNoTitle(Object offset);
 
   /// No description provided for @compactDaySuffix.
   ///

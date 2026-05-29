@@ -118,9 +118,12 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           for (var index = 0; index < _milestones.length; index++)
             Card(
               child: ListTile(
-                title: Text(
-                  resolveMilestoneDisplayTitle(_milestones[index].title, l10n),
-                ),
+                title: switch (
+                  resolveMilestoneDisplayTitle(_milestones[index].title)
+                ) {
+                  final title when title.isNotEmpty => Text(title),
+                  _ => null,
+                },
                 subtitle: Text(
                   '${_formatDateTime(ref.watch(configuredUtcToLocalProvider(_milestones[index].dueAtUtc)))} · '
                   '${_milestones[index].source == MilestoneSource.generated ? l10n.generated : l10n.manual}',

@@ -375,6 +375,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timezoneAmericaLosAngeles => '洛杉矶';
 
   @override
+  String get timezoneRegionAfrica => '非洲';
+
+  @override
+  String get timezoneRegionAmerica => '美洲';
+
+  @override
+  String get timezoneRegionAntarctica => '南极洲';
+
+  @override
+  String get timezoneRegionArctic => '北极';
+
+  @override
+  String get timezoneRegionAsia => '亚洲';
+
+  @override
+  String get timezoneRegionAtlantic => '大西洋';
+
+  @override
+  String get timezoneRegionAustralia => '澳洲';
+
+  @override
+  String get timezoneRegionBrazil => '巴西';
+
+  @override
+  String get timezoneRegionCanada => '加拿大';
+
+  @override
+  String get timezoneRegionChile => '智利';
+
+  @override
+  String get timezoneRegionEtc => '其他';
+
+  @override
+  String get timezoneRegionEurope => '欧洲';
+
+  @override
+  String get timezoneRegionIndian => '印度洋';
+
+  @override
+  String get timezoneRegionMexico => '墨西哥';
+
+  @override
+  String get timezoneRegionPacific => '太平洋';
+
+  @override
+  String get timezoneRegionUs => '美国';
+
+  @override
   String get ongoingNoTask => '当前没有进行中的任务';
 
   @override
@@ -398,8 +446,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get notificationNowDueNoTitle => '现在到点';
+
+  @override
   String notificationAdvanceDue(Object offset, Object title) {
     return '提前$offset · $title';
+  }
+
+  @override
+  String notificationAdvanceDueNoTitle(Object offset) {
+    return '提前$offset';
   }
 
   @override

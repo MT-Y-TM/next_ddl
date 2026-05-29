@@ -144,7 +144,7 @@ class LocalNotificationScheduler implements NotificationScheduler {
       for (final milestone in task.milestones)
         _NotificationTarget(
           idSeed: '${task.id}:${milestone.id}',
-          title: resolveMilestoneDisplayTitle(milestone.title, l10n),
+          title: resolveMilestoneDisplayTitle(milestone.title),
           dueAtUtc: milestone.dueAtUtc,
         ),
       _NotificationTarget(
@@ -167,12 +167,11 @@ class LocalNotificationScheduler implements NotificationScheduler {
           _timezoneService.location,
         );
         final notificationId = '${target.idSeed}:$offset'.hashCode & 0x7fffffff;
-        final message = offset == 0
-            ? l10n.notificationNowDue(target.title)
-            : l10n.notificationAdvanceDue(
-                _formatOffset(offset, l10n),
-                target.title,
-              );
+        final message = _buildScheduledNotificationMessage(
+          offset: offset,
+          title: target.title,
+          l10n: l10n,
+        );
         await _plugin.zonedSchedule(
           notificationId,
           task.title,
@@ -217,13 +216,36 @@ class LocalNotificationScheduler implements NotificationScheduler {
   }) {
     final remaining = resolveActiveDeadlinePoint(task, nowUtc).difference(nowUtc);
     final l10n = resolveAppLocalizations(localePreference);
+    final title = resolvePersistentNotificationTargetTitle(task, nowUtc);
     final countdown = formatCompactCountdown(
       remaining,
       timeUnit: timeUnit,
       daySuffix: l10n.compactDaySuffix,
       hourSuffix: l10n.compactHourSuffix,
     );
-    return '${task.title} · $countdown';
+    if (title.isEmpty) {
+      return countdown;
+    }
+    return '$title · $countdown';
+  }
+
+  String _buildScheduledNotificationMessage({
+    required int offset,
+    required String title,
+    required AppLocalizations l10n,
+  }) {
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) {
+      return offset == 0
+          ? l10n.notificationNowDueNoTitle
+          : l10n.notificationAdvanceDueNoTitle(_formatOffset(offset, l10n));
+    }
+    return offset == 0
+        ? l10n.notificationNowDue(trimmedTitle)
+        : l10n.notificationAdvanceDue(
+            _formatOffset(offset, l10n),
+            trimmedTitle,
+          );
   }
 }
 

@@ -4,11 +4,13 @@ import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
 import 'package:next_ddl/models/update_release.dart';
 import 'package:next_ddl/l10n/app_localizations_en.dart';
+import 'package:next_ddl/l10n/app_localizations_ja.dart';
 import 'package:next_ddl/l10n/app_localizations_zh.dart';
 import 'package:next_ddl/services/timezone_service.dart';
 import 'package:next_ddl/utils/countdown_formatter.dart';
 import 'package:next_ddl/utils/deadline_logic.dart';
 import 'package:next_ddl/utils/milestone_utils.dart';
+import 'package:next_ddl/utils/timezone_labels.dart';
 import 'package:next_ddl/utils/version_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -261,14 +263,81 @@ void main() {
     );
   });
 
-  test('empty milestone title falls back to localized placeholder', () {
+  test('empty milestone title stays empty instead of using a placeholder', () {
+    expect(resolveMilestoneDisplayTitle(''), '');
+    expect(resolveMilestoneDisplayTitle('  '), '');
+  });
+
+  test('persistent notification title prefers next milestone then task title', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final taskWithMilestone = DeadlineTask(
+      id: 'task_1',
+      title: '论文终稿',
+      note: '',
+      timezoneId: 'Asia/Shanghai',
+      createdAtUtc: now,
+      updatedAtUtc: now,
+      finalDueAtUtc: now.add(const Duration(days: 2)),
+      milestones: [
+        Milestone(
+          id: 'm1',
+          title: '阶段检查',
+          dueAtUtc: now.add(const Duration(hours: 2)),
+          source: MilestoneSource.manual,
+        ),
+      ],
+      reminderOffsetsSeconds: const [],
+      notificationsEnabled: false,
+    );
+    final taskWithoutMilestone = taskWithMilestone.copyWith(
+      milestones: const [],
+    );
+    final taskWithBlankMilestone = taskWithMilestone.copyWith(
+      milestones: [
+        Milestone(
+          id: 'm1',
+          title: '   ',
+          dueAtUtc: now.add(const Duration(hours: 2)),
+          source: MilestoneSource.manual,
+        ),
+      ],
+    );
+
     expect(
-      resolveMilestoneDisplayTitle('', AppLocalizationsEn()),
-      'Untitled milestone',
+      resolvePersistentNotificationTargetTitle(taskWithMilestone, now),
+      '阶段检查',
     );
     expect(
-      resolveMilestoneDisplayTitle('  ', AppLocalizationsZh()),
-      '未命名节点',
+      resolvePersistentNotificationTargetTitle(taskWithoutMilestone, now),
+      '论文终稿',
+    );
+    expect(
+      resolvePersistentNotificationTargetTitle(taskWithBlankMilestone, now),
+      '',
+    );
+  });
+
+  test('timezone fallback labels are localized for zh en ja', () {
+    expect(
+      localizedTimezoneDisplayName(
+        AppLocalizationsZh(),
+        'America/Argentina/Buenos_Aires',
+      ),
+      'Buenos Aires（美洲 / Argentina）',
+    );
+    expect(
+      localizedTimezoneDisplayName(
+        AppLocalizationsEn(),
+        'America/Argentina/Buenos_Aires',
+      ),
+      'Buenos Aires (America / Argentina)',
+    );
+    expect(
+      localizedTimezoneDisplayName(
+        AppLocalizationsJa(),
+        'America/Argentina/Buenos_Aires',
+      ),
+      'Buenos Aires（アメリカ / Argentina）',
     );
   });
 

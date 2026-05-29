@@ -35,6 +35,10 @@ class TaskDetailPage extends ConsumerWidget {
     }
 
     final nextMilestone = resolveNextMilestone(task, now);
+    final nextMilestoneTitle =
+        nextMilestone == null
+            ? null
+            : resolveMilestoneDisplayTitle(nextMilestone.title);
     final progress = resolveRemainingProgress(task, now);
     final timeline = [...task.milestones]
       ..sort((left, right) => left.dueAtUtc.compareTo(right.dueAtUtc));
@@ -86,11 +90,11 @@ class TaskDetailPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    l10n.nextNodeValue(
-                      nextMilestone == null
-                          ? l10n.allExpired
-                          : resolveMilestoneDisplayTitle(nextMilestone.title, l10n),
-                    ),
+                    nextMilestone == null
+                        ? l10n.nextNodeValue(l10n.allExpired)
+                        : nextMilestoneTitle!.isEmpty
+                        ? l10n.nextNode
+                        : l10n.nextNodeValue(nextMilestoneTitle),
                   ),
                   if (nextMilestone != null) ...[
                     const SizedBox(height: 4),
@@ -124,9 +128,10 @@ class TaskDetailPage extends ConsumerWidget {
           for (final milestone in timeline)
             ListTile(
               leading: const Icon(Icons.flag_outlined),
-              title: Text(
-                resolveMilestoneDisplayTitle(milestone.title, l10n),
-              ),
+              title: switch (resolveMilestoneDisplayTitle(milestone.title)) {
+                final title when title.isNotEmpty => Text(title),
+                _ => null,
+              },
               subtitle: Text(
                 '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? l10n.generatedNode : l10n.manualNode}',
               ),

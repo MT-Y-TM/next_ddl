@@ -193,6 +193,22 @@
   "timezoneEuropeLondon": "ロンドン",
   "timezoneAmericaNewYork": "ニューヨーク",
   "timezoneAmericaLosAngeles": "ロサンゼルス",
+  "timezoneRegionAfrica": "アフリカ",
+  "timezoneRegionAmerica": "アメリカ",
+  "timezoneRegionAntarctica": "南極",
+  "timezoneRegionArctic": "北極",
+  "timezoneRegionAsia": "アジア",
+  "timezoneRegionAtlantic": "大西洋",
+  "timezoneRegionAustralia": "オーストラリア",
+  "timezoneRegionBrazil": "ブラジル",
+  "timezoneRegionCanada": "カナダ",
+  "timezoneRegionChile": "チリ",
+  "timezoneRegionEtc": "その他",
+  "timezoneRegionEurope": "ヨーロッパ",
+  "timezoneRegionIndian": "インド洋",
+  "timezoneRegionMexico": "メキシコ",
+  "timezoneRegionPacific": "太平洋",
+  "timezoneRegionUs": "アメリカ合衆国",
   "ongoingNoTask": "進行中のタスクはありません",
   "persistentNotificationTitle": "Next DDL",
   "fileExportDialogTitle": "Next DDL データをエクスポート",
@@ -205,11 +221,18 @@
       "title": {}
     }
   },
+  "notificationNowDueNoTitle": "今が期限",
   "notificationAdvanceDue": "{offset}前 · {title}",
   "@notificationAdvanceDue": {
     "placeholders": {
       "offset": {},
       "title": {}
+    }
+  },
+  "notificationAdvanceDueNoTitle": "{offset}前",
+  "@notificationAdvanceDueNoTitle": {
+    "placeholders": {
+      "offset": {}
     }
   },
   "compactDaySuffix": "日",

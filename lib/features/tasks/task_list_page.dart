@@ -212,10 +212,7 @@ class _TaskCard extends StatelessWidget {
                       label: l10n.nextNode,
                       title: nextMilestone == null
                           ? l10n.noFutureNodes
-                          : resolveMilestoneDisplayTitle(
-                              nextMilestone.title,
-                              l10n,
-                            ),
+                          : resolveMilestoneDisplayTitle(nextMilestone.title),
                       countdown: nextMilestone == null
                           ? l10n.allExpired
                           : formatCountdownFromDates(
@@ -302,6 +299,7 @@ class _CountdownRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasTitle = title != null && title!.isNotEmpty;
     final localTime = time;
     final timeLabel = localTime == null
         ? '—'
@@ -320,7 +318,7 @@ class _CountdownRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: Theme.of(context).textTheme.labelLarge),
-              if (title != null) ...[
+              if (hasTitle) ...[
                 const SizedBox(height: 4),
                 Text(
                   title!,

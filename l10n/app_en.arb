@@ -193,6 +193,22 @@
   "timezoneEuropeLondon": "London",
   "timezoneAmericaNewYork": "New York",
   "timezoneAmericaLosAngeles": "Los Angeles",
+  "timezoneRegionAfrica": "Africa",
+  "timezoneRegionAmerica": "America",
+  "timezoneRegionAntarctica": "Antarctica",
+  "timezoneRegionArctic": "Arctic",
+  "timezoneRegionAsia": "Asia",
+  "timezoneRegionAtlantic": "Atlantic",
+  "timezoneRegionAustralia": "Australia",
+  "timezoneRegionBrazil": "Brazil",
+  "timezoneRegionCanada": "Canada",
+  "timezoneRegionChile": "Chile",
+  "timezoneRegionEtc": "Other",
+  "timezoneRegionEurope": "Europe",
+  "timezoneRegionIndian": "Indian Ocean",
+  "timezoneRegionMexico": "Mexico",
+  "timezoneRegionPacific": "Pacific",
+  "timezoneRegionUs": "United States",
   "ongoingNoTask": "No in-progress tasks right now",
   "persistentNotificationTitle": "Next DDL",
   "fileExportDialogTitle": "Export Next DDL data",
@@ -205,11 +221,18 @@
       "title": {}
     }
   },
+  "notificationNowDueNoTitle": "Due now",
   "notificationAdvanceDue": "{offset} early · {title}",
   "@notificationAdvanceDue": {
     "placeholders": {
       "offset": {},
       "title": {}
+    }
+  },
+  "notificationAdvanceDueNoTitle": "{offset} early",
+  "@notificationAdvanceDueNoTitle": {
+    "placeholders": {
+      "offset": {}
     }
   },
   "compactDaySuffix": " days",

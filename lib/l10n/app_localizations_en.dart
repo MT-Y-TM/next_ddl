@@ -383,6 +383,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get timezoneAmericaLosAngeles => 'Los Angeles';
 
   @override
+  String get timezoneRegionAfrica => 'Africa';
+
+  @override
+  String get timezoneRegionAmerica => 'America';
+
+  @override
+  String get timezoneRegionAntarctica => 'Antarctica';
+
+  @override
+  String get timezoneRegionArctic => 'Arctic';
+
+  @override
+  String get timezoneRegionAsia => 'Asia';
+
+  @override
+  String get timezoneRegionAtlantic => 'Atlantic';
+
+  @override
+  String get timezoneRegionAustralia => 'Australia';
+
+  @override
+  String get timezoneRegionBrazil => 'Brazil';
+
+  @override
+  String get timezoneRegionCanada => 'Canada';
+
+  @override
+  String get timezoneRegionChile => 'Chile';
+
+  @override
+  String get timezoneRegionEtc => 'Other';
+
+  @override
+  String get timezoneRegionEurope => 'Europe';
+
+  @override
+  String get timezoneRegionIndian => 'Indian Ocean';
+
+  @override
+  String get timezoneRegionMexico => 'Mexico';
+
+  @override
+  String get timezoneRegionPacific => 'Pacific';
+
+  @override
+  String get timezoneRegionUs => 'United States';
+
+  @override
   String get ongoingNoTask => 'No in-progress tasks right now';
 
   @override
@@ -408,8 +456,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notificationNowDueNoTitle => 'Due now';
+
+  @override
   String notificationAdvanceDue(Object offset, Object title) {
     return '$offset early · $title';
+  }
+
+  @override
+  String notificationAdvanceDueNoTitle(Object offset) {
+    return '$offset early';
   }
 
   @override

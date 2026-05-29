@@ -193,6 +193,22 @@
   "timezoneEuropeLondon": "伦敦",
   "timezoneAmericaNewYork": "纽约",
   "timezoneAmericaLosAngeles": "洛杉矶",
+  "timezoneRegionAfrica": "非洲",
+  "timezoneRegionAmerica": "美洲",
+  "timezoneRegionAntarctica": "南极洲",
+  "timezoneRegionArctic": "北极",
+  "timezoneRegionAsia": "亚洲",
+  "timezoneRegionAtlantic": "大西洋",
+  "timezoneRegionAustralia": "澳洲",
+  "timezoneRegionBrazil": "巴西",
+  "timezoneRegionCanada": "加拿大",
+  "timezoneRegionChile": "智利",
+  "timezoneRegionEtc": "其他",
+  "timezoneRegionEurope": "欧洲",
+  "timezoneRegionIndian": "印度洋",
+  "timezoneRegionMexico": "墨西哥",
+  "timezoneRegionPacific": "太平洋",
+  "timezoneRegionUs": "美国",
   "ongoingNoTask": "当前没有进行中的任务",
   "persistentNotificationTitle": "Next DDL",
   "fileExportDialogTitle": "导出 Next DDL 数据",
@@ -205,11 +221,18 @@
       "title": {}
     }
   },
+  "notificationNowDueNoTitle": "现在到点",
   "notificationAdvanceDue": "提前{offset} · {title}",
   "@notificationAdvanceDue": {
     "placeholders": {
       "offset": {},
       "title": {}
+    }
+  },
+  "notificationAdvanceDueNoTitle": "提前{offset}",
+  "@notificationAdvanceDueNoTitle": {
+    "placeholders": {
+      "offset": {}
     }
   },
   "compactDaySuffix": "天",
