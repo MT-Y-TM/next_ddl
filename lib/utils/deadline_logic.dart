@@ -29,7 +29,7 @@ String resolvePersistentNotificationTargetTitle(
   DateTime nowUtc,
 ) {
   final milestoneTitle = resolveFutureMilestone(task, nowUtc)?.title.trim();
-  if (milestoneTitle != null) {
+  if (milestoneTitle != null && milestoneTitle.isNotEmpty) {
     return milestoneTitle;
   }
   return task.title.trim();

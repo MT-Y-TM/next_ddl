@@ -313,7 +313,7 @@ void main() {
     );
     expect(
       resolvePersistentNotificationTargetTitle(taskWithBlankMilestone, now),
-      '',
+      '论文终稿',
     );
   });
 

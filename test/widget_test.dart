@@ -256,11 +256,11 @@ void main() {
     );
     final updateService = _FakeAppUpdateService(
       release: UpdateRelease(
-        tagName: 'v1.1.2',
-        version: '1.1.2',
+        tagName: 'v1.1.8',
+        version: '1.1.8',
         publishedAtUtc: now,
         body: 'New build available.',
-        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.2',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.8',
         assets: const [],
       ),
     );
@@ -274,7 +274,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('New version available: 1.1.2'), findsOneWidget);
+    expect(find.text('New version available: 1.1.8'), findsOneWidget);
   });
 
   testWidgets('settings page shows update download progress and speed', (
@@ -288,11 +288,11 @@ void main() {
     final blocker = Completer<void>();
     final updateService = _FakeAppUpdateService(
       release: UpdateRelease(
-        tagName: 'v1.1.6',
-        version: '1.1.6',
+        tagName: 'v1.1.8',
+        version: '1.1.8',
         publishedAtUtc: now,
         body: 'New build available.',
-        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.6',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.8',
         assets: const [],
       ),
       progress: const DownloadProgress(
@@ -355,16 +355,16 @@ void main() {
     );
     final updateService = _FakeAppUpdateService(
       release: UpdateRelease(
-        tagName: 'v1.1.6',
-        version: '1.1.6',
+        tagName: 'v1.1.8',
+        version: '1.1.8',
         publishedAtUtc: now,
         body: 'New build available.',
-        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.6',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.8',
         assets: const [],
       ),
       cachedInstaller: const CachedUpdateInstaller(
-        version: '1.1.6',
-        filePath: 'C:/temp/app-release-v1.1.6.apk',
+        version: '1.1.8',
+        filePath: 'C:/temp/app-release-v1.1.8.apk',
       ),
     );
 
@@ -380,7 +380,7 @@ void main() {
         .checkForUpdate(userInitiated: true);
     await tester.pumpAndSettle();
 
-    expect(find.text('Using cached installer for 1.1.6'), findsOneWidget);
+    expect(find.text('Using cached installer for 1.1.8'), findsOneWidget);
   });
 
   testWidgets('settings page shows friendly message when no published release exists', (
@@ -544,11 +544,11 @@ void main() {
     final blocker = Completer<void>();
     final updateService = _FakeAppUpdateService(
       release: UpdateRelease(
-        tagName: 'v1.1.6',
-        version: '1.1.6',
+        tagName: 'v1.1.8',
+        version: '1.1.8',
         publishedAtUtc: now,
         body: 'New build available.',
-        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.6',
+        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.8',
         assets: const [],
       ),
       progress: const DownloadProgress(
@@ -811,5 +811,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.6';
+  Future<String> getVersionLabel() async => '1.1.7';
 }

@@ -1,7 +1,7 @@
 name: next_ddl
 description: "Next DDL deadline app."
 publish_to: 'none'
-version: 1.1.6+1
+version: 1.1.7+1
 
 environment:
   sdk: ^3.10.1
