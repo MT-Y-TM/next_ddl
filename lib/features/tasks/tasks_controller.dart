@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/app_snapshot.dart';
+import '../../models/app_theme_settings.dart';
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
+import '../../models/app_alarm_settings.dart';
+import '../../services/alarm_scheduler.dart';
 import '../../services/app_info_service.dart';
 import '../../services/deadline_repository.dart';
 import '../../services/notification_scheduler.dart';
@@ -57,6 +60,16 @@ final localePreferenceProvider = Provider<AppLocalePreference>((ref) {
       AppLocalePreference.system;
 });
 
+final themeSettingsProvider = Provider<AppThemeSettings>((ref) {
+  return ref.watch(tasksControllerProvider).valueOrNull?.themeSettings ??
+      AppThemeSettings.defaults();
+});
+
+final alarmSettingsProvider = Provider<AppAlarmSettings>((ref) {
+  return ref.watch(tasksControllerProvider).valueOrNull?.alarmSettings ??
+      AppAlarmSettings.defaults();
+});
+
 final persistentNotificationTimeUnitProvider =
     Provider<PersistentNotificationTimeUnit>((ref) {
       return ref
@@ -94,6 +107,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
   DeadlineRepository get _repository => ref.read(deadlineRepositoryProvider);
   NotificationScheduler get _notificationScheduler =>
       ref.read(notificationSchedulerProvider);
+  AlarmScheduler get _alarmScheduler => ref.read(alarmSchedulerProvider);
   TimezoneService get _timezoneService => ref.read(timezoneServiceProvider);
 
   @override
@@ -105,6 +119,11 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
       nowUtc: DateTime.now().toUtc(),
       localePreference: snapshot.preferredLocale,
       timeUnit: snapshot.persistentNotificationTimeUnit,
+    );
+    await _alarmScheduler.syncAlarms(
+      settings: snapshot.alarmSettings,
+      tasks: snapshot.tasks,
+      localePreference: snapshot.preferredLocale,
     );
     return snapshot;
   }
@@ -125,6 +144,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
     await _notificationScheduler.removeAll();
+    await _alarmScheduler.removeAll();
     await _syncAll(nextSnapshot);
   }
 
@@ -137,6 +157,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
     await _notificationScheduler.removeAll();
+    await _alarmScheduler.removeAll();
     await _syncAll(nextSnapshot);
   }
 
@@ -148,6 +169,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(imported);
     await _repository.saveSnapshot(imported);
     await _notificationScheduler.removeAll();
+    await _alarmScheduler.removeAll();
     await _syncAll(imported);
     return imported;
   }
@@ -225,6 +247,39 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     );
   }
 
+  Future<void> setThemeSettings(AppThemeSettings themeSettings) async {
+    final snapshot = state.requireValue;
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      themeSettings: themeSettings,
+    );
+    state = AsyncData(nextSnapshot);
+    await _repository.saveSnapshot(nextSnapshot);
+  }
+
+  Future<void> setAlarmSettings(AppAlarmSettings alarmSettings) async {
+    final snapshot = state.requireValue;
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      alarmSettings: alarmSettings,
+    );
+    state = AsyncData(nextSnapshot);
+    await _repository.saveSnapshot(nextSnapshot);
+    await _alarmScheduler.syncAlarms(
+      settings: nextSnapshot.alarmSettings,
+      tasks: nextSnapshot.tasks,
+      localePreference: nextSnapshot.preferredLocale,
+    );
+  }
+
+  Future<bool> canScheduleExactAlarms() {
+    return _alarmScheduler.canScheduleExactAlarms();
+  }
+
+  Future<void> openExactAlarmSettings() {
+    return _alarmScheduler.openExactAlarmSettings();
+  }
+
   String get timezoneId => _timezoneService.currentTimezoneId;
 
   List<String> get timezoneIds => _timezoneService.timezoneIds;
@@ -237,6 +292,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     final snapshot = state.valueOrNull;
     if (snapshot != null) {
       await _notificationScheduler.removeAll();
+      await _alarmScheduler.removeAll();
       await _syncAll(snapshot);
       state = AsyncData(snapshot);
     }
@@ -272,6 +328,11 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
       nowUtc: DateTime.now().toUtc(),
       localePreference: snapshot.preferredLocale,
       timeUnit: snapshot.persistentNotificationTimeUnit,
+    );
+    await _alarmScheduler.syncAlarms(
+      settings: snapshot.alarmSettings,
+      tasks: snapshot.tasks,
+      localePreference: snapshot.preferredLocale,
     );
   }
 }

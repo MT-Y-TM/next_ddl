@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:next_ddl/models/alarm_audio_item.dart';
+import 'package:next_ddl/models/app_alarm_settings.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
+import 'package:next_ddl/models/app_theme_settings.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
 import 'package:next_ddl/models/update_release.dart';
@@ -45,8 +48,31 @@ void main() {
           ],
           reminderOffsetsSeconds: const [0, 3600, 86400],
           notificationsEnabled: true,
+          alarmEnabled: true,
+          alarmAudioItemsOverride: const [
+            AlarmAudioItem(
+              id: 'audio_task',
+              displayName: 'Task tone',
+              uri: 'content://task-tone',
+            ),
+          ],
         ),
       ],
+      themeSettings: const AppThemeSettings(
+        seedColorValue: 0xFF112233,
+        cornerRadius: 14,
+        backgroundMode: ThemeBackgroundMode.gradient,
+      ),
+      alarmSettings: const AppAlarmSettings(
+        enabled: true,
+        globalAudioItems: [
+          AlarmAudioItem(
+            id: 'audio_global',
+            displayName: 'Global tone',
+            uri: 'content://global-tone',
+          ),
+        ],
+      ),
     );
 
     final decoded = AppSnapshot.fromJson(snapshot.toJson());
@@ -61,6 +87,18 @@ void main() {
     expect(decoded.tasks.single.title, '毕业设计');
     expect(decoded.tasks.single.reminderOffsetsSeconds, [0, 3600, 86400]);
     expect(decoded.tasks.single.milestones.single.title, '开题');
+    expect(decoded.tasks.single.alarmEnabled, isTrue);
+    expect(
+      decoded.tasks.single.alarmAudioItemsOverride.single.uri,
+      'content://task-tone',
+    );
+    expect(decoded.themeSettings.cornerRadius, 14);
+    expect(decoded.themeSettings.backgroundMode, ThemeBackgroundMode.gradient);
+    expect(decoded.alarmSettings.enabled, isTrue);
+    expect(
+      decoded.alarmSettings.globalAudioItems.single.uri,
+      'content://global-tone',
+    );
   });
 
   test('legacy snapshot json falls back to default locale and time unit', () {
@@ -76,6 +114,8 @@ void main() {
       PersistentNotificationTimeUnit.day,
     );
     expect(decoded.persistentNotificationEnabled, isFalse);
+    expect(decoded.themeSettings.seedColorValue, 0xFF0E7490);
+    expect(decoded.alarmSettings.enabled, isFalse);
   });
 
   test('generate default milestones creates 25 50 75 markers', () {

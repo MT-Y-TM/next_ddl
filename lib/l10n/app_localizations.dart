@@ -1179,6 +1179,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Later'**
   String get later;
+
+  /// No description provided for @themeSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeSettings;
+
+  /// No description provided for @themePrimaryColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary color'**
+  String get themePrimaryColor;
+
+  /// No description provided for @themeSolidBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid background'**
+  String get themeSolidBackground;
+
+  /// No description provided for @themeBackgroundSolid.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid'**
+  String get themeBackgroundSolid;
+
+  /// No description provided for @themeBackgroundGradient.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradient'**
+  String get themeBackgroundGradient;
+
+  /// No description provided for @themeBackgroundImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Image background'**
+  String get themeBackgroundImage;
+
+  /// No description provided for @themeGradientStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradient start'**
+  String get themeGradientStart;
+
+  /// No description provided for @themeGradientEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Gradient end'**
+  String get themeGradientEnd;
+
+  /// No description provided for @themeCornerRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Control radius: {value}'**
+  String themeCornerRadius(int value);
+
+  /// No description provided for @themeNoBackgroundImage.
+  ///
+  /// In en, this message translates to:
+  /// **'No background image selected'**
+  String get themeNoBackgroundImage;
+
+  /// No description provided for @themeBackgroundImageReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Background image is set'**
+  String get themeBackgroundImageReady;
+
+  /// No description provided for @themeEditBackgroundImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit background image'**
+  String get themeEditBackgroundImage;
+
+  /// No description provided for @themeImageScale.
+  ///
+  /// In en, this message translates to:
+  /// **'Scale'**
+  String get themeImageScale;
+
+  /// No description provided for @themeImageOffsetX.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal position'**
+  String get themeImageOffsetX;
+
+  /// No description provided for @themeImageOffsetY.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical position'**
+  String get themeImageOffsetY;
+
+  /// No description provided for @themeImageOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Overlay strength'**
+  String get themeImageOverlay;
+
+  /// No description provided for @themeImageBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur strength'**
+  String get themeImageBlur;
+
+  /// No description provided for @themeRotateImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate 90 degrees'**
+  String get themeRotateImage;
+
+  /// No description provided for @alarmSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Alarm settings'**
+  String get alarmSettings;
+
+  /// No description provided for @alarmAndroidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Android uses a foreground service to ring at reminder times and can be stopped from the notification shade. MIUI background and exact alarm permissions can affect reliability.'**
+  String get alarmAndroidHint;
+
+  /// No description provided for @alarmWindowsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Windows currently keeps standard notifications only. Background alarm playback is not supported.'**
+  String get alarmWindowsHint;
+
+  /// No description provided for @enableAlarmFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable alarm capability'**
+  String get enableAlarmFeature;
+
+  /// No description provided for @enableAlarmFeatureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, tasks with alarm ringing turned on can play audio at reminder times.'**
+  String get enableAlarmFeatureHint;
+
+  /// No description provided for @globalAlarmPlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Global ringtone playlist'**
+  String get globalAlarmPlaylist;
+
+  /// No description provided for @addAlarmAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Add ringtone'**
+  String get addAlarmAudio;
+
+  /// No description provided for @alarmAudioCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ringtone(s)'**
+  String alarmAudioCount(int count);
+
+  /// No description provided for @exactAlarmPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact alarm permission'**
+  String get exactAlarmPermission;
+
+  /// No description provided for @exactAlarmPermissionGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact scheduling is allowed, so background alarms can ring more reliably.'**
+  String get exactAlarmPermissionGranted;
+
+  /// No description provided for @exactAlarmPermissionMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact scheduling is not allowed. Background alarms may be delayed or fail.'**
+  String get exactAlarmPermissionMissing;
+
+  /// No description provided for @openAlarmPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Open permission'**
+  String get openAlarmPermission;
+
+  /// No description provided for @enableAlarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable alarm ringing'**
+  String get enableAlarm;
+
+  /// No description provided for @enableAlarmHint.
+  ///
+  /// In en, this message translates to:
+  /// **'At this task\'s reminder times, play a random ringtone. The notification can stop the current alarm.'**
+  String get enableAlarmHint;
+
+  /// No description provided for @taskAlarmPlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Task ringtone playlist'**
+  String get taskAlarmPlaylist;
+
+  /// No description provided for @taskAlarmUsesGlobalPlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses the global playlist when no task ringtones are configured'**
+  String get taskAlarmUsesGlobalPlaylist;
+
+  /// No description provided for @useGlobalAlarmPlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Use global playlist'**
+  String get useGlobalAlarmPlaylist;
 }
 
 class _AppLocalizationsDelegate

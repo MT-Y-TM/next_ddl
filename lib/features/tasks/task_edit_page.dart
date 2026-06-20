@@ -4,6 +4,8 @@ import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
+import '../../models/alarm_audio_item.dart';
+import '../../services/alarm_audio_picker_service.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/locale_utils.dart';
 import '../../utils/milestone_utils.dart';
@@ -25,6 +27,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   late List<Milestone> _milestones;
   late List<int> _reminders;
   late bool _notificationsEnabled;
+  late bool _alarmEnabled;
+  late List<AlarmAudioItem> _alarmAudioItemsOverride;
 
   @override
   void initState() {
@@ -40,6 +44,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     _milestones = [...(task?.milestones ?? const [])];
     _reminders = [...(task?.reminderOffsetsSeconds ?? const [0])];
     _notificationsEnabled = task?.notificationsEnabled ?? true;
+    _alarmEnabled = task?.alarmEnabled ?? false;
+    _alarmAudioItemsOverride = [...(task?.alarmAudioItemsOverride ?? const [])];
   }
 
   @override
@@ -98,6 +104,67 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
             title: Text(l10n.enableNotifications),
             subtitle: Text(l10n.enableNotificationsHint),
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _alarmEnabled,
+            onChanged: (value) {
+              setState(() {
+                _alarmEnabled = value;
+              });
+            },
+            title: Text(l10n.enableAlarm),
+            subtitle: Text(l10n.enableAlarmHint),
+          ),
+          if (_alarmEnabled) ...[
+            const SizedBox(height: 8),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.library_music_outlined),
+                    title: Text(l10n.taskAlarmPlaylist),
+                    subtitle: Text(
+                      _alarmAudioItemsOverride.isEmpty
+                          ? l10n.taskAlarmUsesGlobalPlaylist
+                          : l10n.alarmAudioCount(_alarmAudioItemsOverride.length),
+                    ),
+                    trailing: FilledButton.tonalIcon(
+                      onPressed: _pickTaskAlarmAudio,
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.addAlarmAudio),
+                    ),
+                  ),
+                  for (final item in _alarmAudioItemsOverride)
+                    ListTile(
+                      dense: true,
+                      title: Text(item.displayName),
+                      subtitle: Text(item.uri, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      trailing: IconButton(
+                        tooltip: l10n.delete,
+                        onPressed: () {
+                          setState(() {
+                            _alarmAudioItemsOverride.remove(item);
+                          });
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ),
+                  if (_alarmAudioItemsOverride.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _alarmAudioItemsOverride.clear();
+                          });
+                        },
+                        child: Text(l10n.useGlobalAlarmPlaylist),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           _SectionHeader(
             title: l10n.milestones,
@@ -424,6 +491,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
         ..sort((left, right) => left.dueAtUtc.compareTo(right.dueAtUtc)),
       reminderOffsetsSeconds: _reminders.toSet().toList()..sort(),
       notificationsEnabled: _notificationsEnabled,
+      alarmEnabled: _alarmEnabled,
+      alarmAudioItemsOverride: _alarmAudioItemsOverride,
     );
 
     if (_notificationsEnabled) {
@@ -441,6 +510,16 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickTaskAlarmAudio() async {
+    final picked = await ref.read(alarmAudioPickerServiceProvider).pickAudioItems();
+    if (picked.isEmpty) {
+      return;
+    }
+    setState(() {
+      _alarmAudioItemsOverride = [..._alarmAudioItemsOverride, ...picked];
+    });
   }
 
   Future<DateTime?> _pickDateTime(DateTime initialValue) async {

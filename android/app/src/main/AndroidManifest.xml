@@ -4,6 +4,10 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:label="Next DDL"
@@ -33,6 +37,9 @@
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver
             android:exported="false"
+            android:name=".NextDdlAlarmReceiver" />
+        <receiver
+            android:exported="false"
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -41,6 +48,11 @@
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".NextDdlAlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <meta-data
             android:name="flutterEmbedding"

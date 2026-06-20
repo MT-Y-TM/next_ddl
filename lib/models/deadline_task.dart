@@ -1,3 +1,4 @@
+import 'alarm_audio_item.dart';
 import 'milestone.dart';
 
 class DeadlineTask {
@@ -12,6 +13,8 @@ class DeadlineTask {
     required this.milestones,
     required this.reminderOffsetsSeconds,
     required this.notificationsEnabled,
+    this.alarmEnabled = false,
+    this.alarmAudioItemsOverride = const [],
   });
 
   final String id;
@@ -24,6 +27,8 @@ class DeadlineTask {
   final List<Milestone> milestones;
   final List<int> reminderOffsetsSeconds;
   final bool notificationsEnabled;
+  final bool alarmEnabled;
+  final List<AlarmAudioItem> alarmAudioItemsOverride;
 
   DeadlineTask copyWith({
     String? id,
@@ -36,6 +41,8 @@ class DeadlineTask {
     List<Milestone>? milestones,
     List<int>? reminderOffsetsSeconds,
     bool? notificationsEnabled,
+    bool? alarmEnabled,
+    List<AlarmAudioItem>? alarmAudioItemsOverride,
   }) {
     return DeadlineTask(
       id: id ?? this.id,
@@ -49,6 +56,9 @@ class DeadlineTask {
       reminderOffsetsSeconds:
           reminderOffsetsSeconds ?? this.reminderOffsetsSeconds,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      alarmEnabled: alarmEnabled ?? this.alarmEnabled,
+      alarmAudioItemsOverride:
+          alarmAudioItemsOverride ?? this.alarmAudioItemsOverride,
     );
   }
 
@@ -63,6 +73,9 @@ class DeadlineTask {
         'milestones': milestones.map((item) => item.toJson()).toList(),
         'reminderOffsetsSeconds': reminderOffsetsSeconds,
         'notificationsEnabled': notificationsEnabled,
+        'alarmEnabled': alarmEnabled,
+        'alarmAudioItemsOverride':
+            alarmAudioItemsOverride.map((item) => item.toJson()).toList(),
       };
 
   factory DeadlineTask.fromJson(Map<String, dynamic> json) {
@@ -84,6 +97,13 @@ class DeadlineTask {
               .toList(),
       notificationsEnabled:
           (json['notificationsEnabled'] as bool?) ?? false,
+      alarmEnabled: (json['alarmEnabled'] as bool?) ?? false,
+      alarmAudioItemsOverride:
+          ((json['alarmAudioItemsOverride'] as List<dynamic>? ?? const [])
+                  .whereType<Map<String, dynamic>>())
+              .map(AlarmAudioItem.fromJson)
+              .where((item) => item.uri.trim().isNotEmpty)
+              .toList(),
     );
   }
 }

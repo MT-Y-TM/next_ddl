@@ -1,7 +1,7 @@
 name: next_ddl
 description: "Next DDL deadline app."
 publish_to: 'none'
-version: 1.1.7+1
+version: 1.1.8+1
 
 environment:
   sdk: ^3.10.1
@@ -17,6 +17,7 @@ dependencies:
   flutter_timezone: ^4.1.1
   file_picker: ^10.3.2
   package_info_plus: ^8.3.1
+  path: ^1.9.1
   path_provider: ^2.1.5
   shared_preferences: ^2.5.3
   timezone: ^0.10.1
@@ -24,6 +25,7 @@ dependencies:
   open_filex: ^4.7.0
   url_launcher: ^6.3.1
   window_manager: ^0.5.1
+  flex_color_picker: ^3.7.1
 
 dev_dependencies:
   flutter_test:

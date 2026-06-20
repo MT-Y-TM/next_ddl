@@ -602,4 +602,114 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get later => '稍后';
+
+  @override
+  String get themeSettings => '主题设置';
+
+  @override
+  String get themePrimaryColor => '主色';
+
+  @override
+  String get themeSolidBackground => '纯色背景';
+
+  @override
+  String get themeBackgroundSolid => '纯色';
+
+  @override
+  String get themeBackgroundGradient => '渐变';
+
+  @override
+  String get themeBackgroundImage => '图片背景';
+
+  @override
+  String get themeGradientStart => '渐变起点';
+
+  @override
+  String get themeGradientEnd => '渐变终点';
+
+  @override
+  String themeCornerRadius(int value) {
+    return '控件圆角：$value';
+  }
+
+  @override
+  String get themeNoBackgroundImage => '还没有选择背景图片';
+
+  @override
+  String get themeBackgroundImageReady => '背景图片已设置';
+
+  @override
+  String get themeEditBackgroundImage => '编辑背景图片';
+
+  @override
+  String get themeImageScale => '缩放';
+
+  @override
+  String get themeImageOffsetX => '水平位置';
+
+  @override
+  String get themeImageOffsetY => '垂直位置';
+
+  @override
+  String get themeImageOverlay => '遮罩强度';
+
+  @override
+  String get themeImageBlur => '模糊强度';
+
+  @override
+  String get themeRotateImage => '旋转 90 度';
+
+  @override
+  String get alarmSettings => '闹钟设置';
+
+  @override
+  String get alarmAndroidHint =>
+      'Android 会使用后台前台服务在提醒时间响铃，并可在通知栏停止。本功能受 MIUI 后台和精确闹钟权限影响。';
+
+  @override
+  String get alarmWindowsHint => 'Windows 端当前只保留普通通知，不支持后台自动响铃。';
+
+  @override
+  String get enableAlarmFeature => '启用闹钟能力';
+
+  @override
+  String get enableAlarmFeatureHint => '启用后，已开启闹钟的任务会在提醒时间播放铃声。';
+
+  @override
+  String get globalAlarmPlaylist => '全局铃声播放列表';
+
+  @override
+  String get addAlarmAudio => '添加铃声';
+
+  @override
+  String alarmAudioCount(int count) {
+    return '$count 个铃声';
+  }
+
+  @override
+  String get exactAlarmPermission => '精确闹钟权限';
+
+  @override
+  String get exactAlarmPermissionGranted => '已允许精确调度，后台响铃会更准时。';
+
+  @override
+  String get exactAlarmPermissionMissing => '未允许精确调度，后台响铃可能延迟或失败。';
+
+  @override
+  String get openAlarmPermission => '打开权限';
+
+  @override
+  String get enableAlarm => '启用闹钟响铃';
+
+  @override
+  String get enableAlarmHint => '到达该任务的提醒时间时播放随机铃声，通知栏可停止本次响铃。';
+
+  @override
+  String get taskAlarmPlaylist => '任务铃声播放列表';
+
+  @override
+  String get taskAlarmUsesGlobalPlaylist => '未配置任务铃声时使用全局播放列表';
+
+  @override
+  String get useGlobalAlarmPlaylist => '改用全局播放列表';
 }

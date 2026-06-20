@@ -622,4 +622,120 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get later => 'Later';
+
+  @override
+  String get themeSettings => 'Theme';
+
+  @override
+  String get themePrimaryColor => 'Primary color';
+
+  @override
+  String get themeSolidBackground => 'Solid background';
+
+  @override
+  String get themeBackgroundSolid => 'Solid';
+
+  @override
+  String get themeBackgroundGradient => 'Gradient';
+
+  @override
+  String get themeBackgroundImage => 'Image background';
+
+  @override
+  String get themeGradientStart => 'Gradient start';
+
+  @override
+  String get themeGradientEnd => 'Gradient end';
+
+  @override
+  String themeCornerRadius(int value) {
+    return 'Control radius: $value';
+  }
+
+  @override
+  String get themeNoBackgroundImage => 'No background image selected';
+
+  @override
+  String get themeBackgroundImageReady => 'Background image is set';
+
+  @override
+  String get themeEditBackgroundImage => 'Edit background image';
+
+  @override
+  String get themeImageScale => 'Scale';
+
+  @override
+  String get themeImageOffsetX => 'Horizontal position';
+
+  @override
+  String get themeImageOffsetY => 'Vertical position';
+
+  @override
+  String get themeImageOverlay => 'Overlay strength';
+
+  @override
+  String get themeImageBlur => 'Blur strength';
+
+  @override
+  String get themeRotateImage => 'Rotate 90 degrees';
+
+  @override
+  String get alarmSettings => 'Alarm settings';
+
+  @override
+  String get alarmAndroidHint =>
+      'Android uses a foreground service to ring at reminder times and can be stopped from the notification shade. MIUI background and exact alarm permissions can affect reliability.';
+
+  @override
+  String get alarmWindowsHint =>
+      'Windows currently keeps standard notifications only. Background alarm playback is not supported.';
+
+  @override
+  String get enableAlarmFeature => 'Enable alarm capability';
+
+  @override
+  String get enableAlarmFeatureHint =>
+      'When enabled, tasks with alarm ringing turned on can play audio at reminder times.';
+
+  @override
+  String get globalAlarmPlaylist => 'Global ringtone playlist';
+
+  @override
+  String get addAlarmAudio => 'Add ringtone';
+
+  @override
+  String alarmAudioCount(int count) {
+    return '$count ringtone(s)';
+  }
+
+  @override
+  String get exactAlarmPermission => 'Exact alarm permission';
+
+  @override
+  String get exactAlarmPermissionGranted =>
+      'Exact scheduling is allowed, so background alarms can ring more reliably.';
+
+  @override
+  String get exactAlarmPermissionMissing =>
+      'Exact scheduling is not allowed. Background alarms may be delayed or fail.';
+
+  @override
+  String get openAlarmPermission => 'Open permission';
+
+  @override
+  String get enableAlarm => 'Enable alarm ringing';
+
+  @override
+  String get enableAlarmHint =>
+      'At this task\'s reminder times, play a random ringtone. The notification can stop the current alarm.';
+
+  @override
+  String get taskAlarmPlaylist => 'Task ringtone playlist';
+
+  @override
+  String get taskAlarmUsesGlobalPlaylist =>
+      'Uses the global playlist when no task ringtones are configured';
+
+  @override
+  String get useGlobalAlarmPlaylist => 'Use global playlist';
 }

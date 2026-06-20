@@ -81,12 +81,16 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   @override
   Widget build(BuildContext context) {
     final localePreference = ref.watch(localePreferenceProvider);
+    final themeSettings = ref.watch(themeSettingsProvider);
     return MaterialApp(
       navigatorKey: _navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
-      theme: buildNextDdlTheme(),
-      darkTheme: buildNextDdlTheme(brightness: Brightness.dark),
+      theme: buildNextDdlTheme(settings: themeSettings),
+      darkTheme: buildNextDdlTheme(
+        brightness: Brightness.dark,
+        settings: themeSettings,
+      ),
       themeMode: ThemeMode.system,
       locale: resolvePreferredLocale(localePreference),
       supportedLocales: AppLocalizations.supportedLocales,
@@ -96,6 +100,10 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      builder: (context, child) => NextDdlBackground(
+        settings: themeSettings,
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: const TaskListPage(),
     );
   }

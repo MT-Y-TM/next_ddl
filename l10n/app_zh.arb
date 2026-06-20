@@ -327,5 +327,54 @@
       "value": {}
     }
   },
-  "later": "稍后"
+  "later": "稍后",
+  "themeSettings": "主题设置",
+  "themePrimaryColor": "主色",
+  "themeSolidBackground": "纯色背景",
+  "themeBackgroundSolid": "纯色",
+  "themeBackgroundGradient": "渐变",
+  "themeBackgroundImage": "图片背景",
+  "themeGradientStart": "渐变起点",
+  "themeGradientEnd": "渐变终点",
+  "themeCornerRadius": "控件圆角：{value}",
+  "@themeCornerRadius": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "themeNoBackgroundImage": "还没有选择背景图片",
+  "themeBackgroundImageReady": "背景图片已设置",
+  "themeEditBackgroundImage": "编辑背景图片",
+  "themeImageScale": "缩放",
+  "themeImageOffsetX": "水平位置",
+  "themeImageOffsetY": "垂直位置",
+  "themeImageOverlay": "遮罩强度",
+  "themeImageBlur": "模糊强度",
+  "themeRotateImage": "旋转 90 度",
+  "alarmSettings": "闹钟设置",
+  "alarmAndroidHint": "Android 会使用后台前台服务在提醒时间响铃，并可在通知栏停止。本功能受 MIUI 后台和精确闹钟权限影响。",
+  "alarmWindowsHint": "Windows 端当前只保留普通通知，不支持后台自动响铃。",
+  "enableAlarmFeature": "启用闹钟能力",
+  "enableAlarmFeatureHint": "启用后，已开启闹钟的任务会在提醒时间播放铃声。",
+  "globalAlarmPlaylist": "全局铃声播放列表",
+  "addAlarmAudio": "添加铃声",
+  "alarmAudioCount": "{count} 个铃声",
+  "@alarmAudioCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exactAlarmPermission": "精确闹钟权限",
+  "exactAlarmPermissionGranted": "已允许精确调度，后台响铃会更准时。",
+  "exactAlarmPermissionMissing": "未允许精确调度，后台响铃可能延迟或失败。",
+  "openAlarmPermission": "打开权限",
+  "enableAlarm": "启用闹钟响铃",
+  "enableAlarmHint": "到达该任务的提醒时间时播放随机铃声，通知栏可停止本次响铃。",
+  "taskAlarmPlaylist": "任务铃声播放列表",
+  "taskAlarmUsesGlobalPlaylist": "未配置任务铃声时使用全局播放列表",
+  "useGlobalAlarmPlaylist": "改用全局播放列表"
 }

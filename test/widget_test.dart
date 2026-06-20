@@ -11,15 +11,21 @@ import 'package:next_ddl/features/tasks/task_list_page.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
 import 'package:next_ddl/features/update/app_update_controller.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
+import 'package:next_ddl/models/alarm_audio_item.dart';
+import 'package:next_ddl/models/app_alarm_settings.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
+import 'package:next_ddl/models/app_theme_settings.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
 import 'package:next_ddl/models/update_release.dart';
+import 'package:next_ddl/services/alarm_audio_picker_service.dart';
+import 'package:next_ddl/services/alarm_scheduler.dart';
 import 'package:next_ddl/services/app_info_service.dart';
 import 'package:next_ddl/services/app_update_service.dart';
 import 'package:next_ddl/services/deadline_repository.dart';
 import 'package:next_ddl/services/file_export_service.dart';
 import 'package:next_ddl/services/notification_scheduler.dart';
+import 'package:next_ddl/services/theme_asset_service.dart';
 import 'package:next_ddl/services/timezone_service.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -218,10 +224,49 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
 
+    await tester.scrollUntilVisible(
+      find.text('Language'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Language'), findsOneWidget);
     expect(find.text('Notification time unit'), findsOneWidget);
     expect(find.text('Android persistent notification'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Updates'),
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Updates'), findsOneWidget);
+  });
+
+  testWidgets('settings page shows theme and alarm controls', (tester) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+      themeSettings: AppThemeSettings.defaults().copyWith(cornerRadius: 12),
+    );
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Theme'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('Theme'), findsOneWidget);
+    expect(find.textContaining('Control radius: 12'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Alarm settings'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Alarm settings'), findsOneWidget);
+    expect(find.text('Global ringtone playlist'), findsOneWidget);
   });
 
   testWidgets('settings page checks updates and shows up-to-date state', (
@@ -489,10 +534,18 @@ void main() {
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('语言'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('语言'), findsOneWidget);
-    await tester.tap(find.byType(DropdownButton<AppLocalePreference>).first);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('English').last);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SettingsPage)),
+    );
+    await container
+        .read(tasksControllerProvider.notifier)
+        .setPreferredLocale(AppLocalePreference.en);
     await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsOneWidget);
@@ -509,6 +562,11 @@ void main() {
             )),
           ),
           notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+          alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
+          alarmAudioPickerServiceProvider.overrideWithValue(
+            _FakeAlarmAudioPickerService(),
+          ),
+          themeAssetServiceProvider.overrideWithValue(_FakeThemeAssetService()),
           timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
           fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
           appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
@@ -588,6 +646,11 @@ Widget _buildApp(
     overrides: [
       deadlineRepositoryProvider.overrideWithValue(_MemoryRepository(snapshot)),
       notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+      alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
+      alarmAudioPickerServiceProvider.overrideWithValue(
+        _FakeAlarmAudioPickerService(),
+      ),
+      themeAssetServiceProvider.overrideWithValue(_FakeThemeAssetService()),
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
@@ -608,6 +671,11 @@ Widget _buildSettingsApp(
     overrides: [
       deadlineRepositoryProvider.overrideWithValue(_MemoryRepository(snapshot)),
       notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
+      alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
+      alarmAudioPickerServiceProvider.overrideWithValue(
+        _FakeAlarmAudioPickerService(),
+      ),
+      themeAssetServiceProvider.overrideWithValue(_FakeThemeAssetService()),
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
@@ -679,6 +747,50 @@ class _FakeNotifications implements NotificationScheduler {
     DeadlineTask task, {
     required AppLocalePreference localePreference,
   }) async {}
+}
+
+class _FakeAlarmScheduler implements AlarmScheduler {
+  int syncCount = 0;
+
+  @override
+  Future<bool> canScheduleExactAlarms() async => true;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> openExactAlarmSettings() async {}
+
+  @override
+  Future<void> removeAll() async {}
+
+  @override
+  Future<void> removeTask(String taskId) async {}
+
+  @override
+  Future<void> stopCurrentAlarm() async {}
+
+  @override
+  Future<void> syncAlarms({
+    required AppAlarmSettings settings,
+    required List<DeadlineTask> tasks,
+    required AppLocalePreference localePreference,
+  }) async {
+    syncCount++;
+  }
+}
+
+class _FakeAlarmAudioPickerService implements AlarmAudioPickerService {
+  @override
+  Future<List<AlarmAudioItem>> pickAudioItems() async => const [];
+}
+
+class _FakeThemeAssetService implements ThemeAssetService {
+  @override
+  Future<void> deleteBackgroundImage(String? path) async {}
+
+  @override
+  Future<String?> pickAndCopyBackgroundImage({String? oldPath}) async => null;
 }
 
 class _FakeTimezoneService extends DeviceTimezoneService {

@@ -1,3 +1,5 @@
+import 'app_alarm_settings.dart';
+import 'app_theme_settings.dart';
 import 'deadline_task.dart';
 
 enum AppLocalePreference {
@@ -42,6 +44,8 @@ class AppSnapshot {
     this.persistentNotificationEnabled = false,
     this.preferredLocale = AppLocalePreference.system,
     this.persistentNotificationTimeUnit = PersistentNotificationTimeUnit.day,
+    this.themeSettings = const AppThemeSettings(),
+    this.alarmSettings = const AppAlarmSettings(),
   });
 
   final int schemaVersion;
@@ -50,6 +54,8 @@ class AppSnapshot {
   final bool persistentNotificationEnabled;
   final AppLocalePreference preferredLocale;
   final PersistentNotificationTimeUnit persistentNotificationTimeUnit;
+  final AppThemeSettings themeSettings;
+  final AppAlarmSettings alarmSettings;
 
   factory AppSnapshot.empty() {
     return AppSnapshot(
@@ -59,6 +65,8 @@ class AppSnapshot {
       persistentNotificationEnabled: false,
       preferredLocale: AppLocalePreference.system,
       persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      themeSettings: AppThemeSettings.defaults(),
+      alarmSettings: AppAlarmSettings.defaults(),
     );
   }
 
@@ -69,6 +77,8 @@ class AppSnapshot {
     bool? persistentNotificationEnabled,
     AppLocalePreference? preferredLocale,
     PersistentNotificationTimeUnit? persistentNotificationTimeUnit,
+    AppThemeSettings? themeSettings,
+    AppAlarmSettings? alarmSettings,
   }) {
     return AppSnapshot(
       schemaVersion: schemaVersion ?? this.schemaVersion,
@@ -79,6 +89,8 @@ class AppSnapshot {
       preferredLocale: preferredLocale ?? this.preferredLocale,
       persistentNotificationTimeUnit:
           persistentNotificationTimeUnit ?? this.persistentNotificationTimeUnit,
+      themeSettings: themeSettings ?? this.themeSettings,
+      alarmSettings: alarmSettings ?? this.alarmSettings,
     );
   }
 
@@ -89,6 +101,8 @@ class AppSnapshot {
         'persistentNotificationEnabled': persistentNotificationEnabled,
         'preferredLocaleTag': preferredLocale.tag,
         'persistentNotificationTimeUnit': persistentNotificationTimeUnit.value,
+        'themeSettings': themeSettings.toJson(),
+        'alarmSettings': alarmSettings.toJson(),
       };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> json) {
@@ -111,6 +125,12 @@ class AppSnapshot {
           PersistentNotificationTimeUnit.fromValue(
             json['persistentNotificationTimeUnit'] as String?,
           ),
+      themeSettings: AppThemeSettings.fromJson(
+        json['themeSettings'] as Map<String, dynamic>?,
+      ),
+      alarmSettings: AppAlarmSettings.fromJson(
+        json['alarmSettings'] as Map<String, dynamic>?,
+      ),
     );
   }
 }

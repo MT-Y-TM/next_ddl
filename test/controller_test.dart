@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
+import 'package:next_ddl/models/app_alarm_settings.dart';
+import 'package:next_ddl/services/alarm_scheduler.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
@@ -39,6 +41,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -62,6 +65,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -103,6 +107,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -137,6 +142,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -170,6 +176,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -234,6 +241,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -285,6 +293,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         deadlineRepositoryProvider.overrideWithValue(repository),
+        alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
         notificationSchedulerProvider.overrideWithValue(notifications),
         timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       ],
@@ -376,6 +385,40 @@ class _FakeNotificationScheduler implements NotificationScheduler {
   }
 }
 
+class _FakeAlarmScheduler implements AlarmScheduler {
+  int syncCount = 0;
+  int removeAllCount = 0;
+
+  @override
+  Future<bool> canScheduleExactAlarms() async => true;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> openExactAlarmSettings() async {}
+
+  @override
+  Future<void> removeAll() async {
+    removeAllCount++;
+  }
+
+  @override
+  Future<void> removeTask(String taskId) async {}
+
+  @override
+  Future<void> stopCurrentAlarm() async {}
+
+  @override
+  Future<void> syncAlarms({
+    required AppAlarmSettings settings,
+    required List<DeadlineTask> tasks,
+    required AppLocalePreference localePreference,
+  }) async {
+    syncCount++;
+  }
+}
+
 class _FakeTimezoneService extends DeviceTimezoneService {
   String _timezoneId = 'Asia/Shanghai';
 
@@ -419,3 +462,6 @@ class _FakeTimezoneService extends DeviceTimezoneService {
     return true;
   }
 }
+
+
+

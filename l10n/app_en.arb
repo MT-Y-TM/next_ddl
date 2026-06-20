@@ -327,5 +327,54 @@
       "value": {}
     }
   },
-  "later": "Later"
+  "later": "Later",
+  "themeSettings": "Theme",
+  "themePrimaryColor": "Primary color",
+  "themeSolidBackground": "Solid background",
+  "themeBackgroundSolid": "Solid",
+  "themeBackgroundGradient": "Gradient",
+  "themeBackgroundImage": "Image background",
+  "themeGradientStart": "Gradient start",
+  "themeGradientEnd": "Gradient end",
+  "themeCornerRadius": "Control radius: {value}",
+  "@themeCornerRadius": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "themeNoBackgroundImage": "No background image selected",
+  "themeBackgroundImageReady": "Background image is set",
+  "themeEditBackgroundImage": "Edit background image",
+  "themeImageScale": "Scale",
+  "themeImageOffsetX": "Horizontal position",
+  "themeImageOffsetY": "Vertical position",
+  "themeImageOverlay": "Overlay strength",
+  "themeImageBlur": "Blur strength",
+  "themeRotateImage": "Rotate 90 degrees",
+  "alarmSettings": "Alarm settings",
+  "alarmAndroidHint": "Android uses a foreground service to ring at reminder times and can be stopped from the notification shade. MIUI background and exact alarm permissions can affect reliability.",
+  "alarmWindowsHint": "Windows currently keeps standard notifications only. Background alarm playback is not supported.",
+  "enableAlarmFeature": "Enable alarm capability",
+  "enableAlarmFeatureHint": "When enabled, tasks with alarm ringing turned on can play audio at reminder times.",
+  "globalAlarmPlaylist": "Global ringtone playlist",
+  "addAlarmAudio": "Add ringtone",
+  "alarmAudioCount": "{count} ringtone(s)",
+  "@alarmAudioCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exactAlarmPermission": "Exact alarm permission",
+  "exactAlarmPermissionGranted": "Exact scheduling is allowed, so background alarms can ring more reliably.",
+  "exactAlarmPermissionMissing": "Exact scheduling is not allowed. Background alarms may be delayed or fail.",
+  "openAlarmPermission": "Open permission",
+  "enableAlarm": "Enable alarm ringing",
+  "enableAlarmHint": "At this task's reminder times, play a random ringtone. The notification can stop the current alarm.",
+  "taskAlarmPlaylist": "Task ringtone playlist",
+  "taskAlarmUsesGlobalPlaylist": "Uses the global playlist when no task ringtones are configured",
+  "useGlobalAlarmPlaylist": "Use global playlist"
 }

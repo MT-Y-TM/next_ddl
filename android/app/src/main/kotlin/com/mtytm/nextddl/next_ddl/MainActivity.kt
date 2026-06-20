@@ -10,7 +10,8 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     companion object {
-        private const val CHANNEL = "next_ddl/app_update"
+        private const val UPDATE_CHANNEL = "next_ddl/app_update"
+        private const val ALARM_CHANNEL = "next_ddl/alarm"
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -18,7 +19,7 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
-            CHANNEL,
+            UPDATE_CHANNEL,
         ).setMethodCallHandler { call, result ->
             when (call.method) {
                 "canRequestPackageInstalls" -> {
@@ -39,6 +40,48 @@ class MainActivity : FlutterActivity() {
                         )
                         startActivity(intent)
                     }
+                    result.success(null)
+                }
+
+                else -> result.notImplemented()
+            }
+        }
+
+        val alarmScheduler = NextDdlAlarmScheduler(applicationContext)
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            ALARM_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "canScheduleExactAlarms" -> {
+                    result.success(alarmScheduler.canScheduleExactAlarms())
+                }
+
+                "openExactAlarmSettings" -> {
+                    alarmScheduler.openExactAlarmSettings()
+                    result.success(null)
+                }
+
+                "syncAlarms" -> {
+                    val settings = call.argument<Map<*, *>>("settings") ?: emptyMap<Any, Any>()
+                    val tasks = call.argument<List<Map<*, *>>>("tasks") ?: emptyList()
+                    alarmScheduler.syncAlarms(settings, tasks)
+                    result.success(null)
+                }
+
+                "removeTaskAlarms" -> {
+                    val taskId = call.argument<String>("taskId") ?: ""
+                    alarmScheduler.removeTask(taskId)
+                    result.success(null)
+                }
+
+                "removeAllAlarms" -> {
+                    alarmScheduler.removeAll()
+                    result.success(null)
+                }
+
+                "stopCurrentAlarm" -> {
+                    alarmScheduler.stopCurrentAlarm()
                     result.success(null)
                 }
 

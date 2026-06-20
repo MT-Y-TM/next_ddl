@@ -611,4 +611,119 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get later => 'あとで';
+
+  @override
+  String get themeSettings => 'テーマ設定';
+
+  @override
+  String get themePrimaryColor => 'メインカラー';
+
+  @override
+  String get themeSolidBackground => '単色背景';
+
+  @override
+  String get themeBackgroundSolid => '単色';
+
+  @override
+  String get themeBackgroundGradient => 'グラデーション';
+
+  @override
+  String get themeBackgroundImage => '画像背景';
+
+  @override
+  String get themeGradientStart => 'グラデーション開始';
+
+  @override
+  String get themeGradientEnd => 'グラデーション終了';
+
+  @override
+  String themeCornerRadius(int value) {
+    return 'コントロールの角丸：$value';
+  }
+
+  @override
+  String get themeNoBackgroundImage => '背景画像が選択されていません';
+
+  @override
+  String get themeBackgroundImageReady => '背景画像が設定されています';
+
+  @override
+  String get themeEditBackgroundImage => '背景画像を編集';
+
+  @override
+  String get themeImageScale => '拡大率';
+
+  @override
+  String get themeImageOffsetX => '横位置';
+
+  @override
+  String get themeImageOffsetY => '縦位置';
+
+  @override
+  String get themeImageOverlay => 'オーバーレイ強度';
+
+  @override
+  String get themeImageBlur => 'ぼかし強度';
+
+  @override
+  String get themeRotateImage => '90 度回転';
+
+  @override
+  String get alarmSettings => 'アラーム設定';
+
+  @override
+  String get alarmAndroidHint =>
+      'Android ではリマインダー時刻にフォアグラウンドサービスで鳴動し、通知から停止できます。MIUI のバックグラウンド制限と正確なアラーム権限の影響を受けます。';
+
+  @override
+  String get alarmWindowsHint =>
+      'Windows では現在、通常通知のみ対応しています。バックグラウンドでのアラーム再生は未対応です。';
+
+  @override
+  String get enableAlarmFeature => 'アラーム機能を有効化';
+
+  @override
+  String get enableAlarmFeatureHint =>
+      '有効にすると、アラーム鳴動を有効にしたタスクがリマインダー時刻に音声を再生できます。';
+
+  @override
+  String get globalAlarmPlaylist => '共通着信音プレイリスト';
+
+  @override
+  String get addAlarmAudio => '着信音を追加';
+
+  @override
+  String alarmAudioCount(int count) {
+    return '$count 件の着信音';
+  }
+
+  @override
+  String get exactAlarmPermission => '正確なアラーム権限';
+
+  @override
+  String get exactAlarmPermissionGranted =>
+      '正確なスケジュールが許可されています。バックグラウンドアラームがより確実に鳴ります。';
+
+  @override
+  String get exactAlarmPermissionMissing =>
+      '正確なスケジュールが許可されていません。バックグラウンドアラームが遅延または失敗する可能性があります。';
+
+  @override
+  String get openAlarmPermission => '権限を開く';
+
+  @override
+  String get enableAlarm => 'アラーム鳴動を有効化';
+
+  @override
+  String get enableAlarmHint =>
+      'このタスクのリマインダー時刻にランダムな着信音を再生します。通知から今回の鳴動を停止できます。';
+
+  @override
+  String get taskAlarmPlaylist => 'タスク着信音プレイリスト';
+
+  @override
+  String get taskAlarmUsesGlobalPlaylist => 'タスク着信音が未設定の場合は共通プレイリストを使用します';
+
+  @override
+  String get useGlobalAlarmPlaylist => '共通プレイリストを使う';
 }

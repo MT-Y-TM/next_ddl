@@ -327,5 +327,54 @@
       "value": {}
     }
   },
-  "later": "あとで"
+  "later": "あとで",
+  "themeSettings": "テーマ設定",
+  "themePrimaryColor": "メインカラー",
+  "themeSolidBackground": "単色背景",
+  "themeBackgroundSolid": "単色",
+  "themeBackgroundGradient": "グラデーション",
+  "themeBackgroundImage": "画像背景",
+  "themeGradientStart": "グラデーション開始",
+  "themeGradientEnd": "グラデーション終了",
+  "themeCornerRadius": "コントロールの角丸：{value}",
+  "@themeCornerRadius": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "themeNoBackgroundImage": "背景画像が選択されていません",
+  "themeBackgroundImageReady": "背景画像が設定されています",
+  "themeEditBackgroundImage": "背景画像を編集",
+  "themeImageScale": "拡大率",
+  "themeImageOffsetX": "横位置",
+  "themeImageOffsetY": "縦位置",
+  "themeImageOverlay": "オーバーレイ強度",
+  "themeImageBlur": "ぼかし強度",
+  "themeRotateImage": "90 度回転",
+  "alarmSettings": "アラーム設定",
+  "alarmAndroidHint": "Android ではリマインダー時刻にフォアグラウンドサービスで鳴動し、通知から停止できます。MIUI のバックグラウンド制限と正確なアラーム権限の影響を受けます。",
+  "alarmWindowsHint": "Windows では現在、通常通知のみ対応しています。バックグラウンドでのアラーム再生は未対応です。",
+  "enableAlarmFeature": "アラーム機能を有効化",
+  "enableAlarmFeatureHint": "有効にすると、アラーム鳴動を有効にしたタスクがリマインダー時刻に音声を再生できます。",
+  "globalAlarmPlaylist": "共通着信音プレイリスト",
+  "addAlarmAudio": "着信音を追加",
+  "alarmAudioCount": "{count} 件の着信音",
+  "@alarmAudioCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exactAlarmPermission": "正確なアラーム権限",
+  "exactAlarmPermissionGranted": "正確なスケジュールが許可されています。バックグラウンドアラームがより確実に鳴ります。",
+  "exactAlarmPermissionMissing": "正確なスケジュールが許可されていません。バックグラウンドアラームが遅延または失敗する可能性があります。",
+  "openAlarmPermission": "権限を開く",
+  "enableAlarm": "アラーム鳴動を有効化",
+  "enableAlarmHint": "このタスクのリマインダー時刻にランダムな着信音を再生します。通知から今回の鳴動を停止できます。",
+  "taskAlarmPlaylist": "タスク着信音プレイリスト",
+  "taskAlarmUsesGlobalPlaylist": "タスク着信音が未設定の場合は共通プレイリストを使用します",
+  "useGlobalAlarmPlaylist": "共通プレイリストを使う"
 }
