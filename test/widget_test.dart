@@ -34,92 +34,96 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tz_data.initializeTimeZones();
 
-  testWidgets('home page defaults to in-progress tab and separates overdue tasks', (
+  testWidgets(
+    'home page defaults to in-progress tab and separates overdue tasks',
+    (tester) async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final snapshot = AppSnapshot(
+        schemaVersion: 1,
+        exportedAtUtc: now,
+        persistentNotificationEnabled: false,
+        preferredLocale: AppLocalePreference.zh,
+        persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+        tasks: [
+          DeadlineTask(
+            id: 'progress',
+            title: '进行中任务',
+            note: '',
+            timezoneId: 'Asia/Shanghai',
+            createdAtUtc: now,
+            updatedAtUtc: now,
+            finalDueAtUtc: now.add(const Duration(days: 2)),
+            milestones: const [],
+            reminderOffsetsSeconds: const [],
+            notificationsEnabled: false,
+          ),
+          DeadlineTask(
+            id: 'overdue',
+            title: '过期任务',
+            note: '',
+            timezoneId: 'Asia/Shanghai',
+            createdAtUtc: now,
+            updatedAtUtc: now,
+            finalDueAtUtc: now.subtract(const Duration(hours: 2)),
+            milestones: const [],
+            reminderOffsetsSeconds: const [],
+            notificationsEnabled: false,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(_buildApp(snapshot, now));
+      await tester.pumpAndSettle();
+
+      expect(find.text('进行中'), findsOneWidget);
+      expect(find.text('已过期'), findsOneWidget);
+      expect(find.text('进行中任务'), findsOneWidget);
+      expect(find.text('过期任务'), findsNothing);
+
+      await tester.tap(find.text('已过期'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('过期任务'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'final deadline label appears once and next milestone hides without milestones',
+    (tester) async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final snapshot = AppSnapshot(
+        schemaVersion: 1,
+        exportedAtUtc: now,
+        persistentNotificationEnabled: false,
+        preferredLocale: AppLocalePreference.zh,
+        persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+        tasks: [
+          DeadlineTask(
+            id: '1',
+            title: '论文终稿',
+            note: '',
+            timezoneId: 'Asia/Shanghai',
+            createdAtUtc: now,
+            updatedAtUtc: now,
+            finalDueAtUtc: now.add(const Duration(days: 2)),
+            milestones: const [],
+            reminderOffsetsSeconds: const [0],
+            notificationsEnabled: true,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(_buildApp(snapshot, now));
+      await tester.pumpAndSettle();
+
+      expect(find.text('最终截止'), findsOneWidget);
+      expect(find.text('下一个节点'), findsNothing);
+    },
+  );
+
+  testWidgets('task with milestones still shows next milestone', (
     tester,
   ) async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final snapshot = AppSnapshot(
-      schemaVersion: 1,
-      exportedAtUtc: now,
-      persistentNotificationEnabled: false,
-      preferredLocale: AppLocalePreference.zh,
-      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
-      tasks: [
-        DeadlineTask(
-          id: 'progress',
-          title: '进行中任务',
-          note: '',
-          timezoneId: 'Asia/Shanghai',
-          createdAtUtc: now,
-          updatedAtUtc: now,
-          finalDueAtUtc: now.add(const Duration(days: 2)),
-          milestones: const [],
-          reminderOffsetsSeconds: const [],
-          notificationsEnabled: false,
-        ),
-        DeadlineTask(
-          id: 'overdue',
-          title: '过期任务',
-          note: '',
-          timezoneId: 'Asia/Shanghai',
-          createdAtUtc: now,
-          updatedAtUtc: now,
-          finalDueAtUtc: now.subtract(const Duration(hours: 2)),
-          milestones: const [],
-          reminderOffsetsSeconds: const [],
-          notificationsEnabled: false,
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(_buildApp(snapshot, now));
-    await tester.pumpAndSettle();
-
-    expect(find.text('进行中'), findsOneWidget);
-    expect(find.text('已过期'), findsOneWidget);
-    expect(find.text('进行中任务'), findsOneWidget);
-    expect(find.text('过期任务'), findsNothing);
-
-    await tester.tap(find.text('已过期'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('过期任务'), findsOneWidget);
-  });
-
-  testWidgets('final deadline label appears once and next milestone hides without milestones', (
-    tester,
-  ) async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final snapshot = AppSnapshot(
-      schemaVersion: 1,
-      exportedAtUtc: now,
-      persistentNotificationEnabled: false,
-      preferredLocale: AppLocalePreference.zh,
-      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
-      tasks: [
-        DeadlineTask(
-          id: '1',
-          title: '论文终稿',
-          note: '',
-          timezoneId: 'Asia/Shanghai',
-          createdAtUtc: now,
-          updatedAtUtc: now,
-          finalDueAtUtc: now.add(const Duration(days: 2)),
-          milestones: const [],
-          reminderOffsetsSeconds: const [0],
-          notificationsEnabled: true,
-        ),
-      ],
-    );
-
-    await tester.pumpWidget(_buildApp(snapshot, now));
-    await tester.pumpAndSettle();
-
-    expect(find.text('最终截止'), findsOneWidget);
-    expect(find.text('下一个节点'), findsNothing);
-  });
-
-  testWidgets('task with milestones still shows next milestone', (tester) async {
     final now = DateTime.utc(2026, 1, 1, 8);
     final snapshot = AppSnapshot(
       schemaVersion: 1,
@@ -384,108 +388,113 @@ void main() {
       _buildSettingsApp(snapshot, updateService: updateService),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Clear cached installers'));
+    await tester.tap(
+      find.widgetWithText(OutlinedButton, 'Clear cached installers'),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Cleared 2 cached installer(s)'), findsOneWidget);
   });
 
-  testWidgets('settings page shows cached installer hint when reusable apk exists', (
-    tester,
-  ) async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final snapshot = AppSnapshot.empty().copyWith(
-      exportedAtUtc: now,
-      preferredLocale: AppLocalePreference.en,
-    );
-    final updateService = _FakeAppUpdateService(
-      release: UpdateRelease(
-        tagName: 'v1.1.8',
-        version: '1.1.8',
-        publishedAtUtc: now,
-        body: 'New build available.',
-        htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.8',
-        assets: const [],
-      ),
-      cachedInstaller: const CachedUpdateInstaller(
-        version: '1.1.8',
-        filePath: 'C:/temp/app-release-v1.1.8.apk',
-      ),
-    );
+  testWidgets(
+    'settings page shows cached installer hint when reusable apk exists',
+    (tester) async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final snapshot = AppSnapshot.empty().copyWith(
+        exportedAtUtc: now,
+        preferredLocale: AppLocalePreference.en,
+      );
+      final updateService = _FakeAppUpdateService(
+        release: UpdateRelease(
+          tagName: 'v1.1.8',
+          version: '1.1.8',
+          publishedAtUtc: now,
+          body: 'New build available.',
+          htmlUrl: 'https://github.com/MT-Y-TM/next_ddl/releases/tag/v1.1.8',
+          assets: const [],
+        ),
+        cachedInstaller: const CachedUpdateInstaller(
+          version: '1.1.8',
+          filePath: 'C:/temp/app-release-v1.1.8.apk',
+        ),
+      );
 
-    await tester.pumpWidget(
-      _buildSettingsApp(snapshot, updateService: updateService),
-    );
-    await tester.pumpAndSettle();
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(SettingsPage)),
-    );
-    await container
-        .read(appUpdateControllerProvider.notifier)
-        .checkForUpdate(userInitiated: true);
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _buildSettingsApp(snapshot, updateService: updateService),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SettingsPage)),
+      );
+      await container
+          .read(appUpdateControllerProvider.notifier)
+          .checkForUpdate(userInitiated: true);
+      await tester.pumpAndSettle();
 
-    expect(find.text('Using cached installer for 1.1.8'), findsOneWidget);
-  });
+      expect(find.text('Using cached installer for 1.1.8'), findsOneWidget);
+    },
+  );
 
-  testWidgets('settings page shows friendly message when no published release exists', (
-    tester,
-  ) async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final snapshot = AppSnapshot.empty().copyWith(
-      exportedAtUtc: now,
-      preferredLocale: AppLocalePreference.en,
-    );
-    final updateService = _FakeAppUpdateService(
-      error: const AppUpdateException(AppUpdateErrorType.noPublishedRelease),
-    );
+  testWidgets(
+    'settings page shows friendly message when no published release exists',
+    (tester) async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final snapshot = AppSnapshot.empty().copyWith(
+        exportedAtUtc: now,
+        preferredLocale: AppLocalePreference.en,
+      );
+      final updateService = _FakeAppUpdateService(
+        error: const AppUpdateException(AppUpdateErrorType.noPublishedRelease),
+      );
 
-    await tester.pumpWidget(
-      _buildSettingsApp(snapshot, updateService: updateService),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(FilledButton, 'Check for updates').first,
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _buildSettingsApp(snapshot, updateService: updateService),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Check for updates').first,
+      );
+      await tester.pumpAndSettle();
 
-    expect(
-      find.text('There is no published release available yet.'),
-      findsOneWidget,
-    );
-  });
+      expect(
+        find.text('There is no published release available yet.'),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('settings page timezone dialog shows localized names and iana ids', (
-    tester,
-  ) async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final snapshot = AppSnapshot(
-      schemaVersion: 1,
-      exportedAtUtc: now,
-      persistentNotificationEnabled: false,
-      preferredLocale: AppLocalePreference.en,
-      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
-      tasks: const [],
-    );
+  testWidgets(
+    'settings page timezone dialog shows localized names and iana ids',
+    (tester) async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final snapshot = AppSnapshot(
+        schemaVersion: 1,
+        exportedAtUtc: now,
+        persistentNotificationEnabled: false,
+        preferredLocale: AppLocalePreference.en,
+        persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+        tasks: const [],
+      );
 
-    await tester.pumpWidget(_buildApp(snapshot, now));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('App timezone'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('App timezone'));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_buildApp(snapshot, now));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('App timezone'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('App timezone'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Choose app timezone'), findsOneWidget);
-    expect(find.text('Shanghai'), findsOneWidget);
-    expect(find.text('Asia/Shanghai'), findsOneWidget);
-    expect(find.text('Buenos Aires (America / Argentina)'), findsOneWidget);
-    expect(find.text('America/Argentina/Buenos_Aires'), findsOneWidget);
-  });
+      expect(find.text('Choose app timezone'), findsOneWidget);
+      expect(find.text('Shanghai'), findsOneWidget);
+      expect(find.text('Asia/Shanghai'), findsOneWidget);
+      expect(find.text('Buenos Aires (America / Argentina)'), findsOneWidget);
+      expect(find.text('America/Argentina/Buenos_Aires'), findsOneWidget);
+    },
+  );
 
   testWidgets('timezone dialog search matches localized fallback names', (
     tester,
@@ -557,9 +566,11 @@ void main() {
       ProviderScope(
         overrides: [
           deadlineRepositoryProvider.overrideWithValue(
-            _MemoryRepository(AppSnapshot.empty().copyWith(
-              preferredLocale: AppLocalePreference.ja,
-            )),
+            _MemoryRepository(
+              AppSnapshot.empty().copyWith(
+                preferredLocale: AppLocalePreference.ja,
+              ),
+            ),
           ),
           notificationSchedulerProvider.overrideWithValue(_FakeNotifications()),
           alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
@@ -617,7 +628,9 @@ void main() {
       downloadBlocker: blocker,
     );
 
-    await tester.pumpWidget(_buildApp(snapshot, now, updateService: updateService));
+    await tester.pumpWidget(
+      _buildApp(snapshot, now, updateService: updateService),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('New version available'), findsOneWidget);
@@ -877,7 +890,9 @@ class _FakeAppUpdateService implements AppUpdateService {
   final Completer<void>? downloadBlocker;
 
   @override
-  Future<UpdateRelease?> checkForUpdate({required String currentVersion}) async {
+  Future<UpdateRelease?> checkForUpdate({
+    required String currentVersion,
+  }) async {
     if (error != null) {
       throw error!;
     }
@@ -923,5 +938,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.7';
+  Future<String> getVersionLabel() async => '1.1.9';
 }
