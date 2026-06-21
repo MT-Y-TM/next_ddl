@@ -273,6 +273,45 @@ void main() {
     expect(find.text('Global ringtone playlist'), findsOneWidget);
   });
 
+  testWidgets('background image editor opens as a full-screen control page', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot.empty().copyWith(
+      exportedAtUtc: now,
+      preferredLocale: AppLocalePreference.en,
+    );
+
+    await tester.pumpWidget(
+      _buildApp(
+        snapshot,
+        now,
+        themeAssetService: _FakeThemeAssetService(
+          pickedBackgroundPath: 'C:/next_ddl/missing_background.png',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Theme'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Image background'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('Edit background image'), findsOneWidget);
+    expect(find.text('Overlay strength'), findsWidgets);
+    expect(find.text('Blur strength'), findsWidgets);
+    expect(find.text('Rotate 90 degrees'), findsOneWidget);
+    expect(find.text('Reset image'), findsOneWidget);
+    expect(find.text('Save background'), findsOneWidget);
+  });
+
   testWidgets('settings page checks updates and shows up-to-date state', (
     tester,
   ) async {
@@ -654,6 +693,7 @@ Widget _buildApp(
   AppSnapshot snapshot,
   DateTime now, {
   AppUpdateService? updateService,
+  ThemeAssetService? themeAssetService,
 }) {
   return ProviderScope(
     overrides: [
@@ -663,7 +703,9 @@ Widget _buildApp(
       alarmAudioPickerServiceProvider.overrideWithValue(
         _FakeAlarmAudioPickerService(),
       ),
-      themeAssetServiceProvider.overrideWithValue(_FakeThemeAssetService()),
+      themeAssetServiceProvider.overrideWithValue(
+        themeAssetService ?? _FakeThemeAssetService(),
+      ),
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
@@ -799,11 +841,17 @@ class _FakeAlarmAudioPickerService implements AlarmAudioPickerService {
 }
 
 class _FakeThemeAssetService implements ThemeAssetService {
+  _FakeThemeAssetService({this.pickedBackgroundPath});
+
+  final String? pickedBackgroundPath;
+
   @override
   Future<void> deleteBackgroundImage(String? path) async {}
 
   @override
-  Future<String?> pickAndCopyBackgroundImage({String? oldPath}) async => null;
+  Future<String?> pickAndCopyBackgroundImage({String? oldPath}) async {
+    return pickedBackgroundPath;
+  }
 }
 
 class _FakeTimezoneService extends DeviceTimezoneService {

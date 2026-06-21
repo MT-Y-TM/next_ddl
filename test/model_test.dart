@@ -62,6 +62,7 @@ void main() {
         seedColorValue: 0xFF112233,
         cornerRadius: 14,
         backgroundMode: ThemeBackgroundMode.gradient,
+        imageRotationDegrees: 37,
       ),
       alarmSettings: const AppAlarmSettings(
         enabled: true,
@@ -94,6 +95,7 @@ void main() {
     );
     expect(decoded.themeSettings.cornerRadius, 14);
     expect(decoded.themeSettings.backgroundMode, ThemeBackgroundMode.gradient);
+    expect(decoded.themeSettings.imageRotationDegrees, 37);
     expect(decoded.alarmSettings.enabled, isTrue);
     expect(
       decoded.alarmSettings.globalAudioItems.single.uri,
@@ -116,6 +118,13 @@ void main() {
     expect(decoded.persistentNotificationEnabled, isFalse);
     expect(decoded.themeSettings.seedColorValue, 0xFF0E7490);
     expect(decoded.alarmSettings.enabled, isFalse);
+  });
+
+  test('legacy theme rotation quarter turns migrate to rotation degrees', () {
+    final decoded = AppThemeSettings.fromJson({'imageRotationQuarterTurns': 3});
+
+    expect(decoded.imageRotationDegrees, 270);
+    expect(decoded.imageRotationQuarterTurns, 3);
   });
 
   test('generate default milestones creates 25 50 75 markers', () {
@@ -208,7 +217,10 @@ void main() {
       notificationsEnabled: false,
     );
 
-    expect(resolveActiveDeadlinePoint(task, now), now.add(const Duration(hours: 6)));
+    expect(
+      resolveActiveDeadlinePoint(task, now),
+      now.add(const Duration(hours: 6)),
+    );
   });
 
   test('in progress and overdue tasks are grouped and sorted separately', () {
@@ -272,13 +284,16 @@ void main() {
     ];
 
     expect(
-      sortInProgressTasks(inProgressTasks(tasks, now), now)
-          .map((task) => task.id)
-          .toList(),
+      sortInProgressTasks(
+        inProgressTasks(tasks, now),
+        now,
+      ).map((task) => task.id).toList(),
       ['milestone_soon', 'final_soon'],
     );
     expect(
-      sortOverdueTasks(overdueTasks(tasks, now)).map((task) => task.id).toList(),
+      sortOverdueTasks(
+        overdueTasks(tasks, now),
+      ).map((task) => task.id).toList(),
       ['overdue_old', 'overdue_new'],
     );
     expect(resolveMostUrgentInProgressTask(tasks, now)?.id, 'milestone_soon');
@@ -308,54 +323,57 @@ void main() {
     expect(resolveMilestoneDisplayTitle('  '), '');
   });
 
-  test('persistent notification title prefers next milestone then task title', () {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final taskWithMilestone = DeadlineTask(
-      id: 'task_1',
-      title: '论文终稿',
-      note: '',
-      timezoneId: 'Asia/Shanghai',
-      createdAtUtc: now,
-      updatedAtUtc: now,
-      finalDueAtUtc: now.add(const Duration(days: 2)),
-      milestones: [
-        Milestone(
-          id: 'm1',
-          title: '阶段检查',
-          dueAtUtc: now.add(const Duration(hours: 2)),
-          source: MilestoneSource.manual,
-        ),
-      ],
-      reminderOffsetsSeconds: const [],
-      notificationsEnabled: false,
-    );
-    final taskWithoutMilestone = taskWithMilestone.copyWith(
-      milestones: const [],
-    );
-    final taskWithBlankMilestone = taskWithMilestone.copyWith(
-      milestones: [
-        Milestone(
-          id: 'm1',
-          title: '   ',
-          dueAtUtc: now.add(const Duration(hours: 2)),
-          source: MilestoneSource.manual,
-        ),
-      ],
-    );
+  test(
+    'persistent notification title prefers next milestone then task title',
+    () {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final taskWithMilestone = DeadlineTask(
+        id: 'task_1',
+        title: '论文终稿',
+        note: '',
+        timezoneId: 'Asia/Shanghai',
+        createdAtUtc: now,
+        updatedAtUtc: now,
+        finalDueAtUtc: now.add(const Duration(days: 2)),
+        milestones: [
+          Milestone(
+            id: 'm1',
+            title: '阶段检查',
+            dueAtUtc: now.add(const Duration(hours: 2)),
+            source: MilestoneSource.manual,
+          ),
+        ],
+        reminderOffsetsSeconds: const [],
+        notificationsEnabled: false,
+      );
+      final taskWithoutMilestone = taskWithMilestone.copyWith(
+        milestones: const [],
+      );
+      final taskWithBlankMilestone = taskWithMilestone.copyWith(
+        milestones: [
+          Milestone(
+            id: 'm1',
+            title: '   ',
+            dueAtUtc: now.add(const Duration(hours: 2)),
+            source: MilestoneSource.manual,
+          ),
+        ],
+      );
 
-    expect(
-      resolvePersistentNotificationTargetTitle(taskWithMilestone, now),
-      '阶段检查',
-    );
-    expect(
-      resolvePersistentNotificationTargetTitle(taskWithoutMilestone, now),
-      '论文终稿',
-    );
-    expect(
-      resolvePersistentNotificationTargetTitle(taskWithBlankMilestone, now),
-      '论文终稿',
-    );
-  });
+      expect(
+        resolvePersistentNotificationTargetTitle(taskWithMilestone, now),
+        '阶段检查',
+      );
+      expect(
+        resolvePersistentNotificationTargetTitle(taskWithoutMilestone, now),
+        '论文终稿',
+      );
+      expect(
+        resolvePersistentNotificationTargetTitle(taskWithBlankMilestone, now),
+        '论文终稿',
+      );
+    },
+  );
 
   test('timezone fallback labels are localized for zh en ja', () {
     expect(

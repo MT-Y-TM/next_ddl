@@ -1288,6 +1288,18 @@ abstract class AppLocalizations {
   /// **'Rotate 90 degrees'**
   String get themeRotateImage;
 
+  /// No description provided for @themeResetImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset image'**
+  String get themeResetImage;
+
+  /// No description provided for @themeSaveBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Save background'**
+  String get themeSaveBackground;
+
   /// No description provided for @alarmSettings.
   ///
   /// In en, this message translates to:

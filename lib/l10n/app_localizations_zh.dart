@@ -660,6 +660,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeRotateImage => '旋转 90 度';
 
   @override
+  String get themeResetImage => '重置参数';
+
+  @override
+  String get themeSaveBackground => '保存背景';
+
+  @override
   String get alarmSettings => '闹钟设置';
 
   @override

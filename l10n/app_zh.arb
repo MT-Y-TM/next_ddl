@@ -353,6 +353,8 @@
   "themeImageOverlay": "遮罩强度",
   "themeImageBlur": "模糊强度",
   "themeRotateImage": "旋转 90 度",
+  "themeResetImage": "重置参数",
+  "themeSaveBackground": "保存背景",
   "alarmSettings": "闹钟设置",
   "alarmAndroidHint": "Android 会使用后台前台服务在提醒时间响铃，并可在通知栏停止。本功能受 MIUI 后台和精确闹钟权限影响。",
   "alarmWindowsHint": "Windows 端当前只保留普通通知，不支持后台自动响铃。",

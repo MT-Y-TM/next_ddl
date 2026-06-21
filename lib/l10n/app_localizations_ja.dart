@@ -669,6 +669,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeRotateImage => '90 度回転';
 
   @override
+  String get themeResetImage => '画像パラメータをリセット';
+
+  @override
+  String get themeSaveBackground => '背景を保存';
+
+  @override
   String get alarmSettings => 'アラーム設定';
 
   @override

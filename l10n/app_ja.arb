@@ -353,6 +353,8 @@
   "themeImageOverlay": "オーバーレイ強度",
   "themeImageBlur": "ぼかし強度",
   "themeRotateImage": "90 度回転",
+  "themeResetImage": "画像パラメータをリセット",
+  "themeSaveBackground": "背景を保存",
   "alarmSettings": "アラーム設定",
   "alarmAndroidHint": "Android ではリマインダー時刻にフォアグラウンドサービスで鳴動し、通知から停止できます。MIUI のバックグラウンド制限と正確なアラーム権限の影響を受けます。",
   "alarmWindowsHint": "Windows では現在、通常通知のみ対応しています。バックグラウンドでのアラーム再生は未対応です。",

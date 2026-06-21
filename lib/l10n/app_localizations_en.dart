@@ -680,6 +680,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeRotateImage => 'Rotate 90 degrees';
 
   @override
+  String get themeResetImage => 'Reset image';
+
+  @override
+  String get themeSaveBackground => 'Save background';
+
+  @override
   String get alarmSettings => 'Alarm settings';
 
   @override

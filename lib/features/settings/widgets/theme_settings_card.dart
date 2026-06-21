@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +6,7 @@ import 'package:next_ddl/l10n/app_localizations.dart';
 import '../../../models/app_theme_settings.dart';
 import '../../../services/theme_asset_service.dart';
 import '../../tasks/tasks_controller.dart';
+import '../background_image_editor_page.dart';
 
 class ThemeSettingsCard extends ConsumerWidget {
   const ThemeSettingsCard({
@@ -238,16 +237,18 @@ class ThemeSettingsCard extends ConsumerWidget {
     if (copiedPath == null || !context.mounted) {
       return;
     }
-    final edited = await showDialog<AppThemeSettings>(
-      context: context,
-      builder: (dialogContext) => _BackgroundImageEditorDialog(
-        initial: settings.copyWith(
-          backgroundMode: ThemeBackgroundMode.image,
-          backgroundImagePath: copiedPath,
-          imageScale: 1,
-          imageOffsetX: 0,
-          imageOffsetY: 0,
-          imageRotationQuarterTurns: 0,
+    final edited = await Navigator.of(context).push<AppThemeSettings>(
+      MaterialPageRoute(
+        builder: (dialogContext) => BackgroundImageEditorPage(
+          initial: settings.copyWith(
+            backgroundMode: ThemeBackgroundMode.image,
+            backgroundImagePath: copiedPath,
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageOffsetY: 0,
+            imageRotationQuarterTurns: 0,
+            imageRotationDegrees: 0,
+          ),
         ),
       ),
     );
@@ -256,179 +257,6 @@ class ThemeSettingsCard extends ConsumerWidget {
       return;
     }
     await ref.read(tasksControllerProvider.notifier).setThemeSettings(edited);
-  }
-}
-
-class _BackgroundImageEditorDialog extends StatefulWidget {
-  const _BackgroundImageEditorDialog({required this.initial});
-
-  final AppThemeSettings initial;
-
-  @override
-  State<_BackgroundImageEditorDialog> createState() =>
-      _BackgroundImageEditorDialogState();
-}
-
-class _BackgroundImageEditorDialogState
-    extends State<_BackgroundImageEditorDialog> {
-  late AppThemeSettings _settings = widget.initial;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return AlertDialog(
-      title: Text(l10n.themeEditBackgroundImage),
-      content: SizedBox(
-        width: 520,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ColoredBox(color: Theme.of(context).colorScheme.surface),
-                      if (_settings.backgroundImagePath case final path?)
-                        Transform.translate(
-                          offset: Offset(
-                            _settings.imageOffsetX * 120,
-                            _settings.imageOffsetY * 70,
-                          ),
-                          child: Transform.scale(
-                            scale: _settings.imageScale,
-                            child: RotatedBox(
-                              quarterTurns: _settings.imageRotationQuarterTurns,
-                              child: Image.file(File(path), fit: BoxFit.cover),
-                            ),
-                          ),
-                        ),
-                      ColoredBox(
-                        color: Colors.black.withValues(
-                          alpha: _settings.imageOverlayOpacity,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _SliderRow(
-                label: l10n.themeImageScale,
-                value: _settings.imageScale,
-                min: 0.5,
-                max: 3,
-                onChanged: (value) {
-                  setState(() {
-                    _settings = _settings.copyWith(imageScale: value);
-                  });
-                },
-              ),
-              _SliderRow(
-                label: l10n.themeImageOffsetX,
-                value: _settings.imageOffsetX,
-                min: -1,
-                max: 1,
-                onChanged: (value) {
-                  setState(() {
-                    _settings = _settings.copyWith(imageOffsetX: value);
-                  });
-                },
-              ),
-              _SliderRow(
-                label: l10n.themeImageOffsetY,
-                value: _settings.imageOffsetY,
-                min: -1,
-                max: 1,
-                onChanged: (value) {
-                  setState(() {
-                    _settings = _settings.copyWith(imageOffsetY: value);
-                  });
-                },
-              ),
-              _SliderRow(
-                label: l10n.themeImageOverlay,
-                value: _settings.imageOverlayOpacity,
-                min: 0,
-                max: 0.85,
-                onChanged: (value) {
-                  setState(() {
-                    _settings = _settings.copyWith(imageOverlayOpacity: value);
-                  });
-                },
-              ),
-              _SliderRow(
-                label: l10n.themeImageBlur,
-                value: _settings.imageBlurSigma,
-                min: 0,
-                max: 20,
-                onChanged: (value) {
-                  setState(() {
-                    _settings = _settings.copyWith(imageBlurSigma: value);
-                  });
-                },
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _settings = _settings.copyWith(
-                        imageRotationQuarterTurns:
-                            _settings.imageRotationQuarterTurns + 1,
-                      );
-                    });
-                  },
-                  icon: const Icon(Icons.rotate_90_degrees_ccw_outlined),
-                  label: Text(l10n.themeRotateImage),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_settings),
-          child: Text(l10n.confirm),
-        ),
-      ],
-    );
-  }
-}
-
-class _SliderRow extends StatelessWidget {
-  const _SliderRow({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('$label: ${value.toStringAsFixed(2)}'),
-        Slider(value: value, min: min, max: max, onChanged: onChanged),
-      ],
-    );
   }
 }
 

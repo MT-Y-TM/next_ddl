@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -35,13 +36,19 @@ ThemeData buildNextDdlTheme({
       border: OutlineInputBorder(borderRadius: radius),
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: radius)),
+      style: FilledButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: radius),
+      ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: radius)),
+      style: OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: radius),
+      ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: radius)),
+      style: TextButton.styleFrom(
+        shape: RoundedRectangleBorder(borderRadius: radius),
+      ),
     ),
     dialogTheme: DialogThemeData(
       shape: RoundedRectangleBorder(borderRadius: radius),
@@ -77,10 +84,7 @@ class NextDdlBackground extends StatelessWidget {
 }
 
 class _ThemeBackground extends StatelessWidget {
-  const _ThemeBackground({
-    required this.settings,
-    required this.brightness,
-  });
+  const _ThemeBackground({required this.settings, required this.brightness});
 
   final AppThemeSettings settings;
   final Brightness brightness;
@@ -89,38 +93,63 @@ class _ThemeBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (settings.backgroundMode) {
       ThemeBackgroundMode.gradient => DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(settings.gradientStartColorValue),
-                Color(settings.gradientEndColorValue),
-              ],
-            ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(settings.gradientStartColorValue),
+              Color(settings.gradientEndColorValue),
+            ],
           ),
         ),
+      ),
       ThemeBackgroundMode.image => _ImageBackground(settings: settings),
       ThemeBackgroundMode.solid => ColoredBox(
-          color: brightness == Brightness.dark
-              ? const Color(0xFF0F172A)
-              : Color(settings.solidBackgroundColorValue),
-        ),
+        color: brightness == Brightness.dark
+            ? const Color(0xFF0F172A)
+            : Color(settings.solidBackgroundColorValue),
+      ),
     };
   }
 }
 
-class _ImageBackground extends StatelessWidget {
+class BackgroundImageProviderCache {
+  String? _path;
+  FileImage? _provider;
+
+  FileImage providerFor(String path) {
+    if (_path != path) {
+      _path = path;
+      _provider = FileImage(File(path));
+    }
+    return _provider!;
+  }
+}
+
+class _ImageBackground extends StatefulWidget {
   const _ImageBackground({required this.settings});
 
   final AppThemeSettings settings;
 
   @override
+  State<_ImageBackground> createState() => _ImageBackgroundState();
+}
+
+class _ImageBackgroundState extends State<_ImageBackground> {
+  static final BackgroundImageProviderCache _imageCache =
+      BackgroundImageProviderCache();
+  String? _precachedPath;
+
+  @override
   Widget build(BuildContext context) {
+    final settings = widget.settings;
     final path = settings.backgroundImagePath;
     if (path == null || path.isEmpty || !File(path).existsSync()) {
       return ColoredBox(color: Color(settings.solidBackgroundColorValue));
     }
+    final imageProvider = _imageCache.providerFor(path);
+    _precacheIfNeeded(path, imageProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final child = Transform.translate(
@@ -130,10 +159,10 @@ class _ImageBackground extends StatelessWidget {
           ),
           child: Transform.scale(
             scale: settings.imageScale,
-            child: RotatedBox(
-              quarterTurns: settings.imageRotationQuarterTurns,
-              child: Image.file(
-                File(path),
+            child: Transform.rotate(
+              angle: settings.imageRotationDegrees * math.pi / 180,
+              child: Image(
+                image: imageProvider,
                 fit: BoxFit.cover,
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
@@ -152,11 +181,26 @@ class _ImageBackground extends StatelessWidget {
               child: ClipRect(child: child),
             ),
             ColoredBox(
-              color: Colors.black.withValues(alpha: settings.imageOverlayOpacity),
+              color: Colors.black.withValues(
+                alpha: settings.imageOverlayOpacity,
+              ),
             ),
           ],
         );
       },
     );
+  }
+
+  void _precacheIfNeeded(String path, ImageProvider<Object> imageProvider) {
+    if (_precachedPath == path) {
+      return;
+    }
+    _precachedPath = path;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      precacheImage(imageProvider, context);
+    });
   }
 }

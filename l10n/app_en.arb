@@ -353,6 +353,8 @@
   "themeImageOverlay": "Overlay strength",
   "themeImageBlur": "Blur strength",
   "themeRotateImage": "Rotate 90 degrees",
+  "themeResetImage": "Reset image",
+  "themeSaveBackground": "Save background",
   "alarmSettings": "Alarm settings",
   "alarmAndroidHint": "Android uses a foreground service to ring at reminder times and can be stopped from the notification shade. MIUI background and exact alarm permissions can affect reliability.",
   "alarmWindowsHint": "Windows currently keeps standard notifications only. Background alarm playback is not supported.",
