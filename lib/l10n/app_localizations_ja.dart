@@ -247,6 +247,18 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get settingsTasksAndData => 'タスクとデータ';
+
+  @override
+  String get settingsNotificationsAndAlarms => '通知とアラーム';
+
+  @override
+  String get settingsLanguageAndTimezone => '言語とタイムゾーン';
+
+  @override
+  String get settingsAboutApp => 'アプリについて';
+
+  @override
   String get persistentNotification => 'Android 常駐通知';
 
   @override

@@ -136,6 +136,10 @@
       }
     }
   },
+  "settingsTasksAndData": "Tasks & data",
+  "settingsNotificationsAndAlarms": "Notifications & alarms",
+  "settingsLanguageAndTimezone": "Language & timezone",
+  "settingsAboutApp": "About app",
   "persistentNotification": "Android persistent notification",
   "persistentNotificationAndroidHint": "When enabled, the most urgent task stays in the notification shade and updates automatically when tasks or settings change.",
   "persistentNotificationOtherHint": "This only works on Android. Other platforms keep the setting but do not show a persistent notification.",

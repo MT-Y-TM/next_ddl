@@ -532,6 +532,30 @@ abstract class AppLocalizations {
   /// **'{count} task(s)'**
   String taskCountValue(int count);
 
+  /// No description provided for @settingsTasksAndData.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks & data'**
+  String get settingsTasksAndData;
+
+  /// No description provided for @settingsNotificationsAndAlarms.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications & alarms'**
+  String get settingsNotificationsAndAlarms;
+
+  /// No description provided for @settingsLanguageAndTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Language & timezone'**
+  String get settingsLanguageAndTimezone;
+
+  /// No description provided for @settingsAboutApp.
+  ///
+  /// In en, this message translates to:
+  /// **'About app'**
+  String get settingsAboutApp;
+
   /// No description provided for @persistentNotification.
   ///
   /// In en, this message translates to:

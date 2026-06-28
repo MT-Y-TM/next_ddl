@@ -136,6 +136,10 @@
       }
     }
   },
+  "settingsTasksAndData": "タスクとデータ",
+  "settingsNotificationsAndAlarms": "通知とアラーム",
+  "settingsLanguageAndTimezone": "言語とタイムゾーン",
+  "settingsAboutApp": "アプリについて",
   "persistentNotification": "Android 常駐通知",
   "persistentNotificationAndroidHint": "有効にすると、最も差し迫ったタスクが通知欄に常駐し、タスクや設定の変更時に自動更新されます。",
   "persistentNotificationOtherHint": "この機能は Android のみ有効です。他のプラットフォームでは設定値だけ保持され、常駐通知は表示されません。",

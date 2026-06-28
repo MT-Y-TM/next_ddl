@@ -136,6 +136,10 @@
       }
     }
   },
+  "settingsTasksAndData": "任务总数",
+  "settingsNotificationsAndAlarms": "通知与闹钟",
+  "settingsLanguageAndTimezone": "语言与时区",
+  "settingsAboutApp": "关于应用",
   "persistentNotification": "Android 消息栏常驻提醒",
   "persistentNotificationAndroidHint": "开启后会在消息栏常驻显示最紧急任务摘要，并在任务或开关变化时自动更新。",
   "persistentNotificationOtherHint": "该功能仅在 Android 生效；其他平台会保留设置值但不会显示常驻通知。",

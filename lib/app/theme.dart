@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../features/tasks/task_list_page.dart';
 import '../features/tasks/tasks_controller.dart';
 import '../models/app_theme_settings.dart';
 
@@ -65,15 +64,13 @@ ThemeData buildNextDdlTheme({
 
 class NextDdlAppShell extends StatelessWidget {
   const NextDdlAppShell({
+    required this.child,
     this.background = const NextDdlBackgroundLayer(),
-    this.pageNavigatorKey,
-    this.initialPageBuilder = _defaultInitialPageBuilder,
     super.key,
   });
 
   final Widget background;
-  final GlobalKey<NavigatorState>? pageNavigatorKey;
-  final WidgetBuilder initialPageBuilder;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
@@ -82,20 +79,10 @@ class NextDdlAppShell extends StatelessWidget {
       alignment: Alignment.topLeft,
       children: [
         RepaintBoundary(child: background),
-        Navigator(
-          key: pageNavigatorKey,
-          onGenerateRoute: (settings) => MaterialPageRoute<void>(
-            builder: initialPageBuilder,
-            settings: settings,
-          ),
-        ),
+        child,
       ],
     );
   }
-}
-
-Widget _defaultInitialPageBuilder(BuildContext context) {
-  return const TaskListPage();
 }
 
 class NextDdlBackgroundLayer extends ConsumerWidget {

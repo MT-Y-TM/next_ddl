@@ -251,6 +251,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsTasksAndData => 'Tasks & data';
+
+  @override
+  String get settingsNotificationsAndAlarms => 'Notifications & alarms';
+
+  @override
+  String get settingsLanguageAndTimezone => 'Language & timezone';
+
+  @override
+  String get settingsAboutApp => 'About app';
+
+  @override
   String get persistentNotification => 'Android persistent notification';
 
   @override

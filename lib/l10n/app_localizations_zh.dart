@@ -245,6 +245,18 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get settingsTasksAndData => '任务总数';
+
+  @override
+  String get settingsNotificationsAndAlarms => '通知与闹钟';
+
+  @override
+  String get settingsLanguageAndTimezone => '语言与时区';
+
+  @override
+  String get settingsAboutApp => '关于应用';
+
+  @override
   String get persistentNotification => 'Android 消息栏常驻提醒';
 
   @override

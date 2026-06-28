@@ -205,7 +205,7 @@ void main() {
     expect(find.text('未命名节点'), findsNothing);
   });
 
-  testWidgets('settings page shows locale and persistent time unit controls', (
+  testWidgets('settings page groups controls into second-level pages', (
     tester,
   ) async {
     final now = DateTime.utc(2026, 1, 1, 8);
@@ -222,26 +222,68 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Notification time unit'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
 
-    await tester.scrollUntilVisible(
-      find.text('Language'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Tasks & data'), findsOneWidget);
+    expect(find.text('Theme'), findsWidgets);
+    expect(find.text('Notifications & alarms'), findsOneWidget);
+    expect(find.text('Language & timezone'), findsOneWidget);
+    expect(find.text('About app'), findsOneWidget);
+    expect(find.text('Notification time unit'), findsNothing);
+    expect(find.text('Android persistent notification'), findsNothing);
+
+    await _openSettingsSection(tester, 'Notifications & alarms');
+
     expect(find.text('Notification time unit'), findsOneWidget);
     expect(find.text('Android persistent notification'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Updates'),
-      -200,
-      scrollable: find.byType(Scrollable).first,
+    expect(find.text('Alarm settings'), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Notifications & alarms'), findsOneWidget);
+    expect(find.text('Notification time unit'), findsNothing);
+  });
+
+  testWidgets('settings task data page contains count and json actions', (
+    tester,
+  ) async {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final snapshot = AppSnapshot(
+      schemaVersion: 1,
+      exportedAtUtc: now,
+      persistentNotificationEnabled: false,
+      preferredLocale: AppLocalePreference.en,
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
+      tasks: [
+        DeadlineTask(
+          id: '1',
+          title: 'Task one',
+          note: '',
+          timezoneId: 'Asia/Shanghai',
+          createdAtUtc: now,
+          updatedAtUtc: now,
+          finalDueAtUtc: now.add(const Duration(days: 1)),
+          milestones: const [],
+          reminderOffsetsSeconds: const [],
+          notificationsEnabled: false,
+        ),
+      ],
     );
-    expect(find.text('Updates'), findsOneWidget);
+
+    await tester.pumpWidget(_buildApp(snapshot, now));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export JSON'), findsNothing);
+
+    await _openSettingsSection(tester, 'Tasks & data');
+
+    expect(find.text('Task count'), findsOneWidget);
+    expect(find.text('1 task(s)'), findsWidgets);
+    expect(find.text('Export JSON'), findsOneWidget);
+    expect(find.text('Import JSON'), findsOneWidget);
   });
 
   testWidgets('settings page shows theme and alarm controls', (tester) async {
@@ -256,20 +298,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Theme'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await _openSettingsSection(tester, 'Theme');
 
-    expect(find.text('Theme'), findsOneWidget);
+    expect(find.text('Theme'), findsWidgets);
     expect(find.textContaining('Control radius: 12'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Alarm settings'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Alarm settings'), findsOneWidget);
+    expect(find.text('Global ringtone playlist'), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'Notifications & alarms');
+
     expect(find.text('Global ringtone playlist'), findsOneWidget);
   });
 
@@ -294,11 +332,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('Theme'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await _openSettingsSection(tester, 'Theme');
 
     await tester.tap(find.widgetWithText(OutlinedButton, 'Image background'));
     await tester.pumpAndSettle();
@@ -326,6 +360,7 @@ void main() {
       _buildSettingsApp(snapshot, updateService: updateService),
     );
     await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'About app');
 
     expect(find.text('Check for updates'), findsWidgets);
     await tester.tap(
@@ -357,6 +392,7 @@ void main() {
       _buildSettingsApp(snapshot, updateService: updateService),
     );
     await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'About app');
     await tester.tap(
       find.widgetWithText(FilledButton, 'Check for updates').first,
     );
@@ -395,8 +431,9 @@ void main() {
       _buildSettingsApp(snapshot, updateService: updateService),
     );
     await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'About app');
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(SettingsPage)),
+      tester.element(find.text('About app').first),
     );
     await container
         .read(appUpdateControllerProvider.notifier)
@@ -427,6 +464,7 @@ void main() {
       _buildSettingsApp(snapshot, updateService: updateService),
     );
     await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'About app');
     await tester.tap(
       find.widgetWithText(OutlinedButton, 'Clear cached installers'),
     );
@@ -462,8 +500,9 @@ void main() {
         _buildSettingsApp(snapshot, updateService: updateService),
       );
       await tester.pumpAndSettle();
+      await _openSettingsSection(tester, 'About app');
       final container = ProviderScope.containerOf(
-        tester.element(find.byType(SettingsPage)),
+        tester.element(find.text('About app').first),
       );
       await container
           .read(appUpdateControllerProvider.notifier)
@@ -490,6 +529,7 @@ void main() {
         _buildSettingsApp(snapshot, updateService: updateService),
       );
       await tester.pumpAndSettle();
+      await _openSettingsSection(tester, 'About app');
       await tester.tap(
         find.widgetWithText(FilledButton, 'Check for updates').first,
       );
@@ -519,11 +559,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.settings_outlined));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        find.text('App timezone'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
+      await _openSettingsSection(tester, 'Language & timezone');
       await tester.tap(find.text('App timezone'));
       await tester.pumpAndSettle();
 
@@ -552,11 +588,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(
-      find.text('App timezone'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await _openSettingsSection(tester, 'Language & timezone');
     await tester.tap(find.text('App timezone'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'buenos');
@@ -581,6 +613,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('语言与时区'));
+    await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
       find.text('语言'),
@@ -589,14 +623,14 @@ void main() {
     );
     expect(find.text('语言'), findsOneWidget);
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(SettingsPage)),
+      tester.element(find.text('语言').first),
     );
     await container
         .read(tasksControllerProvider.notifier)
         .setPreferredLocale(AppLocalePreference.en);
     await tester.pumpAndSettle();
 
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Language & timezone'), findsOneWidget);
     expect(find.text('Language'), findsOneWidget);
   });
 
@@ -753,6 +787,12 @@ Widget _buildSettingsApp(
       home: const SettingsPage(),
     ),
   );
+}
+
+Future<void> _openSettingsSection(WidgetTester tester, String title) async {
+  await tester.ensureVisible(find.text(title));
+  await tester.tap(find.text(title));
+  await tester.pumpAndSettle();
 }
 
 class _MemoryRepository implements DeadlineRepository {
