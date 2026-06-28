@@ -100,10 +100,8 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) => NextDdlBackground(
-        settings: themeSettings,
-        child: child ?? const SizedBox.shrink(),
-      ),
+      builder: (context, child) =>
+          NextDdlAppShell(child: child ?? const SizedBox.shrink()),
       home: const TaskListPage(),
     );
   }

@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/tasks/tasks_controller.dart';
 import '../models/app_theme_settings.dart';
 
 ThemeData buildNextDdlTheme({
@@ -60,26 +62,37 @@ ThemeData buildNextDdlTheme({
   );
 }
 
-class NextDdlBackground extends StatelessWidget {
-  const NextDdlBackground({
-    required this.settings,
+class NextDdlAppShell extends StatelessWidget {
+  const NextDdlAppShell({
     required this.child,
+    this.background = const NextDdlBackgroundLayer(),
     super.key,
   });
 
-  final AppThemeSettings settings;
+  final Widget background;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
     return Stack(
       fit: StackFit.expand,
+      alignment: Alignment.topLeft,
       children: [
-        _ThemeBackground(settings: settings, brightness: brightness),
+        RepaintBoundary(child: background),
         child,
       ],
     );
+  }
+}
+
+class NextDdlBackgroundLayer extends ConsumerWidget {
+  const NextDdlBackgroundLayer({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(themeSettingsProvider);
+    final brightness = Theme.of(context).brightness;
+    return _ThemeBackground(settings: settings, brightness: brightness);
   }
 }
 
