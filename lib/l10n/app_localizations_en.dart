@@ -706,7 +706,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alarmWindowsHint =>
-      'Windows currently keeps standard notifications only. Background alarm playback is not supported.';
+      'Windows can ring while the app is running. Closing the app stops desktop alarm scheduling.';
 
   @override
   String get enableAlarmFeature => 'Enable alarm capability';

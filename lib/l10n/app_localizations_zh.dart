@@ -685,7 +685,7 @@ class AppLocalizationsZh extends AppLocalizations {
       'Android 会使用后台前台服务在提醒时间响铃，并可在通知栏停止。本功能受 MIUI 后台和精确闹钟权限影响。';
 
   @override
-  String get alarmWindowsHint => 'Windows 端当前只保留普通通知，不支持后台自动响铃。';
+  String get alarmWindowsHint => 'Windows 端会在应用运行期间响铃；关闭应用后桌面闹钟调度会停止。';
 
   @override
   String get enableAlarmFeature => '启用闹钟能力';

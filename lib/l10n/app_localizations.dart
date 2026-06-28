@@ -1339,7 +1339,7 @@ abstract class AppLocalizations {
   /// No description provided for @alarmWindowsHint.
   ///
   /// In en, this message translates to:
-  /// **'Windows currently keeps standard notifications only. Background alarm playback is not supported.'**
+  /// **'Windows can ring while the app is running. Closing the app stops desktop alarm scheduling.'**
   String get alarmWindowsHint;
 
   /// No description provided for @enableAlarmFeature.

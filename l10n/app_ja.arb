@@ -361,7 +361,7 @@
   "themeSaveBackground": "背景を保存",
   "alarmSettings": "アラーム設定",
   "alarmAndroidHint": "Android ではリマインダー時刻にフォアグラウンドサービスで鳴動し、通知から停止できます。MIUI のバックグラウンド制限と正確なアラーム権限の影響を受けます。",
-  "alarmWindowsHint": "Windows では現在、通常通知のみ対応しています。バックグラウンドでのアラーム再生は未対応です。",
+  "alarmWindowsHint": "Windows ではアプリ起動中にアラームを鳴らせます。アプリを閉じるとデスクトップのアラームスケジュールは停止します。",
   "enableAlarmFeature": "アラーム機能を有効化",
   "enableAlarmFeatureHint": "有効にすると、アラーム鳴動を有効にしたタスクがリマインダー時刻に音声を再生できます。",
   "globalAlarmPlaylist": "共通着信音プレイリスト",

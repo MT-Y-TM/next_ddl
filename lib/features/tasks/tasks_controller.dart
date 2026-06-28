@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/app_snapshot.dart';
 import '../../models/app_theme_settings.dart';
@@ -120,7 +121,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
       localePreference: snapshot.preferredLocale,
       timeUnit: snapshot.persistentNotificationTimeUnit,
     );
-    await _alarmScheduler.syncAlarms(
+    await _syncAlarmsSafely(
       settings: snapshot.alarmSettings,
       tasks: snapshot.tasks,
       localePreference: snapshot.preferredLocale,
@@ -144,7 +145,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
     await _notificationScheduler.removeAll();
-    await _alarmScheduler.removeAll();
+    await _removeAllAlarmsSafely();
     await _syncAll(nextSnapshot);
   }
 
@@ -157,7 +158,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
     await _notificationScheduler.removeAll();
-    await _alarmScheduler.removeAll();
+    await _removeAllAlarmsSafely();
     await _syncAll(nextSnapshot);
   }
 
@@ -169,7 +170,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(imported);
     await _repository.saveSnapshot(imported);
     await _notificationScheduler.removeAll();
-    await _alarmScheduler.removeAll();
+    await _removeAllAlarmsSafely();
     await _syncAll(imported);
     return imported;
   }
@@ -265,7 +266,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     );
     state = AsyncData(nextSnapshot);
     await _repository.saveSnapshot(nextSnapshot);
-    await _alarmScheduler.syncAlarms(
+    await _syncAlarmsSafely(
       settings: nextSnapshot.alarmSettings,
       tasks: nextSnapshot.tasks,
       localePreference: nextSnapshot.preferredLocale,
@@ -292,7 +293,7 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     final snapshot = state.valueOrNull;
     if (snapshot != null) {
       await _notificationScheduler.removeAll();
-      await _alarmScheduler.removeAll();
+      await _removeAllAlarmsSafely();
       await _syncAll(snapshot);
       state = AsyncData(snapshot);
     }
@@ -329,10 +330,34 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
       localePreference: snapshot.preferredLocale,
       timeUnit: snapshot.persistentNotificationTimeUnit,
     );
-    await _alarmScheduler.syncAlarms(
+    await _syncAlarmsSafely(
       settings: snapshot.alarmSettings,
       tasks: snapshot.tasks,
       localePreference: snapshot.preferredLocale,
     );
+  }
+
+  Future<void> _syncAlarmsSafely({
+    required AppAlarmSettings settings,
+    required List<DeadlineTask> tasks,
+    required AppLocalePreference localePreference,
+  }) async {
+    try {
+      await _alarmScheduler.syncAlarms(
+        settings: settings,
+        tasks: tasks,
+        localePreference: localePreference,
+      );
+    } on MissingPluginException {
+      return;
+    }
+  }
+
+  Future<void> _removeAllAlarmsSafely() async {
+    try {
+      await _alarmScheduler.removeAll();
+    } on MissingPluginException {
+      return;
+    }
   }
 }

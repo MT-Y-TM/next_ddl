@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
 import 'package:next_ddl/models/app_alarm_settings.dart';
@@ -12,6 +13,79 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('method channel alarm scheduler ignores missing native implementation', () async {
+    const channel = MethodChannel('test_next_ddl_alarm_missing');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+          throw MissingPluginException('No implementation found');
+        });
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+    final scheduler = MethodChannelAlarmScheduler(channel: channel);
+
+    expect(await scheduler.canScheduleExactAlarms(), isFalse);
+    await expectLater(scheduler.openExactAlarmSettings(), completes);
+    await expectLater(
+      scheduler.syncAlarms(
+        settings: AppAlarmSettings.defaults(),
+        tasks: const [],
+        localePreference: AppLocalePreference.system,
+      ),
+      completes,
+    );
+    await expectLater(scheduler.removeAll(), completes);
+    await expectLater(scheduler.removeTask('task_1'), completes);
+    await expectLater(scheduler.stopCurrentAlarm(), completes);
+  });
+
+  test(
+    'controller still loads and creates tasks when alarm channel is missing',
+    () async {
+      final repository = _MemoryRepository();
+      final notifications = _FakeNotificationScheduler();
+      final container = ProviderContainer(
+        overrides: [
+          deadlineRepositoryProvider.overrideWithValue(repository),
+          alarmSchedulerProvider.overrideWithValue(
+            _MissingPluginAlarmScheduler(),
+          ),
+          notificationSchedulerProvider.overrideWithValue(notifications),
+          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(tasksControllerProvider.future);
+
+      final now = DateTime.utc(2026, 1, 1, 12);
+      final task = DeadlineTask(
+        id: 'task_1',
+        title: 'Windows task',
+        note: '',
+        timezoneId: 'Asia/Shanghai',
+        createdAtUtc: now,
+        updatedAtUtc: now,
+        finalDueAtUtc: now.add(const Duration(days: 1)),
+        milestones: const [],
+        reminderOffsetsSeconds: const [0],
+        notificationsEnabled: true,
+      );
+
+      await container
+          .read(tasksControllerProvider.notifier)
+          .addOrUpdateTask(task);
+
+      final snapshot = container.read(tasksControllerProvider).value!;
+      expect(snapshot.tasks.single.title, 'Windows task');
+      expect(repository.saved?.tasks.single.id, 'task_1');
+      expect(notifications.syncedTaskIds, contains('task_1'));
+    },
+  );
+
   test('controller syncs persistent summary on build with saved preferences', () async {
     final now = DateTime.utc(2026, 1, 1, 12);
     final repository = _MemoryRepository(
@@ -417,6 +491,35 @@ class _FakeAlarmScheduler implements AlarmScheduler {
   }) async {
     syncCount++;
   }
+}
+
+class _MissingPluginAlarmScheduler implements AlarmScheduler {
+  Never _missing() => throw MissingPluginException('No implementation found');
+
+  @override
+  Future<bool> canScheduleExactAlarms() async => _missing();
+
+  @override
+  Future<void> initialize() async => _missing();
+
+  @override
+  Future<void> openExactAlarmSettings() async => _missing();
+
+  @override
+  Future<void> removeAll() async => _missing();
+
+  @override
+  Future<void> removeTask(String taskId) async => _missing();
+
+  @override
+  Future<void> stopCurrentAlarm() async => _missing();
+
+  @override
+  Future<void> syncAlarms({
+    required AppAlarmSettings settings,
+    required List<DeadlineTask> tasks,
+    required AppLocalePreference localePreference,
+  }) async => _missing();
 }
 
 class _FakeTimezoneService extends DeviceTimezoneService {

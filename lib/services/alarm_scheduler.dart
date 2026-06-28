@@ -37,12 +37,19 @@ class MethodChannelAlarmScheduler implements AlarmScheduler {
 
   @override
   Future<bool> canScheduleExactAlarms() async {
-    return await _channel.invokeMethod<bool>('canScheduleExactAlarms') ?? true;
+    try {
+      return await _channel.invokeMethod<bool>('canScheduleExactAlarms') ??
+          true;
+    } on MissingPluginException {
+      return false;
+    }
   }
 
   @override
   Future<void> openExactAlarmSettings() async {
-    await _channel.invokeMethod<void>('openExactAlarmSettings');
+    await _ignoreMissingPlugin(
+      () => _channel.invokeMethod<void>('openExactAlarmSettings'),
+    );
   }
 
   @override
@@ -51,26 +58,42 @@ class MethodChannelAlarmScheduler implements AlarmScheduler {
     required List<DeadlineTask> tasks,
     required AppLocalePreference localePreference,
   }) async {
-    await _channel.invokeMethod<void>('syncAlarms', {
-      'settings': settings.toJson(),
-      'tasks': tasks.map((task) => task.toJson()).toList(),
-      'localeTag': localePreference.tag,
-    });
+    await _ignoreMissingPlugin(
+      () => _channel.invokeMethod<void>('syncAlarms', {
+        'settings': settings.toJson(),
+        'tasks': tasks.map((task) => task.toJson()).toList(),
+        'localeTag': localePreference.tag,
+      }),
+    );
   }
 
   @override
   Future<void> removeTask(String taskId) async {
-    await _channel.invokeMethod<void>('removeTaskAlarms', {'taskId': taskId});
+    await _ignoreMissingPlugin(
+      () => _channel.invokeMethod<void>('removeTaskAlarms', {'taskId': taskId}),
+    );
   }
 
   @override
   Future<void> removeAll() async {
-    await _channel.invokeMethod<void>('removeAllAlarms');
+    await _ignoreMissingPlugin(
+      () => _channel.invokeMethod<void>('removeAllAlarms'),
+    );
   }
 
   @override
   Future<void> stopCurrentAlarm() async {
-    await _channel.invokeMethod<void>('stopCurrentAlarm');
+    await _ignoreMissingPlugin(
+      () => _channel.invokeMethod<void>('stopCurrentAlarm'),
+    );
+  }
+
+  Future<void> _ignoreMissingPlugin(Future<void> Function() action) async {
+    try {
+      await action();
+    } on MissingPluginException {
+      return;
+    }
   }
 }
 

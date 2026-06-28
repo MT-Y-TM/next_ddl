@@ -361,7 +361,7 @@
   "themeSaveBackground": "保存背景",
   "alarmSettings": "闹钟设置",
   "alarmAndroidHint": "Android 会使用后台前台服务在提醒时间响铃，并可在通知栏停止。本功能受 MIUI 后台和精确闹钟权限影响。",
-  "alarmWindowsHint": "Windows 端当前只保留普通通知，不支持后台自动响铃。",
+  "alarmWindowsHint": "Windows 端会在应用运行期间响铃；关闭应用后桌面闹钟调度会停止。",
   "enableAlarmFeature": "启用闹钟能力",
   "enableAlarmFeatureHint": "启用后，已开启闹钟的任务会在提醒时间播放铃声。",
   "globalAlarmPlaylist": "全局铃声播放列表",

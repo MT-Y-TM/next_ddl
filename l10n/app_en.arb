@@ -361,7 +361,7 @@
   "themeSaveBackground": "Save background",
   "alarmSettings": "Alarm settings",
   "alarmAndroidHint": "Android uses a foreground service to ring at reminder times and can be stopped from the notification shade. MIUI background and exact alarm permissions can affect reliability.",
-  "alarmWindowsHint": "Windows currently keeps standard notifications only. Background alarm playback is not supported.",
+  "alarmWindowsHint": "Windows can ring while the app is running. Closing the app stops desktop alarm scheduling.",
   "enableAlarmFeature": "Enable alarm capability",
   "enableAlarmFeatureHint": "When enabled, tasks with alarm ringing turned on can play audio at reminder times.",
   "globalAlarmPlaylist": "Global ringtone playlist",

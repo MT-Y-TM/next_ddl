@@ -695,7 +695,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get alarmWindowsHint =>
-      'Windows では現在、通常通知のみ対応しています。バックグラウンドでのアラーム再生は未対応です。';
+      'Windows ではアプリ起動中にアラームを鳴らせます。アプリを閉じるとデスクトップのアラームスケジュールは停止します。';
 
   @override
   String get enableAlarmFeature => 'アラーム機能を有効化';
