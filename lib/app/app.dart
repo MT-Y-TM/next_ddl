@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../features/tasks/task_detail_page.dart';
-import '../features/tasks/task_list_page.dart';
 import '../features/tasks/tasks_controller.dart';
 import '../features/update/app_update_controller.dart';
 import '../features/update/app_update_state.dart';
@@ -25,7 +24,8 @@ class NextDdlApp extends ConsumerStatefulWidget {
 
 class _NextDdlAppState extends ConsumerState<NextDdlApp>
     with WidgetsBindingObserver {
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _pageNavigatorKey = GlobalKey<NavigatorState>();
   StreamSubscription<String>? _tapSubscription;
   ProviderSubscription<AppUpdateState>? _updateSubscription;
   String? _shownReleaseTag;
@@ -37,7 +37,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     _tapSubscription = LocalNotificationScheduler.notificationTapStream.listen((
       taskId,
     ) {
-      final navigator = _navigatorKey.currentState;
+      final navigator = _pageNavigatorKey.currentState;
       if (navigator == null) {
         return;
       }
@@ -83,7 +83,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     final localePreference = ref.watch(localePreferenceProvider);
     final themeSettings = ref.watch(themeSettingsProvider);
     return MaterialApp(
-      navigatorKey: _navigatorKey,
+      navigatorKey: _rootNavigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
       theme: buildNextDdlTheme(settings: themeSettings),
@@ -100,14 +100,12 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) =>
-          NextDdlAppShell(child: child ?? const SizedBox.shrink()),
-      home: const TaskListPage(),
+      home: NextDdlAppShell(pageNavigatorKey: _pageNavigatorKey),
     );
   }
 
   Future<void> _showUpdateDialog(UpdateRelease release) async {
-    final navigator = _navigatorKey.currentState;
+    final navigator = _rootNavigatorKey.currentState;
     final context = navigator?.context;
     if (context == null || !mounted) {
       return;
