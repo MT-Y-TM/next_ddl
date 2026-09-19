@@ -17,53 +17,44 @@ void main() {
     },
   );
 
-  testWidgets(
-    'app shell keeps the background stable and handles system back in pages',
-    (tester) async {
+  testWidgets('app shell keeps background layer stable while child changes', (
+    tester,
+  ) async {
     var initCount = 0;
     var buildCount = 0;
-    final pageNavigatorKey = GlobalKey<NavigatorState>();
     final background = _ProbeBackground(
       onInit: () => initCount++,
       onBuild: () => buildCount++,
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: NextDdlAppShell(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: NextDdlAppShell(
           background: background,
-          pageNavigatorKey: pageNavigatorKey,
-          initialPageBuilder: (_) => const Scaffold(
-            body: Text('first page'),
-          ),
+          child: const Text('first page'),
         ),
       ),
     );
-    await tester.pumpAndSettle();
 
     expect(initCount, 1);
     expect(buildCount, 1);
     expect(find.text('first page'), findsOneWidget);
 
-    pageNavigatorKey.currentState!.push(
-      MaterialPageRoute<void>(
-        builder: (_) => const Scaffold(body: Text('second page')),
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: NextDdlAppShell(
+          background: background,
+          child: const Text('second page'),
+        ),
       ),
     );
-    await tester.pumpAndSettle();
 
     expect(initCount, 1);
     expect(buildCount, 1);
     expect(find.text('first page'), findsNothing);
     expect(find.text('second page'), findsOneWidget);
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-
-    expect(find.text('first page'), findsOneWidget);
-    expect(find.text('second page'), findsNothing);
-    expect(initCount, 1);
-    expect(buildCount, 1);
   });
 }
 

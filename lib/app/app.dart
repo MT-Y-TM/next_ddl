@@ -25,10 +25,7 @@ class NextDdlApp extends ConsumerStatefulWidget {
 
 class _NextDdlAppState extends ConsumerState<NextDdlApp>
     with WidgetsBindingObserver {
-  final GlobalKey<NavigatorState> _rootNavigatorKey =
-      GlobalKey<NavigatorState>();
-  final GlobalKey<NavigatorState> _pageNavigatorKey =
-      GlobalKey<NavigatorState>();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   StreamSubscription<String>? _tapSubscription;
   ProviderSubscription<AppUpdateState>? _updateSubscription;
   String? _shownReleaseTag;
@@ -40,7 +37,13 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     _tapSubscription = LocalNotificationScheduler.notificationTapStream.listen((
       taskId,
     ) {
-      _openTaskFromNotification(taskId);
+      final navigator = _navigatorKey.currentState;
+      if (navigator == null) {
+        return;
+      }
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => TaskDetailPage(taskId: taskId)),
+      );
     });
     _updateSubscription = ref.listenManual<AppUpdateState>(
       appUpdateControllerProvider,
@@ -80,7 +83,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     final localePreference = ref.watch(localePreferenceProvider);
     final themeSettings = ref.watch(themeSettingsProvider);
     return MaterialApp(
-      navigatorKey: _rootNavigatorKey,
+      navigatorKey: _navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       debugShowCheckedModeBanner: false,
       theme: buildNextDdlTheme(settings: themeSettings),
@@ -97,30 +100,14 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: NextDdlAppShell(
-        pageNavigatorKey: _pageNavigatorKey,
-        initialPageBuilder: (_) => const TaskListPage(),
-      ),
-    );
-  }
-
-  void _openTaskFromNotification(String taskId) {
-    final navigator = _pageNavigatorKey.currentState;
-    if (navigator == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _openTaskFromNotification(taskId);
-        }
-      });
-      return;
-    }
-    navigator.push(
-      MaterialPageRoute<void>(builder: (_) => TaskDetailPage(taskId: taskId)),
+      builder: (context, child) =>
+          NextDdlAppShell(child: child ?? const SizedBox.shrink()),
+      home: const TaskListPage(),
     );
   }
 
   Future<void> _showUpdateDialog(UpdateRelease release) async {
-    final navigator = _rootNavigatorKey.currentState;
+    final navigator = _navigatorKey.currentState;
     final context = navigator?.context;
     if (context == null || !mounted) {
       return;
