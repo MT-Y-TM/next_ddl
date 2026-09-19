@@ -64,13 +64,15 @@ ThemeData buildNextDdlTheme({
 
 class NextDdlAppShell extends StatelessWidget {
   const NextDdlAppShell({
-    required this.child,
+    required this.pageNavigatorKey,
+    required this.initialPageBuilder,
     this.background = const NextDdlBackgroundLayer(),
     super.key,
   });
 
   final Widget background;
-  final Widget child;
+  final GlobalKey<NavigatorState> pageNavigatorKey;
+  final WidgetBuilder initialPageBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +81,16 @@ class NextDdlAppShell extends StatelessWidget {
       alignment: Alignment.topLeft,
       children: [
         RepaintBoundary(child: background),
-        child,
+        NavigatorPopHandler<void>(
+          onPopWithResult: (_) => pageNavigatorKey.currentState?.pop(),
+          child: Navigator(
+            key: pageNavigatorKey,
+            onGenerateRoute: (settings) => MaterialPageRoute<void>(
+              builder: initialPageBuilder,
+              settings: settings,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -177,6 +188,7 @@ class _ImageBackgroundState extends State<_ImageBackground> {
               child: Image(
                 image: imageProvider,
                 fit: BoxFit.cover,
+                gaplessPlayback: true,
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
               ),
