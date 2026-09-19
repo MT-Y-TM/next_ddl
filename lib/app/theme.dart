@@ -22,6 +22,16 @@ ThemeData buildNextDdlTheme({
     colorScheme: scheme,
     brightness: brightness,
     scaffoldBackgroundColor: Colors.transparent,
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: {
+        ...const PageTransitionsTheme().builders,
+        // Flutter's default Android transition paints an opaque surface over
+        // our shared wallpaper. Animate page content with a transparent surface.
+        TargetPlatform.android: const FadeForwardsPageTransitionsBuilder(
+          backgroundColor: Colors.transparent,
+        ),
+      },
+    ),
     appBarTheme: AppBarTheme(
       elevation: 0,
       centerTitle: false,
