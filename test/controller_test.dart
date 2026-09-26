@@ -15,6 +15,37 @@ import 'package:timezone/timezone.dart' as tz;
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('completion cancels reminders and restoring reinstates only active nodes', () async {
+    final now = DateTime.now().toUtc();
+    final task = DeadlineTask(id: 'lifecycle', title: 'Lifecycle', note: '', timezoneId: 'UTC',
+      createdAtUtc: now, updatedAtUtc: now, finalDueAtUtc: now.add(const Duration(days: 2)),
+      milestones: [Milestone(id: 'first', title: '', dueAtUtc: now.add(const Duration(hours: 1)), source: MilestoneSource.manual)],
+      reminderOffsetsSeconds: const [0], notificationsEnabled: true);
+    final repository = _MemoryRepository(initial: AppSnapshot.empty().copyWith(tasks: [task]));
+    final notifications = _FakeNotificationScheduler();
+    final container = ProviderContainer(overrides: [
+      deadlineRepositoryProvider.overrideWithValue(repository),
+      notificationSchedulerProvider.overrideWithValue(notifications),
+      alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
+      timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+    ]);
+    addTearDown(container.dispose);
+    await container.read(tasksControllerProvider.future);
+    final controller = container.read(tasksControllerProvider.notifier);
+    await controller.setMilestoneCompleted(task.id, 'first', true);
+    expect(notifications.lastSyncedTask!.milestones, isEmpty);
+    notifications.syncedTaskIds.clear();
+    await controller.setTaskCompleted(task.id, true);
+    expect(notifications.syncedTaskIds, isEmpty);
+    expect(container.read(archivedTasksProvider), hasLength(1));
+    expect(notifications.removeAllCount, 2);
+    await controller.setTaskCompleted(task.id, false);
+    expect(notifications.lastSyncedTask!.milestones, isEmpty);
+    expect(container.read(archivedTasksProvider), isEmpty);
+    await controller.setMilestoneCompleted(task.id, 'first', false);
+    expect(notifications.lastSyncedTask!.milestones, hasLength(1));
+  });
+
   test('method channel alarm scheduler ignores missing native implementation', () async {
     const channel = MethodChannel('test_next_ddl_alarm_missing');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -410,6 +441,7 @@ class _MemoryRepository implements DeadlineRepository {
 }
 
 class _FakeNotificationScheduler implements NotificationScheduler {
+  DeadlineTask? lastSyncedTask;
   final List<String> syncedTaskIds = [];
   int permissionRequestCount = 0;
   int persistentSyncCount = 0;
@@ -456,6 +488,7 @@ class _FakeNotificationScheduler implements NotificationScheduler {
     required AppLocalePreference localePreference,
   }) async {
     syncedTaskIds.add(task.id);
+    lastSyncedTask = task;
   }
 }
 

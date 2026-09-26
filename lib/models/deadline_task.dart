@@ -15,6 +15,8 @@ class DeadlineTask {
     required this.notificationsEnabled,
     this.alarmEnabled = false,
     this.alarmAudioItemsOverride = const [],
+    this.completedAtUtc,
+    this.tags = const [],
   });
 
   final String id;
@@ -29,6 +31,9 @@ class DeadlineTask {
   final bool notificationsEnabled;
   final bool alarmEnabled;
   final List<AlarmAudioItem> alarmAudioItemsOverride;
+  final DateTime? completedAtUtc;
+  final List<String> tags;
+  bool get isCompleted => completedAtUtc != null;
 
   DeadlineTask copyWith({
     String? id,
@@ -43,9 +48,14 @@ class DeadlineTask {
     bool? notificationsEnabled,
     bool? alarmEnabled,
     List<AlarmAudioItem>? alarmAudioItemsOverride,
+    DateTime? completedAtUtc,
+    bool clearCompletedAt = false,
+    List<String>? tags,
   }) {
     return DeadlineTask(
       id: id ?? this.id,
+      completedAtUtc: clearCompletedAt ? null : completedAtUtc ?? this.completedAtUtc,
+      tags: tags ?? this.tags,
       title: title ?? this.title,
       note: note ?? this.note,
       timezoneId: timezoneId ?? this.timezoneId,
@@ -64,6 +74,8 @@ class DeadlineTask {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        'completedAtUtc': completedAtUtc?.toIso8601String(),
+        'tags': tags,
         'title': title,
         'note': note,
         'timezoneId': timezoneId,
@@ -81,6 +93,8 @@ class DeadlineTask {
   factory DeadlineTask.fromJson(Map<String, dynamic> json) {
     return DeadlineTask(
       id: json['id'] as String,
+      completedAtUtc: DateTime.tryParse(json['completedAtUtc'] as String? ?? '')?.toUtc(),
+      tags: (json['tags'] as List<dynamic>? ?? const []).whereType<String>().map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toSet().toList(),
       title: json['title'] as String,
       note: (json['note'] as String?) ?? '',
       timezoneId: (json['timezoneId'] as String?) ?? 'UTC',

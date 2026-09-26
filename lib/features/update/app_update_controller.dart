@@ -12,6 +12,7 @@ final appUpdateControllerProvider =
     );
 
 class AppUpdateController extends Notifier<AppUpdateState> {
+  bool _installBusy = false;
   AppUpdateService get _service => ref.read(appUpdateServiceProvider);
   AppInfoService get _appInfo => ref.read(appInfoServiceProvider);
 
@@ -21,6 +22,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
   }
 
   Future<void> checkForUpdate({bool userInitiated = false}) async {
+    if (_installBusy || state.status == AppUpdateStatus.checking) return;
     state = state.copyWith(
       status: AppUpdateStatus.checking,
       clearErrorMessage: true,
@@ -28,7 +30,9 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     );
     try {
       final currentVersion = await _appInfo.getVersionLabel();
-      final release = await _service.checkForUpdate(currentVersion: currentVersion);
+      final release = await _service.checkForUpdate(
+        currentVersion: currentVersion,
+      );
       if (release == null) {
         state = state.copyWith(
           status: AppUpdateStatus.upToDate,
@@ -74,40 +78,19 @@ class AppUpdateController extends Notifier<AppUpdateState> {
   }
 
   Future<void> downloadAndInstall() async {
+    if (_installBusy || state.status == AppUpdateStatus.checking) return;
+    _installBusy = true;
+    try {
+      await _downloadAndInstall();
+    } finally {
+      _installBusy = false;
+    }
+  }
+
+  Future<void> _downloadAndInstall() async {
     final release = state.release;
     if (release == null) {
       return;
-    }
-    if (state.hasReusableLocalInstaller && state.downloadedFilePath != null) {
-      state = state.copyWith(
-        status: AppUpdateStatus.installReady,
-        isUsingCachedInstaller: true,
-        clearDownloadProgress: true,
-        clearDownloadPercent: true,
-        clearDownloadSpeed: true,
-      );
-      try {
-        final resumed = await _service.resumePendingInstall(state.downloadedFilePath!);
-        if (resumed) {
-          state = state.copyWith(
-            status: AppUpdateStatus.installReady,
-            requiresInstallPermission: false,
-          );
-          return;
-        }
-        await _service.openInstallPermissionSettings();
-        state = state.copyWith(
-          status: AppUpdateStatus.installReady,
-          requiresInstallPermission: true,
-        );
-        return;
-      } catch (error) {
-        state = state.copyWith(
-          status: AppUpdateStatus.error,
-          error: _normalizeError(error),
-        );
-        return;
-      }
     }
     state = state.copyWith(
       status: AppUpdateStatus.downloading,
@@ -123,8 +106,10 @@ class AppUpdateController extends Notifier<AppUpdateState> {
         onProgress: (progress) {
           state = state.copyWith(
             status: AppUpdateStatus.downloading,
-            downloadProgress: progress.progress ?? state.downloadProgress,
-            downloadPercent: progress.percent ?? state.downloadPercent,
+            downloadProgress: progress.progress,
+            clearDownloadProgress: progress.progress == null,
+            downloadPercent: progress.percent,
+            clearDownloadPercent: progress.percent == null,
             downloadSpeedBytesPerSecond: progress.speedBytesPerSecond,
           );
         },
@@ -136,6 +121,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
             downloadedFilePath: result.filePath,
             localInstallerVersion: result.installerVersion,
             hasReusableLocalInstaller: result.filePath != null,
+            isUsingCachedInstaller: result.usedCachedInstaller,
             requiresInstallPermission: false,
           );
         case AppUpdateInstallStatus.permissionRequired:
@@ -144,6 +130,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
             downloadedFilePath: result.filePath,
             localInstallerVersion: result.installerVersion,
             hasReusableLocalInstaller: result.filePath != null,
+            isUsingCachedInstaller: result.usedCachedInstaller,
             requiresInstallPermission: true,
           );
         case AppUpdateInstallStatus.openedReleasePage:
@@ -187,6 +174,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
   }
 
   Future<void> resumePendingInstallIfPossible() async {
+    if (_installBusy) return;
     if (!Platform.isAndroid) {
       return;
     }
@@ -194,6 +182,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
     if (path == null || !state.requiresInstallPermission) {
       return;
     }
+    _installBusy = true;
     try {
       final resumed = await _service.resumePendingInstall(path);
       if (resumed) {
@@ -207,10 +196,13 @@ class AppUpdateController extends Notifier<AppUpdateState> {
         status: AppUpdateStatus.error,
         error: _normalizeError(error),
       );
+    } finally {
+      _installBusy = false;
     }
   }
 
   Future<int> clearCachedInstallers() async {
+    if (_installBusy || state.status == AppUpdateStatus.checking) return 0;
     final removed = await _service.clearCachedInstallers();
     final downloadedFilePath = state.downloadedFilePath;
     final shouldClearPath = downloadedFilePath != null;
@@ -219,6 +211,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
       isUsingCachedInstaller: false,
       clearDownloadedFilePath: shouldClearPath,
       clearLocalInstallerVersion: true,
+      requiresInstallPermission: false,
     );
     return removed;
   }

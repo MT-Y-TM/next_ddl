@@ -171,11 +171,17 @@ jobs:
       - name: Build Android release APK
         run: flutter build apk --release --target-platform android-arm64
 
+      - name: Generate APK checksum
+        working-directory: build/app/outputs/flutter-apk
+        run: sha256sum app-release.apk > app-release.apk.sha256
+
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-release.apk.sha256
 
   release:
     name: Publish Release
@@ -194,10 +200,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: |
-            Compatibility note:
-            - Android 1.1.6 uses the first formal release keystore.
-            - If you installed 1.1.1 or earlier with the old debug signature, Android cannot upgrade it directly.
-            - Please uninstall the old app once, then install 1.1.6. Future formally signed versions can upgrade normally after that.
+            ## 中文
+            - 新增任务与节点完成状态、归档、快捷延期、搜索和标签筛选。
+            - 新增任务模板与重复计划、提醒状态检查及测试入口。
+            - 新增导入备份恢复、安装包完整性校验及 Android 桌面小组件。
+            - 新功能支持中文、英文、日文；项目许可证改为 MIT。
+
+            ## English
+            - Add task and milestone completion, archives, quick postponement, search, and tag filters.
+            - Add task templates, recurring schedules, reminder diagnostics, and test controls.
+            - Add import backups and restore, installer integrity checks, and an Android home screen widget.
+            - Localize new features in Chinese, English, and Japanese; license the project under MIT.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk
+            release-assets/app-release.apk.sha256

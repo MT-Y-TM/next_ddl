@@ -45,3 +45,6 @@ app.*.map.json
 
 # FVM
 .fvm/
+
+# Local planning documents
+/docs/

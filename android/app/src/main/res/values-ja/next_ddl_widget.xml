@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Next DDL 締め切り</string>
+    <string name="widget_empty">未完了のタスクはありません</string>
+    <string name="widget_empty_hint">タップして Next DDL を開く</string>
+    <string name="widget_next">次の予定：%1$s</string>
+    <string name="widget_final_due">最終期限：%1$s</string>
+    <string name="widget_minutes">%1$d 分</string>
+    <string name="widget_hours_minutes">%1$d 時間 %2$d 分</string>
+    <string name="widget_remaining">残り %1$s</string>
+    <string name="widget_overdue">%1$s 超過</string>
+    <string name="widget_updated_at">%1$s 時点 · 約30分ごとに更新、遅延あり</string>
+    <string name="widget_refresh_hint">約30分ごとに更新、システムによる遅延あり</string>
+</resources>

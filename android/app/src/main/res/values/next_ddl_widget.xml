@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_background">#F5F7F3</color>
+    <color name="widget_text">#182C28</color>
+    <color name="widget_secondary">#52665F</color>
+    <color name="widget_accent">#176B52</color>
+    <string name="widget_name">Next DDL</string>
+    <string name="widget_empty">No unfinished tasks</string>
+    <string name="widget_empty_hint">Tap to open Next DDL</string>
+    <string name="widget_next">Next: %1$s</string>
+    <string name="widget_final_due">Final: %1$s</string>
+    <string name="widget_minutes">%1$d min</string>
+    <string name="widget_hours_minutes">%1$d h %2$d min</string>
+    <string name="widget_remaining">%1$s left</string>
+    <string name="widget_overdue">%1$s overdue</string>
+    <string name="widget_updated_at">As of %1$s · refresh ~30 min, may be delayed</string>
+    <string name="widget_refresh_hint">Refresh ~30 min; system delays possible</string>
+</resources>

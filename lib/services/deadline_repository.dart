@@ -12,6 +12,14 @@ abstract class DeadlineRepository {
   Future<String?> exportSnapshot(AppSnapshot snapshot);
 }
 
+/// Serializes backup and replacement with ordinary saves.
+abstract interface class ProtectedDeadlineRepository {
+  Future<void> replaceSafely(
+    AppSnapshot snapshot,
+    Future<void> Function(AppSnapshot current) backup,
+  );
+}
+
 final deadlineRepositoryProvider = Provider<DeadlineRepository>((ref) {
   throw UnimplementedError('deadlineRepositoryProvider must be overridden');
 });

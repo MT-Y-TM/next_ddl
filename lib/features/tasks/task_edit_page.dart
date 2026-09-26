@@ -10,6 +10,8 @@ import '../../services/timezone_service.dart';
 import '../../utils/locale_utils.dart';
 import '../../utils/milestone_utils.dart';
 import 'tasks_controller.dart';
+import 'task_ui_helpers.dart';
+import 'task_ui_strings.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
   const TaskEditPage({this.existingTask, super.key});
@@ -23,12 +25,14 @@ class TaskEditPage extends ConsumerStatefulWidget {
 class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   late final TextEditingController _titleController;
   late final TextEditingController _noteController;
+  late final TextEditingController _tagsController;
   late DateTime _finalDueLocal;
   late List<Milestone> _milestones;
   late List<int> _reminders;
   late bool _notificationsEnabled;
   late bool _alarmEnabled;
   late List<AlarmAudioItem> _alarmAudioItemsOverride;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -36,13 +40,16 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     final task = widget.existingTask;
     _titleController = TextEditingController(text: task?.title ?? '');
     _noteController = TextEditingController(text: task?.note ?? '');
+    _tagsController = TextEditingController(text: task?.tags.join(', ') ?? '');
     final timezoneService = ref.read(timezoneServiceProvider);
     _finalDueLocal = timezoneService.utcToConfigured(
       task?.finalDueAtUtc ??
           DateTime.now().toUtc().add(const Duration(days: 3)),
     );
     _milestones = [...(task?.milestones ?? const [])];
-    _reminders = [...(task?.reminderOffsetsSeconds ?? const [0])];
+    _reminders = [
+      ...(task?.reminderOffsetsSeconds ?? const [0]),
+    ];
     _notificationsEnabled = task?.notificationsEnabled ?? true;
     _alarmEnabled = task?.alarmEnabled ?? false;
     _alarmAudioItemsOverride = [...(task?.alarmAudioItemsOverride ?? const [])];
@@ -52,6 +59,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   void dispose() {
     _titleController.dispose();
     _noteController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -79,6 +87,15 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
             decoration: InputDecoration(
               labelText: l10n.note,
               hintText: l10n.noteHint,
+            ),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _tagsController,
+            decoration: InputDecoration(
+              labelText: TaskUiStrings(context).tags,
+              helperText: TaskUiStrings(context).tagsHint,
+              helperMaxLines: 3,
             ),
           ),
           const SizedBox(height: 20),
@@ -126,7 +143,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                     subtitle: Text(
                       _alarmAudioItemsOverride.isEmpty
                           ? l10n.taskAlarmUsesGlobalPlaylist
-                          : l10n.alarmAudioCount(_alarmAudioItemsOverride.length),
+                          : l10n.alarmAudioCount(
+                              _alarmAudioItemsOverride.length,
+                            ),
                     ),
                     trailing: FilledButton.tonalIcon(
                       onPressed: _pickTaskAlarmAudio,
@@ -138,7 +157,11 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                     ListTile(
                       dense: true,
                       title: Text(item.displayName),
-                      subtitle: Text(item.uri, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(
+                        item.uri,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       trailing: IconButton(
                         tooltip: l10n.delete,
                         onPressed: () {
@@ -185,9 +208,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           for (var index = 0; index < _milestones.length; index++)
             Card(
               child: ListTile(
-                title: switch (
-                  resolveMilestoneDisplayTitle(_milestones[index].title)
-                ) {
+                title: switch (resolveMilestoneDisplayTitle(
+                  _milestones[index].title,
+                )) {
                   final title when title.isNotEmpty => Text(title),
                   _ => null,
                 },
@@ -256,7 +279,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
-            onPressed: _save,
+            onPressed: _saving ? null : _save,
             icon: const Icon(Icons.save_outlined),
             label: Text(isEditing ? l10n.saveChanges : l10n.createTask),
           ),
@@ -315,9 +338,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setLocalState) => AlertDialog(
-          title: Text(
-            existing == null ? l10n.addMilestone : l10n.edit,
-          ),
+          title: Text(existing == null ? l10n.addMilestone : l10n.edit),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -360,6 +381,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
                       timezoneAwareLocalToUtcProvider(selected),
                     ),
                     source: existing?.source ?? MilestoneSource.manual,
+                    completedAtUtc: existing?.completedAtUtc,
                   ),
                 );
               },
@@ -463,6 +485,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final l10n = AppLocalizations.of(context)!;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -481,6 +504,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     final controller = ref.read(tasksControllerProvider.notifier);
     final task = DeadlineTask(
       id: widget.existingTask?.id ?? _generateId(),
+      completedAtUtc: widget.existingTask?.completedAtUtc,
+      tags: parseTaskTags(_tagsController.text),
       title: title,
       note: _noteController.text.trim(),
       timezoneId: controller.timezoneId,
@@ -495,15 +520,20 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       alarmAudioItemsOverride: _alarmAudioItemsOverride,
     );
 
-    if (_notificationsEnabled) {
-      await controller.requestNotificationPermission();
-    }
-    await controller.addOrUpdateTask(task);
-    if (!mounted) {
-      return;
-    }
+    setState(() => _saving = true);
+    final success = await runTaskUiAction(context, () async {
+      if (_notificationsEnabled) {
+        await controller.requestNotificationPermission();
+      }
+      await controller.addOrUpdateTask(task);
+    });
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (!success) return;
+    final messenger = ScaffoldMessenger.of(context);
     Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(
           widget.existingTask == null ? l10n.taskCreated : l10n.taskUpdated,
@@ -513,7 +543,9 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   }
 
   Future<void> _pickTaskAlarmAudio() async {
-    final picked = await ref.read(alarmAudioPickerServiceProvider).pickAudioItems();
+    final picked = await ref
+        .read(alarmAudioPickerServiceProvider)
+        .pickAudioItems();
     if (picked.isEmpty) {
       return;
     }
@@ -581,10 +613,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     return l10n.advanceSeconds(duration.inSeconds);
   }
 
-  String _labelForReminderUnit(
-    _ReminderUnit unit,
-    AppLocalizations l10n,
-  ) {
+  String _labelForReminderUnit(_ReminderUnit unit, AppLocalizations l10n) {
     return switch (unit) {
       _ReminderUnit.minutes => l10n.minutes,
       _ReminderUnit.hours => l10n.hours,

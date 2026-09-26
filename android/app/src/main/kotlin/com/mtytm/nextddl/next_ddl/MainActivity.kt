@@ -16,6 +16,10 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        if (!flutterEngine.plugins.has(NextDdlWidgetPlugin::class.java)) {
+            flutterEngine.plugins.add(NextDdlWidgetPlugin())
+        }
+        NextDdlReminderHealth.register(this, flutterEngine.dartExecutor.binaryMessenger)
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -63,6 +67,8 @@ class MainActivity : FlutterActivity() {
                 }
 
                 "syncAlarms" -> {
+                    getSharedPreferences("next_ddl_alarm", MODE_PRIVATE).edit()
+                        .putString("localeTag", call.argument<String>("localeTag") ?: "system").apply()
                     val settings = call.argument<Map<*, *>>("settings") ?: emptyMap<Any, Any>()
                     val tasks = call.argument<List<Map<*, *>>>("tasks") ?: emptyList()
                     alarmScheduler.syncAlarms(settings, tasks)

@@ -26,9 +26,8 @@ abstract class AlarmScheduler {
 }
 
 class MethodChannelAlarmScheduler implements AlarmScheduler {
-  MethodChannelAlarmScheduler({
-    MethodChannel? channel,
-  }) : _channel = channel ?? const MethodChannel('next_ddl/alarm');
+  MethodChannelAlarmScheduler({MethodChannel? channel})
+    : _channel = channel ?? const MethodChannel('next_ddl/alarm');
 
   final MethodChannel _channel;
 
@@ -61,7 +60,18 @@ class MethodChannelAlarmScheduler implements AlarmScheduler {
     await _ignoreMissingPlugin(
       () => _channel.invokeMethod<void>('syncAlarms', {
         'settings': settings.toJson(),
-        'tasks': tasks.map((task) => task.toJson()).toList(),
+        'tasks': tasks
+            .where((task) => !task.isCompleted)
+            .map(
+              (task) => task
+                  .copyWith(
+                    milestones: task.milestones
+                        .where((milestone) => !milestone.isCompleted)
+                        .toList(),
+                  )
+                  .toJson(),
+            )
+            .toList(),
         'localeTag': localePreference.tag,
       }),
     );

@@ -5,6 +5,11 @@
 #include <flutter/standard_method_codec.h>
 #include <windows.h>
 #include <mmsystem.h>
+#include <shellapi.h>
+#include <shlwapi.h>
+
+#pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "shlwapi.lib")
 
 #include <algorithm>
 #include <cctype>
@@ -26,6 +31,7 @@ using flutter::EncodableMap;
 using flutter::EncodableValue;
 
 constexpr auto kMaxRingDuration = std::chrono::minutes(5);
+constexpr auto kTestRingDuration = std::chrono::seconds(10);
 
 std::string GetString(const EncodableMap& map, const char* key) {
   const auto it = map.find(EncodableValue(key));
@@ -58,6 +64,44 @@ std::wstring Utf16FromUtf8String(const std::string& utf8_string) {
     return std::wstring();
   }
   return utf16_string;
+}
+
+// nullopt means a URI scheme that Windows local file playback cannot inspect.
+std::optional<std::wstring> LocalAudioPath(const std::string& raw) {
+  auto path = Utf16FromUtf8String(raw);
+  if (path.find(L'\0') != std::wstring::npos) return std::wstring();
+  if (_wcsnicmp(path.c_str(), L"file:", 5) == 0) {
+    std::vector<wchar_t> buffer(path.size() + 1);
+    DWORD length = static_cast<DWORD>(buffer.size());
+    if (FAILED(PathCreateFromUrlW(path.c_str(), buffer.data(), &length, 0))) {
+      return std::wstring();
+    }
+    return std::wstring(buffer.data());
+  }
+  const auto colon = path.find(L':');
+  if (colon != std::wstring::npos &&
+      !(colon == 1 && path.size() > 2 &&
+        ((path[0] >= L'A' && path[0] <= L'Z') ||
+         (path[0] >= L'a' && path[0] <= L'z')) &&
+        (path[2] == L'\\' || path[2] == L'/'))) {
+    return std::nullopt;
+  }
+  return path;
+}
+
+std::string CheckAudioUri(const std::string& uri) {
+  const auto path = LocalAudioPath(uri);
+  if (!path) return "unknown";
+  if (path->empty()) return "unavailable";
+  const auto file = CreateFileW(path->c_str(), GENERIC_READ,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                               nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (file == INVALID_HANDLE_VALUE) return "unavailable";
+  char byte;
+  DWORD read = 0;
+  const bool readable = ReadFile(file, &byte, 1, &read, nullptr) && read == 1;
+  CloseHandle(file);
+  return readable ? "readable" : "unavailable";
 }
 
 bool GetBool(const EncodableMap& map, const char* key) {
@@ -106,7 +150,8 @@ std::vector<std::wstring> ParseAudioPaths(const EncodableValue* value) {
     if (uri.empty()) {
       continue;
     }
-    result.push_back(Utf16FromUtf8String(uri));
+    const auto path = LocalAudioPath(uri);
+    if (path && !path->empty()) result.push_back(*path);
   }
   return result;
 }
@@ -158,7 +203,7 @@ std::vector<std::chrono::system_clock::time_point> CollectDeadlinePoints(
   }
   for (const auto& item : *milestones) {
     const auto* milestone = std::get_if<EncodableMap>(&item);
-    if (!milestone) {
+    if (!milestone || !GetString(*milestone, "completedAtUtc").empty()) {
       continue;
     }
     if (const auto due = ParseIsoUtc(GetString(*milestone, "dueAtUtc"))) {
@@ -181,10 +226,10 @@ std::wstring QuoteMciPath(const std::wstring& path) {
 
 NextDdlAlarmScheduler::NextDdlAlarmScheduler(
     flutter::BinaryMessenger* messenger) {
-  auto channel = std::make_unique<flutter::MethodChannel<EncodableValue>>(
+  alarm_channel_ = std::make_unique<flutter::MethodChannel<EncodableValue>>(
       messenger, "next_ddl/alarm",
       &flutter::StandardMethodCodec::GetInstance());
-  channel->SetMethodCallHandler(
+  alarm_channel_->SetMethodCallHandler(
       [this](const auto& call, auto result) {
         const auto method = call.method_name();
         if (method == "canScheduleExactAlarms") {
@@ -223,11 +268,90 @@ NextDdlAlarmScheduler::NextDdlAlarmScheduler(
         }
         result->NotImplemented();
       });
+  health_channel_ = std::make_unique<flutter::MethodChannel<EncodableValue>>(
+      messenger, "next_ddl/reminder_health",
+      &flutter::StandardMethodCodec::GetInstance());
+  health_channel_->SetMethodCallHandler([this](const auto& call, auto result) {
+    const auto& method = call.method_name();
+    if (method == "pendingAlarmCount") {
+      std::lock_guard<std::mutex> lock(mutex_);
+      result->Success(EncodableValue(static_cast<int64_t>(triggers_.size())));
+      return;
+    }
+    if (method == "openNotificationSettings") {
+      const auto opened = reinterpret_cast<INT_PTR>(ShellExecuteW(
+          nullptr, L"open", L"ms-settings:notifications", nullptr, nullptr,
+          SW_SHOWNORMAL));
+      if (opened > 32) {
+        result->Success();
+      } else {
+        result->Error("settings_unavailable", "Cannot open notification settings");
+      }
+      return;
+    }
+    if (method != "checkAudioUris" && method != "testAlarm") {
+      result->NotImplemented();
+      return;
+    }
+    const auto* args = call.arguments()
+                           ? std::get_if<EncodableMap>(call.arguments())
+                           : nullptr;
+    const char* key = method == "checkAudioUris" ? "uris" : "audioUris";
+    const EncodableList* uris = nullptr;
+    if (args) {
+      const auto it = args->find(EncodableValue(key));
+      if (it != args->end()) uris = std::get_if<EncodableList>(&it->second);
+    }
+    if (!uris) {
+      result->Error("invalid_arguments", "Expected a list of audio URIs");
+      return;
+    }
+    if (method == "checkAudioUris") {
+      EncodableList states;
+      for (const auto& item : *uris) {
+        const auto* uri = std::get_if<std::string>(&item);
+        states.emplace_back(uri ? CheckAudioUri(*uri) : "unknown");
+      }
+      result->Success(EncodableValue(states));
+      return;
+    }
+    auto duration = kTestRingDuration;
+    const auto duration_it = args->find(EncodableValue("maxDurationSeconds"));
+    if (duration_it != args->end()) {
+      int64_t seconds = 0;
+      if (const auto* value = std::get_if<int32_t>(&duration_it->second)) {
+        seconds = *value;
+      } else if (const auto* value64 = std::get_if<int64_t>(&duration_it->second)) {
+        seconds = *value64;
+      }
+      if (seconds <= 0) {
+        result->Success(EncodableValue(false));
+        return;
+      }
+      duration = std::chrono::seconds(std::min<int64_t>(seconds, 10));
+    }
+    bool accepted = false;
+    for (const auto& item : *uris) {
+      const auto* uri = std::get_if<std::string>(&item);
+      if (!uri || CheckAudioUri(*uri) != "readable") continue;
+      const auto path = LocalAudioPath(*uri);
+      if (path && StartPlayback(*path, duration)) {
+        accepted = true;
+        break;
+      }
+    }
+    result->Success(EncodableValue(accepted));
+  });
   StartSchedulerThread();
 }
 
 NextDdlAlarmScheduler::~NextDdlAlarmScheduler() {
-  shutting_down_ = true;
+  alarm_channel_->SetMethodCallHandler(nullptr);
+  health_channel_->SetMethodCallHandler(nullptr);
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    shutting_down_ = true;
+  }
   condition_.notify_all();
   if (scheduler_thread_.joinable()) {
     scheduler_thread_.join();
@@ -256,7 +380,8 @@ void NextDdlAlarmScheduler::SyncAlarms(const EncodableMap& arguments) {
   const auto now = std::chrono::system_clock::now();
   for (const auto& item : *tasks) {
     const auto* task = std::get_if<EncodableMap>(&item);
-    if (!task || !GetBool(*task, "alarmEnabled")) {
+    if (!task || !GetBool(*task, "alarmEnabled") ||
+        !GetString(*task, "completedAtUtc").empty()) {
       continue;
     }
     const auto task_id = GetString(*task, "id");
@@ -332,6 +457,7 @@ void NextDdlAlarmScheduler::RemoveAll() {
 void NextDdlAlarmScheduler::StopCurrentAlarm() {
   std::lock_guard<std::mutex> lock(mutex_);
   StopPlaybackLocked();
+  condition_.notify_all();
 }
 
 void NextDdlAlarmScheduler::StartSchedulerThread() {
@@ -341,27 +467,34 @@ void NextDdlAlarmScheduler::StartSchedulerThread() {
 void NextDdlAlarmScheduler::SchedulerLoop() {
   std::unique_lock<std::mutex> lock(mutex_);
   while (!shutting_down_) {
-    if (triggers_.empty()) {
-      condition_.wait(lock, [this] {
-        return shutting_down_ || !triggers_.empty();
-      });
+    const auto steady_now = std::chrono::steady_clock::now();
+    if (playback_stop_at_ && *playback_stop_at_ <= steady_now) {
+      StopPlaybackLocked();
+    }
+    const auto now = std::chrono::system_clock::now();
+    if (!triggers_.empty() && triggers_.front().trigger_at <= now) {
+      const auto trigger = triggers_.front();
+      triggers_.erase(triggers_.begin());
+      lock.unlock();
+      FireTrigger(trigger);
+      lock.lock();
       continue;
     }
-    const auto next_time = triggers_.front().trigger_at;
-    if (condition_.wait_until(lock, next_time, [this, next_time] {
-          return shutting_down_ || triggers_.empty() ||
-                 triggers_.front().trigger_at != next_time;
-        })) {
-      continue;
+    // Recompute both deadlines on every notification, including playback changes.
+    // A short cap also lets wall-clock changes update future task deadlines.
+    auto wait = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+        std::chrono::seconds(1));
+    if (!triggers_.empty()) {
+      wait = std::min(wait,
+          std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+              triggers_.front().trigger_at - now));
     }
-    if (shutting_down_ || triggers_.empty()) {
-      continue;
+    if (playback_stop_at_) wait = std::min(wait, *playback_stop_at_ - steady_now);
+    if (triggers_.empty() && !playback_stop_at_) {
+      condition_.wait(lock);
+    } else {
+      condition_.wait_for(lock, wait);
     }
-    const auto trigger = triggers_.front();
-    triggers_.erase(triggers_.begin());
-    lock.unlock();
-    FireTrigger(trigger);
-    lock.lock();
   }
 }
 
@@ -372,11 +505,13 @@ void NextDdlAlarmScheduler::FireTrigger(const Trigger& trigger) {
   static thread_local std::mt19937 generator{std::random_device{}()};
   std::uniform_int_distribution<size_t> distribution(
       0, trigger.audio_paths.size() - 1);
-  StartPlayback(trigger.audio_paths[distribution(generator)]);
+  StartPlayback(trigger.audio_paths[distribution(generator)], kMaxRingDuration);
 }
 
-void NextDdlAlarmScheduler::StartPlayback(const std::wstring& audio_path) {
+bool NextDdlAlarmScheduler::StartPlayback(
+    const std::wstring& audio_path, std::chrono::seconds max_duration) {
   std::lock_guard<std::mutex> lock(mutex_);
+  if (shutting_down_) return false;
   StopPlaybackLocked();
   current_alias_ = L"nextddl_alarm_" +
                    std::to_wstring(GetTickCount64());
@@ -384,7 +519,7 @@ void NextDdlAlarmScheduler::StartPlayback(const std::wstring& audio_path) {
                             L" alias " + current_alias_;
   if (mciSendStringW(open_command.c_str(), nullptr, 0, nullptr) != 0) {
     current_alias_.clear();
-    return;
+    return false;
   }
 
   wchar_t status_buffer[64] = {};
@@ -403,17 +538,17 @@ void NextDdlAlarmScheduler::StartPlayback(const std::wstring& audio_path) {
     mciSendStringW(seek_command.c_str(), nullptr, 0, nullptr);
   }
   const auto play_command = L"play " + current_alias_ + L" repeat";
-  mciSendStringW(play_command.c_str(), nullptr, 0, nullptr);
-  std::thread([this, alias = current_alias_] {
-    std::this_thread::sleep_for(kMaxRingDuration);
-    std::lock_guard<std::mutex> timer_lock(mutex_);
-    if (current_alias_ == alias) {
-      StopPlaybackLocked();
-    }
-  }).detach();
+  if (mciSendStringW(play_command.c_str(), nullptr, 0, nullptr) != 0) {
+    StopPlaybackLocked();
+    return false;
+  }
+  playback_stop_at_ = std::chrono::steady_clock::now() + max_duration;
+  condition_.notify_all();
+  return true;
 }
 
 void NextDdlAlarmScheduler::StopPlaybackLocked() {
+  playback_stop_at_.reset();
   if (current_alias_.empty()) {
     return;
   }

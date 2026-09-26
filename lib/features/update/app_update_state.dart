@@ -68,26 +68,25 @@ class AppUpdateState {
       release: clearRelease ? null : (release ?? this.release),
       error: clearErrorMessage ? null : (error ?? this.error),
       userInitiated: userInitiated ?? this.userInitiated,
-      downloadedFilePath:
-          clearDownloadedFilePath
-              ? null
-              : (downloadedFilePath ?? this.downloadedFilePath),
-      downloadProgress:
-          clearDownloadProgress ? null : (downloadProgress ?? this.downloadProgress),
-      downloadPercent:
-          clearDownloadPercent ? null : (downloadPercent ?? this.downloadPercent),
-      downloadSpeedBytesPerSecond:
-          clearDownloadSpeed
-              ? null
-              : (downloadSpeedBytesPerSecond ?? this.downloadSpeedBytesPerSecond),
+      downloadedFilePath: clearDownloadedFilePath
+          ? null
+          : (downloadedFilePath ?? this.downloadedFilePath),
+      downloadProgress: clearDownloadProgress
+          ? null
+          : (downloadProgress ?? this.downloadProgress),
+      downloadPercent: clearDownloadPercent
+          ? null
+          : (downloadPercent ?? this.downloadPercent),
+      downloadSpeedBytesPerSecond: clearDownloadSpeed
+          ? null
+          : (downloadSpeedBytesPerSecond ?? this.downloadSpeedBytesPerSecond),
       isUsingCachedInstaller:
           isUsingCachedInstaller ?? this.isUsingCachedInstaller,
       hasReusableLocalInstaller:
           hasReusableLocalInstaller ?? this.hasReusableLocalInstaller,
-      localInstallerVersion:
-          clearLocalInstallerVersion
-              ? null
-              : (localInstallerVersion ?? this.localInstallerVersion),
+      localInstallerVersion: clearLocalInstallerVersion
+          ? null
+          : (localInstallerVersion ?? this.localInstallerVersion),
       requiresInstallPermission:
           requiresInstallPermission ?? this.requiresInstallPermission,
     );

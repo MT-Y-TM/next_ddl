@@ -46,6 +46,7 @@ class AppSnapshot {
     this.persistentNotificationTimeUnit = PersistentNotificationTimeUnit.day,
     this.themeSettings = const AppThemeSettings(),
     this.alarmSettings = const AppAlarmSettings(),
+    this.planningData = const {},
   });
 
   final int schemaVersion;
@@ -56,6 +57,7 @@ class AppSnapshot {
   final PersistentNotificationTimeUnit persistentNotificationTimeUnit;
   final AppThemeSettings themeSettings;
   final AppAlarmSettings alarmSettings;
+  final Map<String, dynamic> planningData;
 
   factory AppSnapshot.empty() {
     return AppSnapshot(
@@ -79,6 +81,7 @@ class AppSnapshot {
     PersistentNotificationTimeUnit? persistentNotificationTimeUnit,
     AppThemeSettings? themeSettings,
     AppAlarmSettings? alarmSettings,
+    Map<String, dynamic>? planningData,
   }) {
     return AppSnapshot(
       schemaVersion: schemaVersion ?? this.schemaVersion,
@@ -91,6 +94,7 @@ class AppSnapshot {
           persistentNotificationTimeUnit ?? this.persistentNotificationTimeUnit,
       themeSettings: themeSettings ?? this.themeSettings,
       alarmSettings: alarmSettings ?? this.alarmSettings,
+      planningData: planningData ?? this.planningData,
     );
   }
 
@@ -103,11 +107,13 @@ class AppSnapshot {
         'persistentNotificationTimeUnit': persistentNotificationTimeUnit.value,
         'themeSettings': themeSettings.toJson(),
         'alarmSettings': alarmSettings.toJson(),
+        'planningData': planningData,
       };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> json) {
     return AppSnapshot(
       schemaVersion: (json['schemaVersion'] as int?) ?? 1,
+      planningData: Map<String, dynamic>.from(json['planningData'] as Map? ?? const {}),
       exportedAtUtc: DateTime.parse(
         (json['exportedAtUtc'] as String?) ??
             DateTime.now().toUtc().toIso8601String(),

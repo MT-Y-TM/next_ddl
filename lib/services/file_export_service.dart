@@ -1,8 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../models/app_snapshot.dart';
 import '../utils/locale_utils.dart';
@@ -34,14 +34,15 @@ class PlatformFileExportService implements FileExportService {
         fileName: suggestedName,
         type: FileType.custom,
         allowedExtensions: const ['json'],
+        bytes: utf8.encode(content),
       );
     } catch (_) {
       path = null;
     }
-    path ??= await _fallbackPath(suggestedName);
     if (path == null) {
       return null;
     }
+    if (Platform.isAndroid || Platform.isIOS) return path;
     final file = File(path);
     await file.create(recursive: true);
     await file.writeAsString(content);
@@ -70,12 +71,7 @@ class PlatformFileExportService implements FileExportService {
     if (bytes == null) {
       return null;
     }
-    return String.fromCharCodes(bytes);
-  }
-
-  Future<String?> _fallbackPath(String suggestedName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}${Platform.pathSeparator}$suggestedName';
+    return utf8.decode(bytes);
   }
 }
 

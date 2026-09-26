@@ -10,6 +10,9 @@ import '../../utils/milestone_utils.dart';
 import '../../utils/timezone_labels.dart';
 import 'task_edit_page.dart';
 import 'tasks_controller.dart';
+import 'task_ui_helpers.dart';
+import 'task_ui_strings.dart';
+import 'task_postpone_dialog.dart';
 
 class TaskDetailPage extends ConsumerWidget {
   const TaskDetailPage({required this.taskId, super.key});
@@ -19,6 +22,8 @@ class TaskDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final strings = TaskUiStrings(context);
+    final controller = ref.read(tasksControllerProvider.notifier);
     final snapshot = ref.watch(tasksControllerProvider).valueOrNull;
     final matchedTasks =
         snapshot?.tasks.where((item) => item.id == taskId).toList() ?? const [];
@@ -35,10 +40,9 @@ class TaskDetailPage extends ConsumerWidget {
     }
 
     final nextMilestone = resolveNextMilestone(task, now);
-    final nextMilestoneTitle =
-        nextMilestone == null
-            ? null
-            : resolveMilestoneDisplayTitle(nextMilestone.title);
+    final nextMilestoneTitle = nextMilestone == null
+        ? null
+        : resolveMilestoneDisplayTitle(nextMilestone.title);
     final progress = resolveRemainingProgress(task, now);
     final timeline = [...task.milestones]
       ..sort((left, right) => left.dueAtUtc.compareTo(right.dueAtUtc));
@@ -78,45 +82,111 @@ class TaskDetailPage extends ConsumerWidget {
                     Text(task.note),
                   ],
                   const SizedBox(height: 16),
-                  _RemainingProgressBar(progress: progress),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.timezoneLabel(
-                      localizedTimezoneLabel(
-                        l10n,
-                        timezoneService.currentTimezoneId,
+                  if (task.isCompleted)
+                    Text(
+                      '${strings.completed} · ${taskUiDate(timezoneService.utcToConfigured(task.completedAtUtc!))}',
+                    ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final tag in task.tags) Chip(label: Text(tag)),
+                    ],
+                  ),
+                  if (!task.isCompleted) ...[
+                    Text(
+                      task.finalDueAtUtc.isAfter(now)
+                          ? l10n.inProgressTab
+                          : l10n.overdueTab,
+                    ),
+                    _RemainingProgressBar(progress: progress),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.timezoneLabel(
+                        localizedTimezoneLabel(
+                          l10n,
+                          timezoneService.currentTimezoneId,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    nextMilestone == null
-                        ? l10n.nextNodeValue(l10n.allExpired)
-                        : nextMilestoneTitle!.isEmpty
-                        ? l10n.nextNode
-                        : l10n.nextNodeValue(nextMilestoneTitle),
-                  ),
-                  if (nextMilestone != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
-                      formatCountdownFromDates(
-                        now: now,
-                        target: nextMilestone.dueAtUtc,
-                        overduePrefix: l10n.countdownOverduePrefix,
-                        daySuffix: l10n.countdownDaySuffix,
+                      nextMilestone == null
+                          ? l10n.nextNodeValue(l10n.finalDeadline)
+                          : nextMilestoneTitle!.isEmpty
+                          ? l10n.nextNode
+                          : l10n.nextNodeValue(nextMilestoneTitle),
+                    ),
+                    ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        formatCountdownFromDates(
+                          now: now,
+                          target: nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
+                          overduePrefix: l10n.countdownOverduePrefix,
+                          daySuffix: l10n.countdownDaySuffix,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.finalDeadlineValue(
+                        formatCountdownFromDates(
+                          now: now,
+                          target: task.finalDueAtUtc,
+                          overduePrefix: l10n.countdownOverduePrefix,
+                          daySuffix: l10n.countdownDaySuffix,
+                        ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.finalDeadlineValue(
-                      formatCountdownFromDates(
-                        now: now,
-                        target: task.finalDueAtUtc,
-                        overduePrefix: l10n.countdownOverduePrefix,
-                        daySuffix: l10n.countdownDaySuffix,
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TaskActionButton(
+                        label: task.isCompleted
+                            ? strings.restore
+                            : strings.complete,
+                        icon: task.isCompleted
+                            ? Icons.undo
+                            : Icons.check_circle_outline,
+                        onPressed: () async {
+                          await runTaskUiAction(
+                            context,
+                            () => controller.setTaskCompleted(
+                              task.id,
+                              !task.isCompleted,
+                            ),
+                            undo: () => controller.restoreTask(task),
+                          );
+                        },
                       ),
-                    ),
+                      if (!task.isCompleted)
+                        TaskActionButton(
+                          label: strings.postpone,
+                          icon: Icons.update,
+                          onPressed: () async {
+                            final choice = await showDialog<TaskPostponeChoice>(
+                              context: context,
+                              builder: (_) => TaskPostponeDialog(
+                                task: task,
+                                timezone: timezoneService,
+                              ),
+                            );
+                            if (choice == null || !context.mounted) return;
+                            await runTaskUiAction(
+                              context,
+                              () => controller.postponeTask(
+                                task.id,
+                                choice.dueUtc,
+                                shiftFutureMilestones: choice.shift,
+                              ),
+                              undo: () => controller.restoreTask(task),
+                            );
+                          },
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -127,13 +197,50 @@ class TaskDetailPage extends ConsumerWidget {
           const SizedBox(height: 8),
           for (final milestone in timeline)
             ListTile(
-              leading: const Icon(Icons.flag_outlined),
+              leading: Checkbox(
+                semanticLabel: milestone.isCompleted
+                    ? strings.reopenMilestone
+                    : strings.completeMilestone,
+                value: milestone.isCompleted,
+                onChanged: (value) {
+                  runTaskUiAction(
+                    context,
+                    () => controller.setMilestoneCompleted(
+                      task.id,
+                      milestone.id,
+                      value!,
+                    ),
+                    undo: () => controller.restoreTask(task),
+                  );
+                },
+              ),
               title: switch (resolveMilestoneDisplayTitle(milestone.title)) {
-                final title when title.isNotEmpty => Text(title),
-                _ => null,
+                final title when title.isNotEmpty => Text(
+                  title,
+                  style: TextStyle(
+                    decoration: milestone.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
+                  ),
+                ),
+                _ => Text(
+                  l10n.milestoneTime,
+                  style: TextStyle(
+                    decoration: milestone.isCompleted
+                        ? TextDecoration.lineThrough
+                        : null,
+                  ),
+                ),
               },
               subtitle: Text(
                 '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? l10n.generatedNode : l10n.manualNode}',
+              ),
+              trailing: Text(
+                milestone.isCompleted
+                    ? strings.completed
+                    : !milestone.dueAtUtc.isAfter(now)
+                    ? l10n.overdueTab
+                    : l10n.inProgressTab,
               ),
             ),
           ListTile(
@@ -146,7 +253,10 @@ class TaskDetailPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(l10n.reminderRules, style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            l10n.reminderRules,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -155,7 +265,9 @@ class TaskDetailPage extends ConsumerWidget {
               for (final offset in task.reminderOffsetsSeconds)
                 Chip(
                   label: Text(
-                    offset == 0 ? l10n.remindAtTime : _formatOffset(offset, l10n),
+                    offset == 0
+                        ? l10n.remindAtTime
+                        : _formatOffset(offset, l10n),
                   ),
                 ),
               if (task.reminderOffsetsSeconds.isEmpty)
@@ -163,7 +275,7 @@ class TaskDetailPage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 24),
-          FilledButton.tonalIcon(
+          TaskActionButton(
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
@@ -185,15 +297,16 @@ class TaskDetailPage extends ConsumerWidget {
               if (confirmed != true || !context.mounted) {
                 return;
               }
-              await ref
-                  .read(tasksControllerProvider.notifier)
-                  .deleteTask(task.id);
-              if (context.mounted) {
+              final success = await runTaskUiAction(
+                context,
+                () => controller.deleteTask(task.id),
+              );
+              if (success && context.mounted) {
                 Navigator.of(context).pop();
               }
             },
-            icon: const Icon(Icons.delete_outline),
-            label: Text(l10n.deleteTask),
+            icon: Icons.delete_outline,
+            label: l10n.deleteTask,
           ),
         ],
       ),
@@ -234,7 +347,10 @@ class _RemainingProgressBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(l10n.remainingTime, style: Theme.of(context).textTheme.labelLarge),
+            Text(
+              l10n.remainingTime,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
             const Spacer(),
             Text(
               '$percent%',

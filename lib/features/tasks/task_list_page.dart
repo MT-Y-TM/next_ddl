@@ -11,22 +11,149 @@ import '../settings/settings_page.dart';
 import 'task_detail_page.dart';
 import 'task_edit_page.dart';
 import 'tasks_controller.dart';
+import 'task_ui_helpers.dart';
+import 'task_ui_strings.dart';
 
-class TaskListPage extends ConsumerWidget {
+class TaskListPage extends ConsumerStatefulWidget {
   const TaskListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaskListPage> createState() => _TaskListPageState();
+}
+
+class _TaskListPageState extends ConsumerState<TaskListPage> {
+  final _search = TextEditingController();
+  String? _tag;
+  bool _untagged = false;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _clear() => setState(() {
+    _search.clear();
+    _tag = null;
+    _untagged = false;
+  });
+
+  Future<void> _manageTags() async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => Consumer(
+        builder: (context, ref, _) {
+          final strings = TaskUiStrings(context);
+          final l10n = AppLocalizations.of(context)!;
+          final tags =
+              (ref.watch(tasksControllerProvider).valueOrNull?.tasks ??
+                      <DeadlineTask>[])
+                  .expand((task) => task.tags)
+                  .toSet()
+                  .toList()
+                ..sort();
+          return AlertDialog(
+            title: Text(strings.manageTags),
+            content: SizedBox(
+              width: 400,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(strings.removeTag),
+                    if (tags.isEmpty) Text(strings.noTags),
+                    for (final tag in tags)
+                      ListTile(
+                        title: Text(tag),
+                        trailing: IconButton(
+                          tooltip: l10n.delete,
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: Text(tag),
+                                content: Text(strings.removeTag),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, false),
+                                    child: Text(l10n.cancel),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext, true),
+                                    child: Text(l10n.delete),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed != true || !context.mounted) return;
+                            final success = await runTaskUiAction(
+                              context,
+                              () => ref
+                                  .read(tasksControllerProvider.notifier)
+                                  .removeTag(tag),
+                            );
+                            if (success && mounted && _tag == tag) {
+                              setState(() => _tag = null);
+                            }
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.confirm),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final snapshotAsync = ref.watch(tasksControllerProvider);
-    final inProgress = ref.watch(inProgressTasksProvider);
-    final overdue = ref.watch(overdueTasksProvider);
+    final inProgress = filterTaskUi(
+      ref.watch(inProgressTasksProvider),
+      _search.text,
+      tag: _tag,
+      untagged: _untagged,
+    );
+    final overdue = filterTaskUi(
+      ref.watch(overdueTasksProvider),
+      _search.text,
+      tag: _tag,
+      untagged: _untagged,
+    );
+    final archived = filterTaskUi(
+      ref.watch(archivedTasksProvider),
+      _search.text,
+      tag: _tag,
+      untagged: _untagged,
+    );
+    final strings = TaskUiStrings(context);
+    final tags =
+        (snapshotAsync.valueOrNull?.tasks ?? <DeadlineTask>[])
+            .expand((task) => task.tags)
+            .toSet()
+            .toList()
+          ..sort();
+    final filtering =
+        _search.text.trim().isNotEmpty || _tag != null || _untagged;
     final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
     ref.watch(timezoneRevisionProvider);
     final timezoneService = ref.watch(timezoneServiceProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.appTitle),
@@ -34,9 +161,15 @@ class TaskListPage extends ConsumerWidget {
             tabs: [
               Tab(text: l10n.inProgressTab),
               Tab(text: l10n.overdueTab),
+              Tab(text: strings.archived),
             ],
           ),
           actions: [
+            IconButton(
+              tooltip: strings.manageTags,
+              onPressed: _manageTags,
+              icon: const Icon(Icons.sell_outlined),
+            ),
             IconButton(
               tooltip: l10n.settings,
               onPressed: () {
@@ -58,19 +191,106 @@ class TaskListPage extends ConsumerWidget {
           label: Text(l10n.addTask),
         ),
         body: snapshotAsync.when(
-          data: (_) => TabBarView(
+          data: (_) => Column(
             children: [
-              _TaskTabView(
-                tasks: inProgress,
-                nowUtc: now,
-                summary: l10n.inProgressSummary(inProgress.length),
-                toConfiguredTime: timezoneService.utcToConfigured,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: TextField(
+                  controller: _search,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: strings.search,
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      tooltip: strings.clear,
+                      onPressed: _clear,
+                      icon: const Icon(Icons.clear),
+                    ),
+                  ),
+                ),
               ),
-              _TaskTabView(
-                tasks: overdue,
-                nowUtc: now,
-                summary: l10n.overdueSummary(overdue.length),
-                toConfiguredTime: timezoneService.utcToConfigured,
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                child: Text(
+                  strings.scope,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(strings.all),
+                        selected: _tag == null && !_untagged,
+                        onSelected: (_) => setState(() {
+                          _tag = null;
+                          _untagged = false;
+                        }),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(strings.untagged),
+                        selected: _untagged,
+                        onSelected: (value) => setState(() {
+                          _tag = null;
+                          _untagged = value;
+                        }),
+                      ),
+                    ),
+                    for (final tag in tags)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(tag),
+                          selected: _tag == tag,
+                          onSelected: (value) => setState(() {
+                            _tag = value ? tag : null;
+                            _untagged = false;
+                          }),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _TaskTabView(
+                      filtering: filtering,
+                      onClear: _clear,
+                      tasks: inProgress,
+                      nowUtc: now,
+                      summary: l10n.inProgressSummary(inProgress.length),
+                      toConfiguredTime: timezoneService.utcToConfigured,
+                    ),
+                    _TaskTabView(
+                      filtering: filtering,
+                      onClear: _clear,
+                      tasks: overdue,
+                      nowUtc: now,
+                      summary: l10n.overdueSummary(overdue.length),
+                      toConfiguredTime: timezoneService.utcToConfigured,
+                    ),
+                    _TaskTabView(
+                      tasks: archived,
+                      emptyMessage: strings.emptyArchive,
+                      nowUtc: now,
+                      summary: '${strings.archived} (${archived.length})',
+                      toConfiguredTime: timezoneService.utcToConfigured,
+                      filtering: filtering,
+                      onClear: _clear,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -93,8 +313,14 @@ class _TaskTabView extends StatelessWidget {
     required this.nowUtc,
     required this.summary,
     required this.toConfiguredTime,
+    required this.filtering,
+    required this.onClear,
+    this.emptyMessage,
   });
 
+  final bool filtering;
+  final String? emptyMessage;
+  final VoidCallback onClear;
   final List<DeadlineTask> tasks;
   final DateTime nowUtc;
   final String summary;
@@ -103,32 +329,47 @@ class _TaskTabView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (tasks.isEmpty) {
+      if (filtering) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(TaskUiStrings(context).noResults),
+              TextButton(
+                onPressed: onClear,
+                child: Text(TaskUiStrings(context).clear),
+              ),
+            ],
+          ),
+        );
+      }
+      if (emptyMessage != null) {
+        return Center(child: Text(emptyMessage!));
+      }
       return _EmptyState(
         onCreate: () {
-          Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const TaskEditPage()),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const TaskEditPage()));
         },
       );
     }
-    return ListView(
+    return ListView.builder(
       padding: const EdgeInsets.only(bottom: 120, top: 8),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            summary,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-        const SizedBox(height: 8),
-        for (final task in tasks)
-          _TaskCard(
-            task: task,
-            nowUtc: nowUtc,
-            toConfiguredTime: toConfiguredTime,
-          ),
-      ],
+      itemCount: tasks.length + 1,
+      itemBuilder: (context, index) => index == 0
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                summary,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            )
+          : _TaskCard(
+              task: tasks[index - 1],
+              nowUtc: nowUtc,
+              toConfiguredTime: toConfiguredTime,
+            ),
     );
   }
 }
@@ -205,39 +446,55 @@ class _TaskCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _RemainingProgressBar(progress: progress),
-                  const SizedBox(height: 16),
-                  if (task.milestones.isNotEmpty) ...[
-                _CountdownRow(
-                      label: l10n.nextNode,
-                      title: nextMilestone == null
-                          ? l10n.noFutureNodes
-                          : resolveMilestoneDisplayTitle(nextMilestone.title),
-                      countdown: nextMilestone == null
-                          ? l10n.allExpired
-                          : formatCountdownFromDates(
-                              now: nowUtc,
-                              target: nextMilestone.dueAtUtc,
-                              overduePrefix: l10n.countdownOverduePrefix,
-                              daySuffix: l10n.countdownDaySuffix,
-                            ),
-                      time: nextMilestone == null
-                          ? null
-                          : toConfiguredTime(nextMilestone.dueAtUtc),
+                  if (task.tags.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        for (final tag in task.tags) Chip(label: Text(tag)),
+                      ],
                     ),
+                  if (task.isCompleted)
+                    Text(
+                      '${TaskUiStrings(context).completed} · ${taskUiDate(toConfiguredTime(task.completedAtUtc!))}',
+                    )
+                  else ...[
+                    Text(
+                      task.finalDueAtUtc.isAfter(nowUtc)
+                          ? l10n.inProgressTab
+                          : l10n.overdueTab,
+                    ),
+                    _RemainingProgressBar(progress: progress),
                     const SizedBox(height: 16),
-                  ],
-                  _CountdownRow(
-                    label: l10n.finalDeadline,
-                    title: null,
-                    countdown: formatCountdownFromDates(
-                      now: nowUtc,
-                      target: task.finalDueAtUtc,
-                      overduePrefix: l10n.countdownOverduePrefix,
-                      daySuffix: l10n.countdownDaySuffix,
+                    if (task.milestones.isNotEmpty) ...[
+                      _CountdownRow(
+                        label: l10n.nextNode,
+                        title: nextMilestone == null
+                            ? l10n.finalDeadline
+                            : resolveMilestoneDisplayTitle(nextMilestone.title),
+                        countdown: formatCountdownFromDates(
+                          now: nowUtc,
+                          target: nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
+                          overduePrefix: l10n.countdownOverduePrefix,
+                          daySuffix: l10n.countdownDaySuffix,
+                        ),
+                        time: toConfiguredTime(
+                          nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    _CountdownRow(
+                      label: l10n.finalDeadline,
+                      title: null,
+                      countdown: formatCountdownFromDates(
+                        now: nowUtc,
+                        target: task.finalDueAtUtc,
+                        overduePrefix: l10n.countdownOverduePrefix,
+                        daySuffix: l10n.countdownDaySuffix,
+                      ),
+                      time: toConfiguredTime(task.finalDueAtUtc),
                     ),
-                    time: toConfiguredTime(task.finalDueAtUtc),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -262,7 +519,10 @@ class _RemainingProgressBar extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(l10n.remainingTime, style: Theme.of(context).textTheme.labelLarge),
+            Text(
+              l10n.remainingTime,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
             const Spacer(),
             Text(
               '$percent%',

@@ -131,22 +131,23 @@ class LocalNotificationScheduler implements NotificationScheduler {
     DeadlineTask task, {
     required AppLocalePreference localePreference,
   }) async {
-    if (!task.notificationsEnabled) {
+    await removeTask(task.id);
+    if (!task.notificationsEnabled || task.isCompleted) {
       return;
     }
 
-    await removeTask(task.id);
     final l10n = resolveAppLocalizations(
       localePreference,
       systemLocale: WidgetsBinding.instance.platformDispatcher.locale,
     );
     final targets = <_NotificationTarget>[
       for (final milestone in task.milestones)
-        _NotificationTarget(
-          idSeed: '${task.id}:${milestone.id}',
-          title: resolveMilestoneDisplayTitle(milestone.title),
-          dueAtUtc: milestone.dueAtUtc,
-        ),
+        if (!milestone.isCompleted)
+          _NotificationTarget(
+            idSeed: '${task.id}:${milestone.id}',
+            title: resolveMilestoneDisplayTitle(milestone.title),
+            dueAtUtc: milestone.dueAtUtc,
+          ),
       _NotificationTarget(
         idSeed: '${task.id}:final',
         title: l10n.finalDeadline,
@@ -214,7 +215,10 @@ class LocalNotificationScheduler implements NotificationScheduler {
     required AppLocalePreference localePreference,
     required PersistentNotificationTimeUnit timeUnit,
   }) {
-    final remaining = resolveActiveDeadlinePoint(task, nowUtc).difference(nowUtc);
+    final remaining = resolveActiveDeadlinePoint(
+      task,
+      nowUtc,
+    ).difference(nowUtc);
     final l10n = resolveAppLocalizations(localePreference);
     final title = resolvePersistentNotificationTargetTitle(task, nowUtc);
     final countdown = formatCompactCountdown(

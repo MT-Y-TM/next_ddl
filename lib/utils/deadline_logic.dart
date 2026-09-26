@@ -2,10 +2,11 @@ import '../models/deadline_task.dart';
 import '../models/milestone.dart';
 
 Milestone? resolveFutureMilestone(DeadlineTask task, DateTime nowUtc) {
+  if (task.isCompleted) return null;
   final milestones = [...task.milestones]
     ..sort((left, right) => left.dueAtUtc.compareTo(right.dueAtUtc));
   for (final milestone in milestones) {
-    if (!milestone.dueAtUtc.isBefore(nowUtc)) {
+    if (!milestone.isCompleted && !milestone.dueAtUtc.isBefore(nowUtc)) {
       return milestone;
     }
   }
@@ -38,14 +39,14 @@ String resolvePersistentNotificationTargetTitle(
 List<DeadlineTask> inProgressTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
   return [
     for (final task in tasks)
-      if (!task.finalDueAtUtc.isBefore(nowUtc)) task,
+      if (!task.isCompleted && !task.finalDueAtUtc.isBefore(nowUtc)) task,
   ];
 }
 
 List<DeadlineTask> overdueTasks(List<DeadlineTask> tasks, DateTime nowUtc) {
   return [
     for (final task in tasks)
-      if (task.finalDueAtUtc.isBefore(nowUtc)) task,
+      if (!task.isCompleted && task.finalDueAtUtc.isBefore(nowUtc)) task,
   ];
 }
 

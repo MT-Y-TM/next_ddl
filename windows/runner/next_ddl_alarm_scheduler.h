@@ -3,12 +3,14 @@
 
 #include <flutter/binary_messenger.h>
 #include <flutter/encodable_value.h>
+#include <flutter/method_channel.h>
 
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -34,7 +36,8 @@ class NextDdlAlarmScheduler {
   void StartSchedulerThread();
   void SchedulerLoop();
   void FireTrigger(const Trigger& trigger);
-  void StartPlayback(const std::wstring& audio_path);
+  bool StartPlayback(const std::wstring& audio_path,
+                     std::chrono::seconds max_duration);
   void StopPlaybackLocked();
 
   std::mutex mutex_;
@@ -43,6 +46,9 @@ class NextDdlAlarmScheduler {
   std::thread scheduler_thread_;
   std::atomic<bool> shutting_down_ = false;
   std::wstring current_alias_;
+  std::optional<std::chrono::steady_clock::time_point> playback_stop_at_;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> alarm_channel_;
+  std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> health_channel_;
 };
 
 #endif  // RUNNER_NEXT_DDL_ALARM_SCHEDULER_H_

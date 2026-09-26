@@ -75,12 +75,12 @@ void main() {
       await tester.pumpWidget(_buildApp(snapshot, now));
       await tester.pumpAndSettle();
 
-      expect(find.text('进行中'), findsOneWidget);
-      expect(find.text('已过期'), findsOneWidget);
+      expect(find.widgetWithText(Tab, '进行中'), findsOneWidget);
+      expect(find.widgetWithText(Tab, '已过期'), findsOneWidget);
       expect(find.text('进行中任务'), findsOneWidget);
       expect(find.text('过期任务'), findsNothing);
 
-      await tester.tap(find.text('已过期'));
+      await tester.tap(find.widgetWithText(Tab, '已过期'));
       await tester.pumpAndSettle();
 
       expect(find.text('过期任务'), findsOneWidget);
@@ -674,6 +674,11 @@ void main() {
 
     expect(find.text('新規タスク'), findsOneWidget);
     expect(find.text('タスク名'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('中間マイルストーン'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('中間マイルストーン'), findsOneWidget);
   });
 

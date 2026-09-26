@@ -39,6 +39,8 @@ class NextDdlAlarmService : Service() {
     }
 
     private fun startRinging(intent: Intent) {
+        val ringDuration = intent.getLongExtra("testDurationMillis", NextDdlAlarmConstants.MAX_RING_MILLIS)
+            .coerceIn(1_000L, NextDdlAlarmConstants.MAX_RING_MILLIS)
         val taskTitle = intent.getStringExtra(NextDdlAlarmConstants.EXTRA_TASK_TITLE)
             ?: "Next DDL"
         val audioUris = intent.getStringArrayListExtra(
@@ -49,19 +51,22 @@ class NextDdlAlarmService : Service() {
             buildNotification(taskTitle),
         )
         if (audioUris.isEmpty()) {
-            handler.postDelayed(stopRunnable, NextDdlAlarmConstants.MAX_RING_MILLIS)
+            handler.postDelayed(stopRunnable, ringDuration)
             return
         }
-        val uri = Uri.parse(audioUris.random())
         player?.release()
-        player = MediaPlayer().apply {
+        player = null
+        for (audioUri in audioUris.shuffled()) {
+          val candidate = MediaPlayer()
+          try {
+            candidate.apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ALARM)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build(),
             )
-            setDataSource(applicationContext, uri)
+            setDataSource(applicationContext, Uri.parse(audioUri))
             isLooping = true
             setOnPreparedListener { prepared ->
                 val duration = prepared.duration
@@ -76,14 +81,24 @@ class NextDdlAlarmService : Service() {
                 true
             }
             prepareAsync()
+            }
+            player = candidate
+            break
+          } catch (_: Exception) {
+            candidate.release()
+          }
+        }
+        if (player == null) {
+            stopRinging()
+            return
         }
         handler.removeCallbacks(stopRunnable)
-        handler.postDelayed(stopRunnable, NextDdlAlarmConstants.MAX_RING_MILLIS)
+        handler.postDelayed(stopRunnable, ringDuration)
     }
 
     private fun stopRinging() {
         handler.removeCallbacks(stopRunnable)
-        player?.stop()
+        try { player?.stop() } catch (_: IllegalStateException) { }
         player?.release()
         player = null
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -109,7 +124,7 @@ class NextDdlAlarmService : Service() {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setOngoing(true)
             .setAutoCancel(false)
-            .addAction(applicationInfo.icon, "Stop", stopPendingIntent)
+            .addAction(applicationInfo.icon, stopLabel(), stopPendingIntent)
             .build()
     }
 
@@ -122,5 +137,15 @@ class NextDdlAlarmService : Service() {
             NotificationManager.IMPORTANCE_HIGH,
         )
         manager.createNotificationChannel(channel)
+    }
+
+    private fun stopLabel(): String {
+        val preference = getSharedPreferences("next_ddl_alarm", MODE_PRIVATE).getString("localeTag", "system")
+        val language = if (preference == "system") java.util.Locale.getDefault().language else preference
+        return when (language) {
+            "zh" -> "停止响铃"
+            "ja" -> "アラームを停止"
+            else -> "Stop alarm"
+        }
     }
 }

@@ -9,9 +9,14 @@ import 'package:next_ddl/l10n/app_localizations.dart';
 import '../features/tasks/task_detail_page.dart';
 import '../features/tasks/task_list_page.dart';
 import '../features/tasks/tasks_controller.dart';
+import '../features/tasks/task_planning_provider.dart';
+import '../features/update/update_reliability_panel.dart';
 import '../features/update/app_update_controller.dart';
 import '../features/update/app_update_state.dart';
 import '../models/update_release.dart';
+import '../models/app_snapshot.dart';
+import '../services/home_widget_service.dart';
+import '../services/timezone_service.dart';
 import '../services/local_notification_scheduler.dart';
 import '../utils/locale_utils.dart';
 import 'theme.dart';
@@ -29,11 +34,23 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   StreamSubscription<String>? _tapSubscription;
   ProviderSubscription<AppUpdateState>? _updateSubscription;
   String? _shownReleaseTag;
+  final _homeWidget = HomeWidgetService();
+  ProviderSubscription<AsyncValue<AppSnapshot>>? _widgetSubscription;
+  ProviderSubscription<int>? _widgetTimezoneSubscription;
+  bool _refreshingPlans = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _widgetSubscription = ref.listenManual(tasksControllerProvider, (_, next) {
+      final snapshot = next.valueOrNull;
+      if (snapshot != null) _syncWidget(snapshot);
+    });
+    _widgetTimezoneSubscription = ref.listenManual(timezoneRevisionProvider, (_, _) {
+      final snapshot = ref.read(tasksControllerProvider).valueOrNull;
+      if (snapshot != null) _syncWidget(snapshot);
+    });
     _tapSubscription = LocalNotificationScheduler.notificationTapStream.listen((
       taskId,
     ) {
@@ -60,7 +77,56 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(appUpdateControllerProvider.notifier).checkForUpdate();
+      _initializeWidget();
+      _refreshPlans();
     });
+  }
+
+  Future<void> _refreshPlans() async {
+    if (_refreshingPlans) return;
+    _refreshingPlans = true;
+    try {
+      await ref.read(tasksControllerProvider.future);
+      if (!mounted) return;
+      final service = ref.read(taskPlanningProvider);
+      await service.reload();
+      if (!mounted) return;
+      await service.materialize();
+    } catch (error) {
+      debugPrint('Task planning refresh failed: ${error.runtimeType}');
+    } finally {
+      _refreshingPlans = false;
+    }
+  }
+
+  Future<void> _syncWidget(AppSnapshot snapshot) async {
+    try {
+      await _homeWidget.sync(snapshot, timezoneId: ref.read(timezoneServiceProvider).currentTimezoneId);
+    } catch (error) {
+      debugPrint('Home widget sync failed: ${error.runtimeType}');
+    }
+  }
+
+  Future<void> _initializeWidget() async {
+    try {
+      final snapshot = await ref.read(tasksControllerProvider.future);
+      if (!mounted) return;
+      await _syncWidget(snapshot);
+      if (!mounted) return;
+      await _homeWidget.listenForTaskTaps((id) {
+        if (!mounted) return;
+        final navigator = _navigatorKey.currentState;
+        final exists = ref.read(tasksControllerProvider).valueOrNull?.tasks.any((task) => task.id == id) ?? false;
+        if (navigator == null) return;
+        if (exists) {
+          navigator.push(MaterialPageRoute<void>(builder: (_) => TaskDetailPage(taskId: id)));
+        } else {
+          navigator.popUntil((route) => route.isFirst);
+        }
+      });
+    } catch (error) {
+      debugPrint('Home widget initialization failed: ${error.runtimeType}');
+    }
   }
 
   @override
@@ -68,6 +134,9 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     WidgetsBinding.instance.removeObserver(this);
     _updateSubscription?.close();
     _tapSubscription?.cancel();
+    _widgetSubscription?.close();
+    _widgetTimezoneSubscription?.close();
+    _homeWidget.dispose();
     super.dispose();
   }
 
@@ -75,6 +144,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(appUpdateControllerProvider.notifier).resumePendingInstallIfPossible();
+      _refreshPlans();
     }
   }
 
@@ -130,7 +200,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
           }
           return AlertDialog(
             title: Text(l10n.updateDialogTitle),
-            content: Column(
+            content: SingleChildScrollView(child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -165,8 +235,14 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
+                if (state.status == AppUpdateStatus.error || state.requiresInstallPermission)
+                  UpdateReliabilityPanel(
+                    state: state,
+                    onRetry: () => ref.read(appUpdateControllerProvider.notifier).downloadAndInstall(),
+                    onOpenRelease: () => ref.read(appUpdateControllerProvider.notifier).openReleasePage(),
+                  ),
               ],
-            ),
+            )),
             actions: [
               TextButton(
                 onPressed: isDownloading
