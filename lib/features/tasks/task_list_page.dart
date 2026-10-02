@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -25,6 +26,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   final _search = TextEditingController();
   String? _tag;
   bool _untagged = false;
+  bool _searchVisible = false;
 
   @override
   void dispose() {
@@ -37,6 +39,18 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     _tag = null;
     _untagged = false;
   });
+
+  bool _handleScrollNotification(ScrollNotification notification) {
+    if (notification is OverscrollNotification && notification.overscroll < 0) {
+      if (!_searchVisible) setState(() => _searchVisible = true);
+    } else if (notification is UserScrollNotification &&
+        notification.direction == ScrollDirection.forward &&
+        _search.text.trim().isEmpty &&
+        _searchVisible) {
+      setState(() => _searchVisible = false);
+    }
+    return false;
+  }
 
   Future<void> _manageTags() async {
     await showDialog<void>(
@@ -65,6 +79,54 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                     for (final tag in tags)
                       ListTile(
                         title: Text(tag),
+                        onTap: () async {
+                          final controller = TextEditingController(text: tag);
+                          final renamed = await showDialog<String>(
+                            context: context,
+                            builder: (dialogContext) => AlertDialog(
+                              title: Text(strings.editTag),
+                              content: TextField(
+                                controller: controller,
+                                autofocus: true,
+                                textInputAction: TextInputAction.done,
+                                decoration: InputDecoration(
+                                  labelText: strings.tagName,
+                                ),
+                                onSubmitted: (_) => Navigator.pop(
+                                  dialogContext,
+                                  controller.text,
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                  child: Text(l10n.cancel),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.pop(
+                                    dialogContext,
+                                    controller.text,
+                                  ),
+                                  child: Text(l10n.confirm),
+                                ),
+                              ],
+                            ),
+                          );
+                          controller.dispose();
+                          if (renamed == null || !context.mounted) return;
+                          if (renamed.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(strings.tagCannotBeEmpty)),
+                            );
+                            return;
+                          }
+                          await runTaskUiAction(
+                            context,
+                            () => ref
+                                .read(tasksControllerProvider.notifier)
+                                .renameTag(tag, renamed),
+                          );
+                        },
                         trailing: IconButton(
                           tooltip: l10n.delete,
                           icon: const Icon(Icons.delete_outline),
@@ -193,31 +255,40 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
         body: snapshotAsync.when(
           data: (_) => Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: TextField(
-                  controller: _search,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    labelText: strings.search,
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      tooltip: strings.clear,
-                      onPressed: _clear,
-                      icon: const Icon(Icons.clear),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                child: Text(
-                  strings.scope,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 180),
+                child: !_searchVisible && !filtering
+                    ? const SizedBox.shrink()
+                    : Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                            child: TextField(
+                              controller: _search,
+                              onChanged: (_) => setState(() {}),
+                              decoration: InputDecoration(
+                                labelText: strings.search,
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: IconButton(
+                                  tooltip: strings.clear,
+                                  onPressed: _clear,
+                                  icon: const Icon(Icons.clear),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            child: Text(
+                              strings.scope,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -262,34 +333,37 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                 ),
               ),
               Expanded(
-                child: TabBarView(
-                  children: [
-                    _TaskTabView(
-                      filtering: filtering,
-                      onClear: _clear,
-                      tasks: inProgress,
-                      nowUtc: now,
-                      summary: l10n.inProgressSummary(inProgress.length),
-                      toConfiguredTime: timezoneService.utcToConfigured,
-                    ),
-                    _TaskTabView(
-                      filtering: filtering,
-                      onClear: _clear,
-                      tasks: overdue,
-                      nowUtc: now,
-                      summary: l10n.overdueSummary(overdue.length),
-                      toConfiguredTime: timezoneService.utcToConfigured,
-                    ),
-                    _TaskTabView(
-                      tasks: archived,
-                      emptyMessage: strings.emptyArchive,
-                      nowUtc: now,
-                      summary: '${strings.archived} (${archived.length})',
-                      toConfiguredTime: timezoneService.utcToConfigured,
-                      filtering: filtering,
-                      onClear: _clear,
-                    ),
-                  ],
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _handleScrollNotification,
+                  child: TabBarView(
+                    children: [
+                      _TaskTabView(
+                        filtering: filtering,
+                        onClear: _clear,
+                        tasks: inProgress,
+                        nowUtc: now,
+                        summary: l10n.inProgressSummary(inProgress.length),
+                        toConfiguredTime: timezoneService.utcToConfigured,
+                      ),
+                      _TaskTabView(
+                        filtering: filtering,
+                        onClear: _clear,
+                        tasks: overdue,
+                        nowUtc: now,
+                        summary: l10n.overdueSummary(overdue.length),
+                        toConfiguredTime: timezoneService.utcToConfigured,
+                      ),
+                      _TaskTabView(
+                        tasks: archived,
+                        emptyMessage: strings.emptyArchive,
+                        nowUtc: now,
+                        summary: '${strings.archived} (${archived.length})',
+                        toConfiguredTime: timezoneService.utcToConfigured,
+                        filtering: filtering,
+                        onClear: _clear,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

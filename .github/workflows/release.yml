@@ -205,12 +205,14 @@ jobs:
             - 新增任务模板与重复计划、提醒状态检查及测试入口。
             - 新增导入备份恢复、安装包完整性校验及 Android 桌面小组件。
             - 新功能支持中文、英文、日文；项目许可证改为 MIT。
+            - 优化搜索栏下拉显示，支持回车快速创建标签和单个标签重命名。
 
             ## English
             - Add task and milestone completion, archives, quick postponement, search, and tag filters.
             - Add task templates, recurring schedules, reminder diagnostics, and test controls.
             - Add import backups and restore, installer integrity checks, and an Android home screen widget.
             - Localize new features in Chinese, English, and Japanese; license the project under MIT.
+            - Improve search reveal-on-pull behavior, Enter-to-add tags, and single-tag renaming.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

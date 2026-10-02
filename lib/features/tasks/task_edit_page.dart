@@ -25,7 +25,8 @@ class TaskEditPage extends ConsumerStatefulWidget {
 class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   late final TextEditingController _titleController;
   late final TextEditingController _noteController;
-  late final TextEditingController _tagsController;
+  late final TextEditingController _tagInputController;
+  late List<String> _tags;
   late DateTime _finalDueLocal;
   late List<Milestone> _milestones;
   late List<int> _reminders;
@@ -40,7 +41,8 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     final task = widget.existingTask;
     _titleController = TextEditingController(text: task?.title ?? '');
     _noteController = TextEditingController(text: task?.note ?? '');
-    _tagsController = TextEditingController(text: task?.tags.join(', ') ?? '');
+    _tagInputController = TextEditingController();
+    _tags = [...(task?.tags ?? const <String>[])];
     final timezoneService = ref.read(timezoneServiceProvider);
     _finalDueLocal = timezoneService.utcToConfigured(
       task?.finalDueAtUtc ??
@@ -59,8 +61,19 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   void dispose() {
     _titleController.dispose();
     _noteController.dispose();
-    _tagsController.dispose();
+    _tagInputController.dispose();
     super.dispose();
+  }
+
+  void _addTag(String value) {
+    final tag = value.trim();
+    if (tag.isEmpty) return;
+    setState(() {
+      for (final item in parseTaskTags(tag)) {
+        if (!_tags.contains(item)) _tags.add(item);
+      }
+      _tagInputController.clear();
+    });
   }
 
   @override
@@ -90,12 +103,34 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
             ),
           ),
           const SizedBox(height: 20),
-          TextField(
-            controller: _tagsController,
+          InputDecorator(
             decoration: InputDecoration(
               labelText: TaskUiStrings(context).tags,
-              helperText: TaskUiStrings(context).tagsHint,
-              helperMaxLines: 3,
+              helperText: TaskUiStrings(context).addTag,
+              border: const OutlineInputBorder(),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final tag in _tags)
+                  InputChip(
+                    label: Text(tag),
+                    onDeleted: () => setState(() => _tags.remove(tag)),
+                  ),
+                SizedBox(
+                  width: 180,
+                  child: TextField(
+                    controller: _tagInputController,
+                    decoration: InputDecoration(
+                      hintText: TaskUiStrings(context).tagName,
+                      border: InputBorder.none,
+                    ),
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: _addTag,
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
@@ -502,10 +537,14 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     }
 
     final controller = ref.read(tasksControllerProvider.notifier);
+    final normalizedTags = <String>{
+      ..._tags,
+      ...parseTaskTags(_tagInputController.text),
+    }.toList();
     final task = DeadlineTask(
       id: widget.existingTask?.id ?? _generateId(),
       completedAtUtc: widget.existingTask?.completedAtUtc,
-      tags: parseTaskTags(_tagsController.text),
+      tags: normalizedTags,
       title: title,
       note: _noteController.text.trim(),
       timezoneId: controller.timezoneId,

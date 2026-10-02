@@ -182,7 +182,9 @@ Future<_UiController> _pump(
     ),
   );
   await tester.pumpAndSettle();
-  await ProviderScope.containerOf(tester.element(find.byWidget(page))).read(tasksControllerProvider.future);
+  await ProviderScope.containerOf(
+    tester.element(find.byWidget(page)),
+  ).read(tasksControllerProvider.future);
   await tester.pumpAndSettle();
   return controller;
 }
@@ -220,6 +222,8 @@ void main() {
           _task('Archived match', note: '日本語', tags: ['work'], completed: _now),
         ],
       );
+      await tester.drag(find.byType(ListView).first, const Offset(0, 180));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), ' 日本語 ');
       await tester.pumpAndSettle();
       expect(find.text('Active'), findsOneWidget);
@@ -381,7 +385,13 @@ void main() {
         isNull,
       );
       await _tap(tester, find.text('Custom time'));
-      await _tap(tester, find.descendant(of: find.byType(DatePickerDialog), matching: find.text('Cancel')));
+      await _tap(
+        tester,
+        find.descendant(
+          of: find.byType(DatePickerDialog),
+          matching: find.text('Cancel'),
+        ),
+      );
       expect(find.text('2001-01-01 00:00 → 2001-01-01 01:00'), findsOneWidget);
       expect(
         tester
@@ -411,59 +421,125 @@ void main() {
     expect(find.textContaining('private scheduling detail'), findsNothing);
   });
 
-  testWidgets('custom date and time confirm uses configured timezone', (tester) async {
+  testWidgets('custom date and time confirm uses configured timezone', (
+    tester,
+  ) async {
     final timezone = _Timezone('Asia/Tokyo');
     final due = DateTime.utc(2040, 1, 31, 16, 30);
     TaskPostponeChoice? choice;
-    await _pump(tester, Scaffold(body: Builder(builder: (context) => TextButton(
-      onPressed: () async {
-        choice = await showDialog<TaskPostponeChoice>(context: context,
-          builder: (_) => TaskPostponeDialog(task: _task('Custom', due: due), timezone: timezone));
-      }, child: const Text('Open'),
-    ))));
+    await _pump(
+      tester,
+      Scaffold(
+        body: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              choice = await showDialog<TaskPostponeChoice>(
+                context: context,
+                builder: (_) => TaskPostponeDialog(
+                  task: _task('Custom', due: due),
+                  timezone: timezone,
+                ),
+              );
+            },
+            child: const Text('Open'),
+          ),
+        ),
+      ),
+    );
     await _tap(tester, find.text('Open'));
     expect(find.text('2040-02-01 01:30 → 2040-02-01 02:30'), findsOneWidget);
     await _tap(tester, find.text('Custom time'));
-    await _tap(tester, find.descendant(of: find.byType(DatePickerDialog), matching: find.text('OK')));
-    await _tap(tester, find.descendant(of: find.byType(TimePickerDialog), matching: find.text('OK')));
+    await _tap(
+      tester,
+      find.descendant(
+        of: find.byType(DatePickerDialog),
+        matching: find.text('OK'),
+      ),
+    );
+    await _tap(
+      tester,
+      find.descendant(
+        of: find.byType(TimePickerDialog),
+        matching: find.text('OK'),
+      ),
+    );
     await _tap(tester, find.text('Confirm'));
     expect(choice!.dueUtc, due.add(const Duration(hours: 1)));
     expect(choice!.shift, isFalse);
   });
 
-  testWidgets('one day means 24 UTC hours across daylight saving', (tester) async {
+  testWidgets('one day means 24 UTC hours across daylight saving', (
+    tester,
+  ) async {
     final timezone = _Timezone('America/New_York');
     final due = DateTime.utc(2027, 3, 13, 17);
-    await _pump(tester, Scaffold(body: TaskPostponeDialog(
-      task: _task('DST', due: due), timezone: timezone)));
+    await _pump(
+      tester,
+      Scaffold(
+        body: TaskPostponeDialog(
+          task: _task('DST', due: due),
+          timezone: timezone,
+        ),
+      ),
+    );
     await _tap(tester, find.text('+1 day'));
     expect(find.text('2027-03-13 12:00 → 2027-03-14 13:00'), findsOneWidget);
   });
 
-  testWidgets('editing tags preserves task and milestone completion', (tester) async {
-    final task = _task('Archived', completed: _now, tags: ['old'], nodes: [
-      _node('Done', _now.add(const Duration(hours: 1)), completed: true),
-    ]);
-    final controller = await _pump(tester, TaskEditPage(existingTask: task), tasks: [task]);
+  testWidgets('editing tags preserves task and milestone completion', (
+    tester,
+  ) async {
+    final task = _task(
+      'Archived',
+      completed: _now,
+      tags: ['old'],
+      nodes: [
+        _node('Done', _now.add(const Duration(hours: 1)), completed: true),
+      ],
+    );
+    final controller = await _pump(
+      tester,
+      TaskEditPage(existingTask: task),
+      tasks: [task],
+    );
     await tester.enterText(find.byType(TextField).at(2), 'work，学习,work');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
     final l = AppLocalizations.of(tester.element(find.byType(TaskEditPage)))!;
-    await tester.scrollUntilVisible(find.text(l.saveChanges), 250,
-      scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      find.text(l.saveChanges),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
     await _tap(tester, find.text(l.saveChanges));
-    expect(controller.tasks.single.tags, ['work', '学习']);
+    expect(controller.tasks.single.tags, ['old', 'work', '学习']);
     expect(controller.tasks.single.completedAtUtc, task.completedAtUtc);
-    expect(controller.tasks.single.milestones.single.completedAtUtc, task.milestones.single.completedAtUtc);
+    expect(
+      controller.tasks.single.milestones.single.completedAtUtc,
+      task.milestones.single.completedAtUtc,
+    );
     expect(controller.writes, 1);
   });
 
-  testWidgets('large lists are lazy and searching does not mutate tasks', (tester) async {
-    final controller = await _pump(tester, const TaskListPage(), tasks: [
-      for (var i = 0; i < 500; i++) _task('Task $i'),
-    ]);
+  testWidgets('large lists are lazy and searching does not mutate tasks', (
+    tester,
+  ) async {
+    final controller = await _pump(
+      tester,
+      const TaskListPage(),
+      tasks: [for (var i = 0; i < 500; i++) _task('Task $i')],
+    );
     expect(find.text('Task 499'), findsNothing);
+    await tester.drag(find.byType(ListView).first, const Offset(0, 180));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Task 499');
     await tester.pumpAndSettle();
-    expect(find.byWidgetPredicate((widget) => widget is Text && widget.data == 'Task 499'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Text && widget.data == 'Task 499',
+      ),
+      findsOneWidget,
+    );
     expect(controller.tasks, hasLength(500));
     expect(controller.writes, 0);
   });
@@ -480,7 +556,7 @@ void main() {
       await _pump(tester, const TaskEditPage(), locale: locale);
       strings = TaskUiStrings(tester.element(find.byType(TaskEditPage)));
       expect(find.text(strings.tags), findsOneWidget);
-      expect(find.text(strings.tagsHint), findsOneWidget);
+      expect(find.text(strings.addTag), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }

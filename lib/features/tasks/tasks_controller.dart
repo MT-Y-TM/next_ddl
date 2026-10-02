@@ -59,7 +59,9 @@ final overdueTasksProvider = Provider<List<DeadlineTask>>((ref) {
 });
 
 final archivedTasksProvider = Provider<List<DeadlineTask>>((ref) {
-  final tasks = ref.watch(tasksControllerProvider).valueOrNull?.tasks ?? const <DeadlineTask>[];
+  final tasks =
+      ref.watch(tasksControllerProvider).valueOrNull?.tasks ??
+      const <DeadlineTask>[];
   return tasks.where((task) => task.isCompleted).toList()
     ..sort((a, b) => b.completedAtUtc!.compareTo(a.completedAtUtc!));
 });
@@ -117,58 +119,130 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
 
   Future<T> _serialize<T>(Future<T> Function() operation) {
     final result = _pendingMutation.then((_) => operation());
-    _pendingMutation = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    _pendingMutation = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
     return result;
   }
 
-  DeadlineTask _task(String id) => state.requireValue.tasks.firstWhere((task) => task.id == id);
+  DeadlineTask _task(String id) =>
+      state.requireValue.tasks.firstWhere((task) => task.id == id);
 
-  Future<void> savePlanningData(Map<String, dynamic> data) => _serialize(() async {
-    final updated = state.requireValue.copyWith(planningData: data, exportedAtUtc: DateTime.now().toUtc());
+  Future<void> savePlanningData(Map<String, dynamic> data) =>
+      _serialize(() async {
+        final updated = state.requireValue.copyWith(
+          planningData: data,
+          exportedAtUtc: DateTime.now().toUtc(),
+        );
+        await _repository.saveSnapshot(updated);
+        state = AsyncData(updated);
+      });
+
+  Future<void> setTaskCompleted(String id, bool completed) =>
+      _serialize(() async {
+        await _saveTask(
+          _task(id).copyWith(
+            completedAtUtc: completed ? DateTime.now().toUtc() : null,
+            clearCompletedAt: !completed,
+            updatedAtUtc: DateTime.now().toUtc(),
+          ),
+        );
+      });
+
+  Future<void> setMilestoneCompleted(
+    String taskId,
+    String milestoneId,
+    bool completed,
+  ) => _serialize(() async {
+    final task = _task(taskId);
+    final now = DateTime.now().toUtc();
+    await _saveTask(
+      task.copyWith(
+        updatedAtUtc: now,
+        milestones: [
+          for (final node in task.milestones)
+            if (node.id == milestoneId)
+              node.copyWith(
+                completedAtUtc: completed ? now : null,
+                clearCompletedAt: !completed,
+              )
+            else
+              node,
+        ],
+      ),
+    );
+  });
+
+  Future<void> postponeTask(
+    String id,
+    DateTime due, {
+    bool shiftFutureMilestones = false,
+  }) => _serialize(() async {
+    await _saveTask(
+      postponeDeadlineTask(
+        _task(id),
+        due,
+        nowUtc: DateTime.now().toUtc(),
+        shiftFutureMilestones: shiftFutureMilestones,
+      ),
+    );
+  });
+
+  Future<void> restoreTask(DeadlineTask task) =>
+      addOrUpdateTask(task.copyWith(updatedAtUtc: DateTime.now().toUtc()));
+
+  Future<void> setTaskTags(String id, List<String> tags) =>
+      _serialize(() async {
+        await _saveTask(
+          _task(id).copyWith(
+            tags: tags
+                .map((tag) => tag.trim())
+                .where((tag) => tag.isNotEmpty)
+                .toSet()
+                .toList(),
+            updatedAtUtc: DateTime.now().toUtc(),
+          ),
+        );
+      });
+
+  Future<void> removeTag(String tag) => _serialize(() async {
+    final snapshot = state.requireValue;
+    final updated = snapshot.copyWith(
+      tasks: [
+        for (final task in snapshot.tasks)
+          if (task.tags.contains(tag))
+            task.copyWith(
+              tags: task.tags.where((item) => item != tag).toList(),
+              updatedAtUtc: DateTime.now().toUtc(),
+            )
+          else
+            task,
+      ],
+    );
     await _repository.saveSnapshot(updated);
     state = AsyncData(updated);
   });
 
-  Future<void> setTaskCompleted(String id, bool completed) => _serialize(() async {
-    await _saveTask(_task(id).copyWith(
-      completedAtUtc: completed ? DateTime.now().toUtc() : null,
-      clearCompletedAt: !completed,
-      updatedAtUtc: DateTime.now().toUtc(),
-    ));
-  });
-
-  Future<void> setMilestoneCompleted(String taskId, String milestoneId, bool completed) => _serialize(() async {
-    final task = _task(taskId);
-    final now = DateTime.now().toUtc();
-    await _saveTask(task.copyWith(updatedAtUtc: now, milestones: [
-      for (final node in task.milestones)
-        if (node.id == milestoneId)
-          node.copyWith(completedAtUtc: completed ? now : null, clearCompletedAt: !completed)
-        else node,
-    ]));
-  });
-
-  Future<void> postponeTask(String id, DateTime due, {bool shiftFutureMilestones = false}) => _serialize(() async {
-    await _saveTask(postponeDeadlineTask(_task(id), due,
-      nowUtc: DateTime.now().toUtc(), shiftFutureMilestones: shiftFutureMilestones));
-  });
-
-  Future<void> restoreTask(DeadlineTask task) => addOrUpdateTask(task.copyWith(updatedAtUtc: DateTime.now().toUtc()));
-
-  Future<void> setTaskTags(String id, List<String> tags) => _serialize(() async {
-    await _saveTask(_task(id).copyWith(
-      tags: tags.map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toSet().toList(),
-      updatedAtUtc: DateTime.now().toUtc(),
-    ));
-  });
-
-  Future<void> removeTag(String tag) => _serialize(() async {
+  Future<void> renameTag(String oldTag, String newTag) => _serialize(() async {
+    final normalized = newTag.trim();
+    if (normalized.isEmpty || normalized == oldTag) return;
     final snapshot = state.requireValue;
-    final updated = snapshot.copyWith(tasks: [
-      for (final task in snapshot.tasks)
-        if (task.tags.contains(tag)) task.copyWith(tags: task.tags.where((item) => item != tag).toList(), updatedAtUtc: DateTime.now().toUtc())
-        else task,
-    ]);
+    final updated = snapshot.copyWith(
+      tasks: [
+        for (final task in snapshot.tasks)
+          if (task.tags.contains(oldTag))
+            task.copyWith(
+              tags: task.tags
+                  .map((tag) => tag == oldTag ? normalized : tag)
+                  .toSet()
+                  .toList(),
+              updatedAtUtc: DateTime.now().toUtc(),
+            )
+          else
+            task,
+      ],
+    );
     await _repository.saveSnapshot(updated);
     state = AsyncData(updated);
   });
@@ -196,7 +270,8 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     return snapshot;
   }
 
-  Future<void> addOrUpdateTask(DeadlineTask task) => _serialize(() => _saveTask(task));
+  Future<void> addOrUpdateTask(DeadlineTask task) =>
+      _serialize(() => _saveTask(task));
 
   Future<void> _saveTask(DeadlineTask task) async {
     final snapshot = state.requireValue;
@@ -268,44 +343,46 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     return _notificationScheduler.requestPermissionIfNeeded();
   }
 
-  Future<void> setPersistentNotificationEnabled(bool enabled) => _serialize(() async {
-    final snapshot = state.requireValue;
-    if (snapshot.persistentNotificationEnabled == enabled) {
-      return;
-    }
-    if (enabled) {
-      await _notificationScheduler.requestPermissionIfNeeded();
-    }
-    final nextSnapshot = snapshot.copyWith(
-      exportedAtUtc: DateTime.now().toUtc(),
-      persistentNotificationEnabled: enabled,
-    );
-    await _repository.saveSnapshot(nextSnapshot);
-    state = AsyncData(nextSnapshot);
-    await _notificationScheduler.syncPersistentNotification(
-      enabled: enabled,
-      tasks: nextSnapshot.tasks,
-      nowUtc: DateTime.now().toUtc(),
-      localePreference: nextSnapshot.preferredLocale,
-      timeUnit: nextSnapshot.persistentNotificationTimeUnit,
-    );
-  });
+  Future<void> setPersistentNotificationEnabled(bool enabled) =>
+      _serialize(() async {
+        final snapshot = state.requireValue;
+        if (snapshot.persistentNotificationEnabled == enabled) {
+          return;
+        }
+        if (enabled) {
+          await _notificationScheduler.requestPermissionIfNeeded();
+        }
+        final nextSnapshot = snapshot.copyWith(
+          exportedAtUtc: DateTime.now().toUtc(),
+          persistentNotificationEnabled: enabled,
+        );
+        await _repository.saveSnapshot(nextSnapshot);
+        state = AsyncData(nextSnapshot);
+        await _notificationScheduler.syncPersistentNotification(
+          enabled: enabled,
+          tasks: nextSnapshot.tasks,
+          nowUtc: DateTime.now().toUtc(),
+          localePreference: nextSnapshot.preferredLocale,
+          timeUnit: nextSnapshot.persistentNotificationTimeUnit,
+        );
+      });
 
-  Future<void> setPreferredLocale(AppLocalePreference preferredLocale) => _serialize(() async {
-    final snapshot = state.requireValue;
-    if (snapshot.preferredLocale == preferredLocale) {
-      return;
-    }
-    final nextSnapshot = snapshot.copyWith(
-      exportedAtUtc: DateTime.now().toUtc(),
-      preferredLocale: preferredLocale,
-    );
-    await _repository.saveSnapshot(nextSnapshot);
-    state = AsyncData(nextSnapshot);
-    await _notificationScheduler.removeAll();
-    await _removeAllAlarmsSafely();
-    await _syncAll(nextSnapshot);
-  });
+  Future<void> setPreferredLocale(AppLocalePreference preferredLocale) =>
+      _serialize(() async {
+        final snapshot = state.requireValue;
+        if (snapshot.preferredLocale == preferredLocale) {
+          return;
+        }
+        final nextSnapshot = snapshot.copyWith(
+          exportedAtUtc: DateTime.now().toUtc(),
+          preferredLocale: preferredLocale,
+        );
+        await _repository.saveSnapshot(nextSnapshot);
+        state = AsyncData(nextSnapshot);
+        await _notificationScheduler.removeAll();
+        await _removeAllAlarmsSafely();
+        await _syncAll(nextSnapshot);
+      });
 
   Future<void> setPersistentNotificationTimeUnit(
     PersistentNotificationTimeUnit timeUnit,
@@ -329,30 +406,32 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     );
   });
 
-  Future<void> setThemeSettings(AppThemeSettings themeSettings) => _serialize(() async {
-    final snapshot = state.requireValue;
-    final nextSnapshot = snapshot.copyWith(
-      exportedAtUtc: DateTime.now().toUtc(),
-      themeSettings: themeSettings,
-    );
-    await _repository.saveSnapshot(nextSnapshot);
-    state = AsyncData(nextSnapshot);
-  });
+  Future<void> setThemeSettings(AppThemeSettings themeSettings) =>
+      _serialize(() async {
+        final snapshot = state.requireValue;
+        final nextSnapshot = snapshot.copyWith(
+          exportedAtUtc: DateTime.now().toUtc(),
+          themeSettings: themeSettings,
+        );
+        await _repository.saveSnapshot(nextSnapshot);
+        state = AsyncData(nextSnapshot);
+      });
 
-  Future<void> setAlarmSettings(AppAlarmSettings alarmSettings) => _serialize(() async {
-    final snapshot = state.requireValue;
-    final nextSnapshot = snapshot.copyWith(
-      exportedAtUtc: DateTime.now().toUtc(),
-      alarmSettings: alarmSettings,
-    );
-    await _repository.saveSnapshot(nextSnapshot);
-    state = AsyncData(nextSnapshot);
-    await _syncAlarmsSafely(
-      settings: nextSnapshot.alarmSettings,
-      tasks: nextSnapshot.tasks,
-      localePreference: nextSnapshot.preferredLocale,
-    );
-  });
+  Future<void> setAlarmSettings(AppAlarmSettings alarmSettings) =>
+      _serialize(() async {
+        final snapshot = state.requireValue;
+        final nextSnapshot = snapshot.copyWith(
+          exportedAtUtc: DateTime.now().toUtc(),
+          alarmSettings: alarmSettings,
+        );
+        await _repository.saveSnapshot(nextSnapshot);
+        state = AsyncData(nextSnapshot);
+        await _syncAlarmsSafely(
+          settings: nextSnapshot.alarmSettings,
+          tasks: nextSnapshot.tasks,
+          localePreference: nextSnapshot.preferredLocale,
+        );
+      });
 
   Future<bool> canScheduleExactAlarms() {
     return _alarmScheduler.canScheduleExactAlarms();
@@ -401,7 +480,11 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     for (final task in snapshot.tasks) {
       if (task.isCompleted) continue;
       await _notificationScheduler.syncTask(
-        task.copyWith(milestones: task.milestones.where((node) => !node.isCompleted).toList()),
+        task.copyWith(
+          milestones: task.milestones
+              .where((node) => !node.isCompleted)
+              .toList(),
+        ),
         localePreference: snapshot.preferredLocale,
       );
     }
@@ -430,7 +513,11 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
         tasks: [
           for (final task in tasks)
             if (!task.isCompleted)
-              task.copyWith(milestones: task.milestones.where((node) => !node.isCompleted).toList()),
+              task.copyWith(
+                milestones: task.milestones
+                    .where((node) => !node.isCompleted)
+                    .toList(),
+              ),
         ],
         localePreference: localePreference,
       );

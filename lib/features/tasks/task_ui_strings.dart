@@ -41,6 +41,13 @@ class TaskUiStrings {
   String get all => t('全部标签', 'All tags', 'すべてのタグ');
   String get untagged => t('未分类', 'Untagged', '未分類');
   String get manageTags => t('管理标签', 'Manage tags', 'タグを管理');
+  String get addTag =>
+      t('输入标签后按回车添加', 'Type a tag and press Enter to add', 'タグを入力して Enter で追加');
+  String get editTag => t('编辑标签', 'Edit tag', 'タグを編集');
+  String get tagName => t('标签名称', 'Tag name', 'タグ名');
+  String get tagUpdated => t('标签已更新', 'Tag updated', 'タグを更新しました');
+  String get tagCannotBeEmpty =>
+      t('标签不能为空', 'Tag cannot be empty', 'タグは空にできません');
   String get removeTag => t(
     '删除标签会从所有任务中移除该标签，但保留任务。',
     'Remove this tag from all tasks without deleting any tasks.',
