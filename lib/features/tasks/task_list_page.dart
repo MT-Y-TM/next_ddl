@@ -41,13 +41,19 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   });
 
   bool _handleScrollNotification(ScrollNotification notification) {
-    if (notification is OverscrollNotification && notification.overscroll < 0) {
-      if (!_searchVisible) setState(() => _searchVisible = true);
-    } else if (notification is UserScrollNotification &&
-        notification.direction == ScrollDirection.forward &&
-        _search.text.trim().isEmpty &&
-        _searchVisible) {
-      setState(() => _searchVisible = false);
+    if (notification is UserScrollNotification) {
+      if (notification.direction == ScrollDirection.forward &&
+          !_searchVisible) {
+        setState(() => _searchVisible = true);
+      } else if (notification.direction == ScrollDirection.reverse &&
+          _search.text.trim().isEmpty &&
+          _searchVisible) {
+        setState(() => _searchVisible = false);
+      }
+    } else if (notification is OverscrollNotification &&
+        notification.overscroll < 0 &&
+        !_searchVisible) {
+      setState(() => _searchVisible = true);
     }
     return false;
   }
@@ -333,37 +339,37 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                 ),
               ),
               Expanded(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: _handleScrollNotification,
-                  child: TabBarView(
-                    children: [
-                      _TaskTabView(
-                        filtering: filtering,
-                        onClear: _clear,
-                        tasks: inProgress,
-                        nowUtc: now,
-                        summary: l10n.inProgressSummary(inProgress.length),
-                        toConfiguredTime: timezoneService.utcToConfigured,
-                      ),
-                      _TaskTabView(
-                        filtering: filtering,
-                        onClear: _clear,
-                        tasks: overdue,
-                        nowUtc: now,
-                        summary: l10n.overdueSummary(overdue.length),
-                        toConfiguredTime: timezoneService.utcToConfigured,
-                      ),
-                      _TaskTabView(
-                        tasks: archived,
-                        emptyMessage: strings.emptyArchive,
-                        nowUtc: now,
-                        summary: '${strings.archived} (${archived.length})',
-                        toConfiguredTime: timezoneService.utcToConfigured,
-                        filtering: filtering,
-                        onClear: _clear,
-                      ),
-                    ],
-                  ),
+                child: TabBarView(
+                  children: [
+                    _TaskTabView(
+                      filtering: filtering,
+                      onClear: _clear,
+                      tasks: inProgress,
+                      nowUtc: now,
+                      summary: l10n.inProgressSummary(inProgress.length),
+                      toConfiguredTime: timezoneService.utcToConfigured,
+                      onScrollNotification: _handleScrollNotification,
+                    ),
+                    _TaskTabView(
+                      filtering: filtering,
+                      onClear: _clear,
+                      tasks: overdue,
+                      nowUtc: now,
+                      summary: l10n.overdueSummary(overdue.length),
+                      toConfiguredTime: timezoneService.utcToConfigured,
+                      onScrollNotification: _handleScrollNotification,
+                    ),
+                    _TaskTabView(
+                      tasks: archived,
+                      emptyMessage: strings.emptyArchive,
+                      nowUtc: now,
+                      summary: '${strings.archived} (${archived.length})',
+                      toConfiguredTime: timezoneService.utcToConfigured,
+                      filtering: filtering,
+                      onClear: _clear,
+                      onScrollNotification: _handleScrollNotification,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -389,12 +395,14 @@ class _TaskTabView extends StatelessWidget {
     required this.toConfiguredTime,
     required this.filtering,
     required this.onClear,
+    required this.onScrollNotification,
     this.emptyMessage,
   });
 
   final bool filtering;
   final String? emptyMessage;
   final VoidCallback onClear;
+  final bool Function(ScrollNotification) onScrollNotification;
   final List<DeadlineTask> tasks;
   final DateTime nowUtc;
   final String summary;
@@ -428,22 +436,25 @@ class _TaskTabView extends StatelessWidget {
         },
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 120, top: 8),
-      itemCount: tasks.length + 1,
-      itemBuilder: (context, index) => index == 0
-          ? Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                summary,
-                style: Theme.of(context).textTheme.bodyMedium,
+    return NotificationListener<ScrollNotification>(
+      onNotification: onScrollNotification,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 120, top: 8),
+        itemCount: tasks.length + 1,
+        itemBuilder: (context, index) => index == 0
+            ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  summary,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              )
+            : _TaskCard(
+                task: tasks[index - 1],
+                nowUtc: nowUtc,
+                toConfiguredTime: toConfiguredTime,
               ),
-            )
-          : _TaskCard(
-              task: tasks[index - 1],
-              nowUtc: nowUtc,
-              toConfiguredTime: toConfiguredTime,
-            ),
+      ),
     );
   }
 }
