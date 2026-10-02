@@ -651,7 +651,9 @@ class _PredictionSettingsPageState
                     const SizedBox(height: 12),
                     TextField(
                       controller: _apiKeyController,
-                      obscureText: true,
+                      keyboardType: TextInputType.text,
+                      autocorrect: false,
+                      enableSuggestions: false,
                       decoration: InputDecoration(
                         labelText: strings.apiKey,
                         helperText: _apiKeySaved ? strings.apiKeySaved : null,
