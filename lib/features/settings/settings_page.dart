@@ -5,6 +5,7 @@ import 'package:next_ddl/l10n/app_localizations.dart';
 import '../../models/app_alarm_settings.dart';
 import '../../models/app_snapshot.dart';
 import '../../models/app_theme_settings.dart';
+import '../../models/app_prediction_settings.dart';
 import '../../services/timezone_service.dart';
 import '../../services/deadline_repository.dart';
 import '../../services/backup_service.dart';
@@ -22,6 +23,8 @@ import 'widgets/reminder_health_card.dart';
 import 'widgets/theme_settings_card.dart';
 import 'widgets/timezone_picker_dialog.dart';
 import 'widgets/update_settings_card.dart';
+import 'prediction_ui_strings.dart';
+import '../../services/ai_secret_store.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -33,6 +36,9 @@ class SettingsPage extends ConsumerWidget {
     ref.watch(timezoneRevisionProvider);
     final timezoneId = ref.watch(timezoneServiceProvider).currentTimezoneId;
     final l10n = AppLocalizations.of(context)!;
+    final prediction =
+        snapshot?.predictionSettings ?? const AppPredictionSettings();
+    final predictionStrings = PredictionUiStrings(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
@@ -69,6 +75,15 @@ class SettingsPage extends ConsumerWidget {
             title: l10n.settingsAboutApp,
             subtitle: versionAsync.valueOrNull ?? l10n.loading,
             onTap: () => _push(context, const _AboutAppSettingsPage()),
+          ),
+          _SettingsEntryCard(
+            icon: Icons.auto_awesome_outlined,
+            title: predictionStrings.title,
+            subtitle: predictionStrings.entrySubtitle(
+              localEnabled: prediction.enabled,
+              aiEnabled: prediction.aiEnabled,
+            ),
+            onTap: () => _push(context, const _PredictionSettingsPage()),
           ),
         ],
       ),
@@ -474,6 +489,200 @@ class _AboutAppSettingsPage extends ConsumerWidget {
             ),
           ),
           UpdateSettingsCard(state: updateState),
+        ],
+      ),
+    );
+  }
+}
+
+class _PredictionSettingsPage extends ConsumerStatefulWidget {
+  const _PredictionSettingsPage();
+
+  @override
+  ConsumerState<_PredictionSettingsPage> createState() =>
+      _PredictionSettingsPageState();
+}
+
+class _PredictionSettingsPageState
+    extends ConsumerState<_PredictionSettingsPage> {
+  late final TextEditingController _baseUrlController;
+  late final TextEditingController _modelController;
+  late final TextEditingController _promptController;
+  late AppPredictionSettings _settings;
+  final _apiKeyController = TextEditingController();
+  bool _apiKeySaved = false;
+  bool _saving = false;
+
+  PredictionUiStrings get strings => PredictionUiStrings(context);
+
+  @override
+  void initState() {
+    super.initState();
+    _settings = ref.read(predictionSettingsProvider);
+    _baseUrlController = TextEditingController(text: _settings.baseUrl);
+    _modelController = TextEditingController(text: _settings.model);
+    _promptController = TextEditingController(text: _settings.customPrompt);
+    _loadApiKey();
+  }
+
+  Future<void> _loadApiKey() async {
+    final value = await ref.read(aiSecretStoreProvider).readApiKey();
+    if (mounted) setState(() => _apiKeySaved = value?.isNotEmpty == true);
+  }
+
+  @override
+  void dispose() {
+    _baseUrlController.dispose();
+    _modelController.dispose();
+    _promptController.dispose();
+    _apiKeyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    final next = _settings.copyWith(
+      enabled: _settings.enabled,
+      aiEnabled: _settings.aiEnabled,
+      aiProtocol: _settings.aiProtocol,
+      stepByStep: _settings.stepByStep,
+      baseUrl: _baseUrlController.text.trim(),
+      model: _modelController.text.trim(),
+      customPrompt: _promptController.text,
+    );
+    await ref
+        .read(tasksControllerProvider.notifier)
+        .setPredictionSettings(next);
+    if (_apiKeyController.text.trim().isNotEmpty) {
+      await ref.read(aiSecretStoreProvider).writeApiKey(_apiKeyController.text);
+      _apiKeyController.clear();
+      _apiKeySaved = true;
+    }
+    if (mounted) {
+      setState(() {
+        _settings = next;
+        _saving = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.save)));
+    }
+  }
+
+  String _protocolLabel(AiProtocol value) => switch (value) {
+    AiProtocol.chatCompletions => 'Chat Completions',
+    AiProtocol.responses => 'Responses',
+    AiProtocol.anthropicMessages => 'Anthropic Messages',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(strings.title)),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: Text(strings.enabled),
+                  subtitle: Text(strings.enabledHint),
+                  value: _settings.enabled,
+                  onChanged: (value) => setState(
+                    () => _settings = _settings.copyWith(enabled: value),
+                  ),
+                ),
+                SwitchListTile(
+                  title: Text(strings.aiEnabled),
+                  subtitle: Text(strings.aiHint),
+                  value: _settings.aiEnabled,
+                  onChanged: (value) => setState(
+                    () => _settings = _settings.copyWith(aiEnabled: value),
+                  ),
+                ),
+                SwitchListTile(
+                  title: Text(strings.stepByStep),
+                  subtitle: Text(strings.stepByStepHint),
+                  value: _settings.stepByStep,
+                  onChanged: _settings.aiEnabled
+                      ? (value) => setState(
+                          () =>
+                              _settings = _settings.copyWith(stepByStep: value),
+                        )
+                      : null,
+                ),
+              ],
+            ),
+          ),
+          if (_settings.aiEnabled) ...[
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    DropdownButtonFormField<AiProtocol>(
+                      initialValue: _settings.aiProtocol,
+                      decoration: InputDecoration(labelText: strings.protocol),
+                      items: [
+                        for (final item in AiProtocol.values)
+                          DropdownMenuItem(
+                            value: item,
+                            child: Text(_protocolLabel(item)),
+                          ),
+                      ],
+                      onChanged: (value) => setState(
+                        () => _settings = _settings.copyWith(aiProtocol: value),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _baseUrlController,
+                      decoration: InputDecoration(labelText: strings.baseUrl),
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _modelController,
+                      decoration: InputDecoration(labelText: strings.model),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _apiKeyController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: strings.apiKey,
+                        helperText: _apiKeySaved ? strings.apiKeySaved : null,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _promptController,
+                      minLines: 3,
+                      maxLines: 8,
+                      decoration: InputDecoration(
+                        labelText: strings.prompt,
+                        hintText: strings.promptHint,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      strings.privacy,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: _saving ? null : _save,
+            icon: const Icon(Icons.save_outlined),
+            label: Text(strings.save),
+          ),
         ],
       ),
     );

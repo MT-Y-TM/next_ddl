@@ -1,4 +1,5 @@
 import 'app_alarm_settings.dart';
+import 'app_prediction_settings.dart';
 import 'app_theme_settings.dart';
 import 'deadline_task.dart';
 
@@ -46,6 +47,7 @@ class AppSnapshot {
     this.persistentNotificationTimeUnit = PersistentNotificationTimeUnit.day,
     this.themeSettings = const AppThemeSettings(),
     this.alarmSettings = const AppAlarmSettings(),
+    this.predictionSettings = const AppPredictionSettings(),
     this.planningData = const {},
   });
 
@@ -57,6 +59,7 @@ class AppSnapshot {
   final PersistentNotificationTimeUnit persistentNotificationTimeUnit;
   final AppThemeSettings themeSettings;
   final AppAlarmSettings alarmSettings;
+  final AppPredictionSettings predictionSettings;
   final Map<String, dynamic> planningData;
 
   factory AppSnapshot.empty() {
@@ -69,6 +72,7 @@ class AppSnapshot {
       persistentNotificationTimeUnit: PersistentNotificationTimeUnit.day,
       themeSettings: AppThemeSettings.defaults(),
       alarmSettings: AppAlarmSettings.defaults(),
+      predictionSettings: const AppPredictionSettings(),
     );
   }
 
@@ -81,6 +85,7 @@ class AppSnapshot {
     PersistentNotificationTimeUnit? persistentNotificationTimeUnit,
     AppThemeSettings? themeSettings,
     AppAlarmSettings? alarmSettings,
+    AppPredictionSettings? predictionSettings,
     Map<String, dynamic>? planningData,
   }) {
     return AppSnapshot(
@@ -94,48 +99,55 @@ class AppSnapshot {
           persistentNotificationTimeUnit ?? this.persistentNotificationTimeUnit,
       themeSettings: themeSettings ?? this.themeSettings,
       alarmSettings: alarmSettings ?? this.alarmSettings,
+      predictionSettings: predictionSettings ?? this.predictionSettings,
       planningData: planningData ?? this.planningData,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'schemaVersion': schemaVersion,
-        'exportedAtUtc': exportedAtUtc.toIso8601String(),
-        'tasks': tasks.map((item) => item.toJson()).toList(),
-        'persistentNotificationEnabled': persistentNotificationEnabled,
-        'preferredLocaleTag': preferredLocale.tag,
-        'persistentNotificationTimeUnit': persistentNotificationTimeUnit.value,
-        'themeSettings': themeSettings.toJson(),
-        'alarmSettings': alarmSettings.toJson(),
-        'planningData': planningData,
-      };
+    'schemaVersion': schemaVersion,
+    'exportedAtUtc': exportedAtUtc.toIso8601String(),
+    'tasks': tasks.map((item) => item.toJson()).toList(),
+    'persistentNotificationEnabled': persistentNotificationEnabled,
+    'preferredLocaleTag': preferredLocale.tag,
+    'persistentNotificationTimeUnit': persistentNotificationTimeUnit.value,
+    'themeSettings': themeSettings.toJson(),
+    'alarmSettings': alarmSettings.toJson(),
+    'predictionSettings': predictionSettings.toJson(),
+    'planningData': planningData,
+  };
 
   factory AppSnapshot.fromJson(Map<String, dynamic> json) {
     return AppSnapshot(
       schemaVersion: (json['schemaVersion'] as int?) ?? 1,
-      planningData: Map<String, dynamic>.from(json['planningData'] as Map? ?? const {}),
+      planningData: Map<String, dynamic>.from(
+        json['planningData'] as Map? ?? const {},
+      ),
       exportedAtUtc: DateTime.parse(
         (json['exportedAtUtc'] as String?) ??
             DateTime.now().toUtc().toIso8601String(),
       ).toUtc(),
-      tasks: ((json['tasks'] as List<dynamic>? ?? const [])
-              .cast<Map<String, dynamic>>())
-          .map(DeadlineTask.fromJson)
-          .toList(),
+      tasks:
+          ((json['tasks'] as List<dynamic>? ?? const [])
+                  .cast<Map<String, dynamic>>())
+              .map(DeadlineTask.fromJson)
+              .toList(),
       persistentNotificationEnabled:
           (json['persistentNotificationEnabled'] as bool?) ?? false,
       preferredLocale: AppLocalePreference.fromTag(
         json['preferredLocaleTag'] as String?,
       ),
-      persistentNotificationTimeUnit:
-          PersistentNotificationTimeUnit.fromValue(
-            json['persistentNotificationTimeUnit'] as String?,
-          ),
+      persistentNotificationTimeUnit: PersistentNotificationTimeUnit.fromValue(
+        json['persistentNotificationTimeUnit'] as String?,
+      ),
       themeSettings: AppThemeSettings.fromJson(
         json['themeSettings'] as Map<String, dynamic>?,
       ),
       alarmSettings: AppAlarmSettings.fromJson(
         json['alarmSettings'] as Map<String, dynamic>?,
+      ),
+      predictionSettings: AppPredictionSettings.fromJson(
+        json['predictionSettings'] as Map<String, dynamic>?,
       ),
     );
   }

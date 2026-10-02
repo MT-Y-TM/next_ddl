@@ -6,6 +6,7 @@ import '../../models/app_theme_settings.dart';
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
 import '../../models/app_alarm_settings.dart';
+import '../../models/app_prediction_settings.dart';
 import '../../services/alarm_scheduler.dart';
 import '../../services/backup_service.dart';
 import '../../services/app_info_service.dart';
@@ -79,6 +80,11 @@ final themeSettingsProvider = Provider<AppThemeSettings>((ref) {
 final alarmSettingsProvider = Provider<AppAlarmSettings>((ref) {
   return ref.watch(tasksControllerProvider).valueOrNull?.alarmSettings ??
       AppAlarmSettings.defaults();
+});
+
+final predictionSettingsProvider = Provider<AppPredictionSettings>((ref) {
+  return ref.watch(tasksControllerProvider).valueOrNull?.predictionSettings ??
+      const AppPredictionSettings();
 });
 
 final persistentNotificationTimeUnitProvider =
@@ -431,6 +437,19 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
           tasks: nextSnapshot.tasks,
           localePreference: nextSnapshot.preferredLocale,
         );
+      });
+
+  Future<void> setPredictionSettings(
+    AppPredictionSettings predictionSettings,
+  ) =>
+      _serialize(() async {
+        final snapshot = state.requireValue;
+        final nextSnapshot = snapshot.copyWith(
+          exportedAtUtc: DateTime.now().toUtc(),
+          predictionSettings: predictionSettings,
+        );
+        await _repository.saveSnapshot(nextSnapshot);
+        state = AsyncData(nextSnapshot);
       });
 
   Future<bool> canScheduleExactAlarms() {

@@ -7,11 +7,14 @@ import '../../models/milestone.dart';
 import '../../models/alarm_audio_item.dart';
 import '../../services/alarm_audio_picker_service.dart';
 import '../../services/timezone_service.dart';
+import '../../services/deadline_prediction_service.dart';
+import '../../services/ai_task_service.dart';
 import '../../utils/locale_utils.dart';
 import '../../utils/milestone_utils.dart';
 import 'tasks_controller.dart';
 import 'task_ui_helpers.dart';
 import 'task_ui_strings.dart';
+import '../settings/prediction_ui_strings.dart';
 
 class TaskEditPage extends ConsumerStatefulWidget {
   const TaskEditPage({this.existingTask, super.key});
@@ -34,6 +37,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   late bool _alarmEnabled;
   late List<AlarmAudioItem> _alarmAudioItemsOverride;
   bool _saving = false;
+  bool _aiBusy = false;
 
   @override
   void initState() {
@@ -44,9 +48,14 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     _tagInputController = TextEditingController();
     _tags = [...(task?.tags ?? const <String>[])];
     final timezoneService = ref.read(timezoneServiceProvider);
+    final predictionSettings = ref.read(predictionSettingsProvider);
+    final prediction = predictionSettings.enabled && task == null
+        ? const DeadlinePredictionService().predict(
+            ref.read(tasksControllerProvider).valueOrNull?.tasks ?? const [],
+          )
+        : const DeadlinePrediction(duration: Duration(days: 3), sampleCount: 0);
     _finalDueLocal = timezoneService.utcToConfigured(
-      task?.finalDueAtUtc ??
-          DateTime.now().toUtc().add(const Duration(days: 3)),
+      task?.finalDueAtUtc ?? DateTime.now().toUtc().add(prediction.duration),
     );
     _milestones = [...(task?.milestones ?? const [])];
     _reminders = [
@@ -144,6 +153,22 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
               child: Text(l10n.pickTime),
             ),
           ),
+          if (ref.watch(predictionSettingsProvider).aiEnabled &&
+              widget.existingTask == null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: _aiBusy ? null : _generateAiSuggestion,
+                icon: _aiBusy
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome_outlined),
+                label: Text(PredictionUiStrings(context).title),
+              ),
+            ),
           const SizedBox(height: 16),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -579,6 +604,53 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _generateAiSuggestion() async {
+    if (_aiBusy) return;
+    final settings = ref.read(predictionSettingsProvider);
+    final local = const DeadlinePredictionService().predict(
+      ref.read(tasksControllerProvider).valueOrNull?.tasks ?? const [],
+      title: _titleController.text,
+      tags: _tags,
+    );
+    setState(() => _aiBusy = true);
+    try {
+      final suggestion = await AiTaskService().suggest(
+        settings,
+        AiTaskInput(
+          title: _titleController.text.trim(),
+          note: _noteController.text.trim(),
+          tags: _tags,
+          nowUtc: DateTime.now().toUtc(),
+          localPredictionHours: local.duration.inMinutes / 60,
+        ),
+      );
+      if (!mounted) return;
+      final now = DateTime.now().toUtc();
+      final hours = suggestion.deadlineOffsetHours;
+      final due = hours == null
+          ? now.add(local.duration)
+          : now.add(Duration(minutes: (hours.clamp(1, 2160) * 60).round()));
+      setState(() {
+        if (suggestion.title?.isNotEmpty == true) {
+          _titleController.text = suggestion.title!;
+        }
+        if (suggestion.note?.isNotEmpty == true) {
+          _noteController.text = suggestion.note!;
+        }
+        if (suggestion.tags.isNotEmpty) _tags = suggestion.tags;
+        _finalDueLocal = ref.read(timezoneServiceProvider).utcToConfigured(due);
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _aiBusy = false);
+    }
   }
 
   Future<void> _pickTaskAlarmAudio() async {
