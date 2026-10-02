@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="widget_brand">NEXT DDL</string>
+    <string name="widget_focus_label">当前最紧急</string>
     <string name="widget_name">Next DDL 截止提醒</string>
     <string name="widget_empty">暂无未完成任务</string>
     <string name="widget_empty_hint">点击打开 Next DDL</string>
+    <string name="widget_next_label">下一关键点</string>
+    <string name="widget_remaining_label">剩余时间</string>
+    <string name="widget_final_label">最终截止</string>
     <string name="widget_next">下一节点：%1$s</string>
     <string name="widget_final_due">最终截止：%1$s</string>
     <string name="widget_minutes">%1$d 分钟</string>

@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -47,7 +48,12 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
             val localized = context.createConfigurationContext(config)
             val now = System.currentTimeMillis()
             val task = snapshot.select(now)
-            val formatter = SimpleDateFormat("MM-dd HH:mm z", locale).apply {
+            val datePattern = when (locale.language) {
+                "zh" -> "M月d日 HH:mm"
+                "ja" -> "M月d日 HH:mm"
+                else -> "MMM d, HH:mm z"
+            }
+            val formatter = SimpleDateFormat(datePattern, locale).apply {
                 timeZone = TimeZone.getTimeZone(snapshot.timezoneId)
             }
             fun date(time: Long) = formatter.format(Date(time))
@@ -61,13 +67,24 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
             for (id in ids) {
                 val views = RemoteViews(context.packageName, R.layout.next_ddl_widget)
                 views.setTextViewText(R.id.widget_title, task?.title ?: localized.getString(R.string.widget_empty))
-                views.setTextViewText(R.id.widget_node, task?.let {
-                    localized.getString(R.string.widget_next, it.targetTitle(now))
-                } ?: localized.getString(R.string.widget_empty_hint))
-                views.setTextViewText(R.id.widget_countdown, task?.let { countdown(it.activeDue(now)) } ?: "")
-                views.setTextViewText(R.id.widget_final, task?.let {
-                    localized.getString(R.string.widget_final_due, date(it.finalDue))
-                } ?: "")
+                if (task == null) {
+                    views.setViewVisibility(R.id.widget_empty_hint, View.VISIBLE)
+                    views.setViewVisibility(R.id.widget_details, View.GONE)
+                    views.setTextViewText(R.id.widget_empty_hint, localized.getString(R.string.widget_empty_hint))
+                } else {
+                    views.setViewVisibility(R.id.widget_empty_hint, View.GONE)
+                    views.setViewVisibility(R.id.widget_details, View.VISIBLE)
+                    views.setTextViewText(R.id.widget_node, task.targetTitle(now))
+                    views.setTextViewText(R.id.widget_countdown, countdown(task.activeDue(now)))
+                    views.setTextViewText(R.id.widget_final, date(task.finalDue))
+                    views.setTextColor(
+                        R.id.widget_countdown,
+                        context.resources.getColor(
+                            if (task.finalDue < now) R.color.widget_warning else R.color.widget_accent,
+                            context.theme,
+                        ),
+                    )
+                }
                 views.setTextViewText(R.id.widget_updated, localized.getString(R.string.widget_updated_at, date(now)))
                 val intent = Intent(context, MainActivity::class.java).apply {
                     action = OPEN_TASK

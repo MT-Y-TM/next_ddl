@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="widget_background">#F5F7F3</color>
+    <color name="widget_background_start">#F7FBF7</color>
+    <color name="widget_background_end">#DCEFE5</color>
+    <color name="widget_border">#A8D1BC</color>
     <color name="widget_text">#182C28</color>
     <color name="widget_secondary">#52665F</color>
     <color name="widget_accent">#176B52</color>
+    <color name="widget_warning">#B5473D</color>
+    <string name="widget_brand">NEXT DDL</string>
+    <string name="widget_focus_label">FOCUS NOW</string>
     <string name="widget_name">Next DDL</string>
     <string name="widget_empty">No unfinished tasks</string>
     <string name="widget_empty_hint">Tap to open Next DDL</string>
+    <string name="widget_next_label">NEXT KEY POINT</string>
+    <string name="widget_remaining_label">TIME LEFT</string>
+    <string name="widget_final_label">FINAL</string>
     <string name="widget_next">Next: %1$s</string>
     <string name="widget_final_due">Final: %1$s</string>
     <string name="widget_minutes">%1$d min</string>
