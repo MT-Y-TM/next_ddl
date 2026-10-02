@@ -58,33 +58,6 @@ class UpdateSettingsCard extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
-            if (state.release case final release?) ...[
-              const SizedBox(height: 8),
-              Text(
-                l10n.publishedAtLabel(
-                  settingsFormatDateTime(release.publishedAtUtc.toLocal()),
-                ),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.updateReleaseNotes,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                release.body.isEmpty ? l10n.noReleaseNotes : release.body,
-                maxLines: 6,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            if (!Platform.isAndroid) ...[
-              const SizedBox(height: 8),
-              Text(
-                l10n.windowsUpdateNotice,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

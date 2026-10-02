@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
@@ -15,7 +13,6 @@ import '../backup/backup_localizations.dart';
 import '../tasks/task_planning_page.dart';
 import '../tasks/task_planning_provider.dart';
 import '../tasks/task_planning_strings.dart';
-import '../update/update_reliability_panel.dart';
 import '../../utils/timezone_labels.dart';
 import '../tasks/tasks_controller.dart';
 import '../update/app_update_controller.dart';
@@ -183,39 +180,68 @@ class _TaskDataSettingsPage extends ConsumerWidget {
                   title: Text(l10n.importJson),
                   subtitle: Text(l10n.importJsonHint),
                   onTap: () async {
-                    await Navigator.of(context).push(MaterialPageRoute<void>(
-                      builder: (_) => const _ImportDataPage(),
-                    ));
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const _ImportDataPage(),
+                      ),
+                    );
                   },
                 ),
               ],
             ),
           ),
-          Card(child: ListTile(
-            leading: const Icon(Icons.restore),
-            title: Text(BackupLocalizations.of(context).title),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => BackupPage(
-              service: BackupService(repository: ref.read(deadlineRepositoryProvider)),
-              onRestored: (_) async {
-                await ref.read(tasksControllerProvider.notifier).reloadPersistedSnapshot();
-                await ref.read(taskPlanningProvider).reload();
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.restore),
+              title: Text(BackupLocalizations.of(context).title),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => BackupPage(
+                    service: BackupService(
+                      repository: ref.read(deadlineRepositoryProvider),
+                    ),
+                    onRestored: (_) async {
+                      await ref
+                          .read(tasksControllerProvider.notifier)
+                          .reloadPersistedSnapshot();
+                      await ref.read(taskPlanningProvider).reload();
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.repeat),
+              title: Text(
+                TaskPlanningStrings(
+                  Localizations.localeOf(context),
+                ).text('title'),
+              ),
+              onTap: () async {
+                final service = ref.read(taskPlanningProvider);
+                await service.reload();
+                if (!context.mounted) return;
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => TaskPlanningPage(
+                      service: service,
+                      sourceTasks:
+                          ref
+                              .read(tasksControllerProvider)
+                              .valueOrNull
+                              ?.tasks ??
+                          const [],
+                      timezoneId: ref
+                          .read(timezoneServiceProvider)
+                          .currentTimezoneId,
+                    ),
+                  ),
+                );
               },
-            ))),
-          )),
-          Card(child: ListTile(
-            leading: const Icon(Icons.repeat),
-            title: Text(TaskPlanningStrings(Localizations.localeOf(context)).text('title')),
-            onTap: () async {
-              final service = ref.read(taskPlanningProvider);
-              await service.reload();
-              if (!context.mounted) return;
-              await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TaskPlanningPage(
-                service: service,
-                sourceTasks: ref.read(tasksControllerProvider).valueOrNull?.tasks ?? const [],
-                timezoneId: ref.read(timezoneServiceProvider).currentTimezoneId,
-              )));
-            },
-          )),
+            ),
+          ),
         ],
       ),
     );
@@ -261,11 +287,6 @@ class _NotificationAlarmSettingsPage extends ConsumerWidget {
             child: SwitchListTile(
               secondary: const Icon(Icons.notifications_active_outlined),
               title: Text(l10n.persistentNotification),
-              subtitle: Text(
-                Platform.isAndroid
-                    ? l10n.persistentNotificationAndroidHint
-                    : l10n.persistentNotificationOtherHint,
-              ),
               value: snapshot?.persistentNotificationEnabled ?? false,
               onChanged: snapshot == null
                   ? null
@@ -336,17 +357,6 @@ class _NotificationAlarmSettingsPage extends ConsumerWidget {
             tasks: snapshot?.tasks ?? const [],
             settings: snapshot?.alarmSettings ?? AppAlarmSettings.defaults(),
             enabled: snapshot != null,
-          ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: Text(l10n.notificationNotice),
-              subtitle: Text(
-                Platform.isWindows
-                    ? l10n.windowsNotificationNotice
-                    : l10n.androidNotificationNotice,
-              ),
-            ),
           ),
         ],
       ),
@@ -464,12 +474,6 @@ class _AboutAppSettingsPage extends ConsumerWidget {
             ),
           ),
           UpdateSettingsCard(state: updateState),
-          if (Platform.isAndroid)
-            Padding(padding: const EdgeInsets.all(16), child: UpdateReliabilityPanel(
-              state: updateState,
-              onRetry: () => ref.read(appUpdateControllerProvider.notifier).downloadAndInstall(),
-              onOpenRelease: () => ref.read(appUpdateControllerProvider.notifier).openReleasePage(),
-            )),
         ],
       ),
     );
@@ -492,22 +496,37 @@ class _ImportDataPageState extends ConsumerState<_ImportDataPage> {
     setState(() => _busy = true);
     final strings = BackupLocalizations.of(context);
     try {
-      final imported = await ref.read(deadlineRepositoryProvider).importSnapshot();
+      final imported = await ref
+          .read(deadlineRepositoryProvider)
+          .importSnapshot();
       if (imported == null || !mounted) return;
-      if (!await confirmSnapshotReplacement(context, imported) || !mounted) return;
+      if (!await confirmSnapshotReplacement(context, imported) || !mounted) {
+        return;
+      }
       final controller = ref.read(tasksControllerProvider.notifier);
       try {
         await controller.replaceWithBackup(imported);
       } catch (error) {
         // State is published only after the protected replacement commits.
-        if (identical(ref.read(tasksControllerProvider).valueOrNull, imported)) {
+        if (identical(
+          ref.read(tasksControllerProvider).valueOrNull,
+          imported,
+        )) {
           _pendingSync = true;
         } else {
           rethrow;
         }
       }
       await ref.read(taskPlanningProvider).reload();
-      if (mounted) setState(() => _message = _pendingSync ? strings.scheduleFailed : AppLocalizations.of(context)!.importSuccess(imported.tasks.length));
+      if (mounted) {
+        setState(
+          () => _message = _pendingSync
+              ? strings.scheduleFailed
+              : AppLocalizations.of(
+                  context,
+                )!.importSuccess(imported.tasks.length),
+        );
+      }
     } catch (error) {
       if (mounted) setState(() => _message = strings.error(error));
     } finally {
@@ -518,15 +537,21 @@ class _ImportDataPageState extends ConsumerState<_ImportDataPage> {
   Future<void> _retry() async {
     setState(() => _busy = true);
     try {
-      await ref.read(tasksControllerProvider.notifier).reloadPersistedSnapshot();
+      await ref
+          .read(tasksControllerProvider.notifier)
+          .reloadPersistedSnapshot();
       if (mounted) {
         setState(() {
-        _pendingSync = false;
-        _message = BackupLocalizations.of(context).saved;
-      });
+          _pendingSync = false;
+          _message = BackupLocalizations.of(context).saved;
+        });
       }
     } catch (_) {
-      if (mounted) setState(() => _message = BackupLocalizations.of(context).scheduleFailed);
+      if (mounted) {
+        setState(
+          () => _message = BackupLocalizations.of(context).scheduleFailed,
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -537,17 +562,30 @@ class _ImportDataPageState extends ConsumerState<_ImportDataPage> {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.importJson)),
-      body: Padding(padding: const EdgeInsets.all(24), child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(l10n.importJsonHint),
-          const SizedBox(height: 16),
-          if (_busy) const LinearProgressIndicator(),
-          if (_message != null) Text(_message!),
-          FilledButton(onPressed: _busy ? null : _pendingSync ? _retry : _import,
-            child: Text(_pendingSync ? BackupLocalizations.of(context).retry : l10n.importJson)),
-        ],
-      )),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.importJsonHint),
+            const SizedBox(height: 16),
+            if (_busy) const LinearProgressIndicator(),
+            if (_message != null) Text(_message!),
+            FilledButton(
+              onPressed: _busy
+                  ? null
+                  : _pendingSync
+                  ? _retry
+                  : _import,
+              child: Text(
+                _pendingSync
+                    ? BackupLocalizations.of(context).retry
+                    : l10n.importJson,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

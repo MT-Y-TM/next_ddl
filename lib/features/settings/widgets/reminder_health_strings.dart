@@ -30,26 +30,15 @@ class ReminderHealthStrings {
     ),
     ReminderPermission.notApplicable => _t('不适用', 'Not applicable', '対象外'),
   };
-  String get planned => _t(
-    '下次预期提醒（按任务数据推算，非系统登记确认）',
-    'Next expected reminders (calculated, not confirmed system registrations)',
-    '次回の予定（タスクから算出・システム登録の確認ではありません）',
-  );
+  String get planned => _t('下次预期提醒', 'Next expected reminders', '次回の予定');
   String kind(ReminderKind value) => value == ReminderKind.notification
       ? _t('通知', 'Notification', '通知')
       : _t('响铃', 'Alarm', 'アラーム');
   String get finalDeadline => _t('最终截止', 'Final deadline', '最終期限');
   String get unnamedNode => _t('未命名节点', 'Unnamed milestone', '名前のない中間期限');
-  String get noNotification => _t(
-    '没有未来通知：任务可能已完成、通知未开启、未设提前量或提醒时间已过。',
-    'No future notification: tasks may be completed, notifications disabled, offsets empty, or reminder times past.',
-    '今後の通知はありません。完了済み、通知オフ、通知タイミング未設定、または予定時刻を過ぎています。',
-  );
-  String get noAlarm => _t(
-    '没有未来响铃：检查全局/任务闹钟开关、音频列表、提前量及完成状态。',
-    'No future alarm: check global/task switches, audio lists, offsets and completion status.',
-    '今後のアラームはありません。全体・タスク設定、音声、通知タイミング、完了状態を確認してください。',
-  );
+  String get noNotification =>
+      _t('暂无未来通知', 'No future notification', '今後の通知はありません');
+  String get noAlarm => _t('暂无未来响铃', 'No future alarm', '今後のアラームはありません');
   String get registration => _t('登记状态', 'Registration status', '登録状態');
   String pending(int? count) => count == null
       ? _t('通知待处理记录：未知', 'Pending notification records: unknown', '通知の保留記録：不明')

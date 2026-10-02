@@ -40,13 +40,6 @@ class AlarmSettingsCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              Platform.isAndroid
-                  ? l10n.alarmAndroidHint
-                  : l10n.alarmWindowsHint,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: settings.enabled,
@@ -56,7 +49,6 @@ class AlarmSettingsCard extends ConsumerWidget {
                         .setAlarmSettings(settings.copyWith(enabled: value))
                   : null,
               title: Text(l10n.enableAlarmFeature),
-              subtitle: Text(l10n.enableAlarmFeatureHint),
             ),
             const SizedBox(height: 8),
             ListTile(
@@ -76,11 +68,6 @@ class AlarmSettingsCard extends ConsumerWidget {
               ListTile(
                 dense: true,
                 title: Text(item.displayName),
-                subtitle: Text(
-                  item.uri,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
                 trailing: IconButton(
                   tooltip: l10n.delete,
                   onPressed: enabled ? () => _removeAudio(ref, item.id) : null,

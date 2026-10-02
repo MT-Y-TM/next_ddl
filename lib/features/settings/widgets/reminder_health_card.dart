@@ -149,7 +149,6 @@ class _ReminderHealthCardState extends ConsumerState<ReminderHealthCard>
               ),
               Text(s.pending(report.pendingNotificationCount)),
               Text(s.alarms(report.pendingAlarmCount)),
-              Text(s.registrationHint),
               const SizedBox(height: 12),
               Text(s.audio, style: Theme.of(context).textTheme.titleSmall),
               if (report.audio.isEmpty) Text(s.noAudio),
@@ -157,7 +156,6 @@ class _ReminderHealthCardState extends ConsumerState<ReminderHealthCard>
                 Text('${check.item.displayName}: ${s.audioState(check.state)}'),
             ],
             const SizedBox(height: 12),
-            Text(s.testHint),
             Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -217,15 +215,6 @@ class _ReminderHealthCardState extends ConsumerState<ReminderHealthCard>
             ),
             if (_result != null)
               Semantics(liveRegion: true, child: Text(s.result(_result!))),
-            const SizedBox(height: 8),
-            Text(
-              !service.supported
-                  ? s.unsupportedPlatform
-                  : service.platform == TargetPlatform.android
-                  ? s.androidHint
-                  : s.windowsHint,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
           ],
         ),
       ),
