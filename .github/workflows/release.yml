@@ -208,6 +208,7 @@ jobs:
             - 优化搜索栏下拉显示，支持回车快速创建标签和单个标签重命名。
             - 修复任务卡片列表滚动时搜索栏显示状态，并更新应用图标。
             - 精简关于应用与通知/闹钟页面的说明性备注，保留核心状态和操作。
+            - 新增首页任务卡片快捷完成/恢复、延后 1 小时/1 天和直接编辑，操作支持撤销。
 
             ## English
             - Add task and milestone completion, archives, quick postponement, search, and tag filters.
@@ -217,6 +218,7 @@ jobs:
             - Improve search reveal-on-pull behavior, Enter-to-add tags, and single-tag renaming.
             - Fix search visibility while scrolling task cards and update the application icon.
             - Reduce explanatory notes in About and Notifications/Alarms, keeping core statuses and actions.
+            - Add home task-card actions for complete/reopen, postpone by one hour/day, and edit with undo support.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

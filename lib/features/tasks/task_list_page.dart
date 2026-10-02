@@ -387,7 +387,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   }
 }
 
-class _TaskTabView extends StatelessWidget {
+class _TaskTabView extends StatefulWidget {
   const _TaskTabView({
     required this.tasks,
     required this.nowUtc,
@@ -409,24 +409,50 @@ class _TaskTabView extends StatelessWidget {
   final DateTime Function(DateTime value) toConfiguredTime;
 
   @override
+  State<_TaskTabView> createState() => _TaskTabViewState();
+}
+
+class _TaskTabViewState extends State<_TaskTabView> {
+  final _scrollController = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant _TaskTabView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.filtering != widget.filtering ||
+        oldWidget.tasks.length != widget.tasks.length) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (tasks.isEmpty) {
-      if (filtering) {
+    if (widget.tasks.isEmpty) {
+      if (widget.filtering) {
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(TaskUiStrings(context).noResults),
               TextButton(
-                onPressed: onClear,
+                onPressed: widget.onClear,
                 child: Text(TaskUiStrings(context).clear),
               ),
             ],
           ),
         );
       }
-      if (emptyMessage != null) {
-        return Center(child: Text(emptyMessage!));
+      if (widget.emptyMessage != null) {
+        return Center(child: Text(widget.emptyMessage!));
       }
       return _EmptyState(
         onCreate: () {
@@ -437,29 +463,30 @@ class _TaskTabView extends StatelessWidget {
       );
     }
     return NotificationListener<ScrollNotification>(
-      onNotification: onScrollNotification,
+      onNotification: widget.onScrollNotification,
       child: ListView.builder(
+        controller: _scrollController,
         padding: const EdgeInsets.only(bottom: 120, top: 8),
-        itemCount: tasks.length + 1,
+        itemCount: widget.tasks.length + 1,
         itemBuilder: (context, index) => index == 0
             ? Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  summary,
+                  widget.summary,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               )
             : _TaskCard(
-                task: tasks[index - 1],
-                nowUtc: nowUtc,
-                toConfiguredTime: toConfiguredTime,
+                task: widget.tasks[index - 1],
+                nowUtc: widget.nowUtc,
+                toConfiguredTime: widget.toConfiguredTime,
               ),
       ),
     );
   }
 }
 
-class _TaskCard extends StatelessWidget {
+class _TaskCard extends ConsumerStatefulWidget {
   const _TaskCard({
     required this.task,
     required this.nowUtc,
@@ -471,17 +498,73 @@ class _TaskCard extends StatelessWidget {
   final DateTime Function(DateTime value) toConfiguredTime;
 
   @override
+  ConsumerState<_TaskCard> createState() => _TaskCardState();
+}
+
+enum _TaskCardAction { toggleCompleted, postponeHour, postponeDay, edit }
+
+class _TaskCardState extends ConsumerState<_TaskCard> {
+  bool _busy = false;
+
+  Future<void> _runAction(_TaskCardAction action) async {
+    if (_busy) return;
+    final controller = ref.read(tasksControllerProvider.notifier);
+    final task = widget.task;
+    setState(() => _busy = true);
+    try {
+      switch (action) {
+        case _TaskCardAction.toggleCompleted:
+          await runTaskUiAction(
+            context,
+            () => controller.setTaskCompleted(task.id, !task.isCompleted),
+            undo: () => controller.restoreTask(task),
+          );
+        case _TaskCardAction.postponeHour:
+        case _TaskCardAction.postponeDay:
+          final duration = action == _TaskCardAction.postponeHour
+              ? const Duration(hours: 1)
+              : const Duration(days: 1);
+          final nowUtc = DateTime.now().toUtc();
+          final baseDue = task.finalDueAtUtc.isAfter(nowUtc)
+              ? task.finalDueAtUtc
+              : nowUtc;
+          await runTaskUiAction(
+            context,
+            () => controller.postponeTask(
+              task.id,
+              baseDue.add(duration),
+              shiftFutureMilestones: true,
+            ),
+            undo: () => controller.restoreTask(task),
+          );
+        case _TaskCardAction.edit:
+          if (mounted) {
+            await Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => TaskEditPage(existingTask: task),
+              ),
+            );
+          }
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final urgency = resolveTaskUrgency(task, nowUtc);
-    final nextMilestone = resolveNextMilestone(task, nowUtc);
+    final task = widget.task;
+    final urgency = resolveTaskUrgency(task, widget.nowUtc);
+    final nextMilestone = resolveNextMilestone(task, widget.nowUtc);
     final scheme = Theme.of(context).colorScheme;
     final color = switch (urgency) {
       TaskUrgency.normal => scheme.primary,
       TaskUrgency.urgent => scheme.tertiary,
       TaskUrgency.overdue => scheme.error,
     };
-    final progress = resolveRemainingProgress(task, nowUtc);
+    final progress = resolveRemainingProgress(task, widget.nowUtc);
+    final strings = TaskUiStrings(context);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -507,12 +590,82 @@ class _TaskCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    task.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 36),
+                        child: Text(
+                          task.title,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                      Positioned(
+                        right: -8,
+                        top: -8,
+                        child: PopupMenuButton<_TaskCardAction>(
+                          enabled: !_busy,
+                          tooltip: strings.edit,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                          iconSize: 22,
+                          color: Theme.of(context).colorScheme.surface,
+                          iconColor: Colors.white,
+                          onSelected: _runAction,
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: _TaskCardAction.toggleCompleted,
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  task.isCompleted
+                                      ? Icons.undo
+                                      : Icons.check_circle_outline,
+                                ),
+                                title: Text(
+                                  task.isCompleted
+                                      ? strings.restore
+                                      : strings.complete,
+                                ),
+                              ),
+                            ),
+                            if (!task.isCompleted)
+                              PopupMenuItem(
+                                value: _TaskCardAction.postponeHour,
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const Icon(Icons.schedule),
+                                  title: Text(strings.hour),
+                                ),
+                              ),
+                            if (!task.isCompleted)
+                              PopupMenuItem(
+                                value: _TaskCardAction.postponeDay,
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const Icon(Icons.event),
+                                  title: Text(strings.day),
+                                ),
+                              ),
+                            PopupMenuItem(
+                              value: _TaskCardAction.edit,
+                              child: ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: const Icon(Icons.edit_outlined),
+                                title: Text(strings.edit),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   if (task.note.trim().isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -540,11 +693,11 @@ class _TaskCard extends StatelessWidget {
                     ),
                   if (task.isCompleted)
                     Text(
-                      '${TaskUiStrings(context).completed} · ${taskUiDate(toConfiguredTime(task.completedAtUtc!))}',
+                      '${TaskUiStrings(context).completed} · ${taskUiDate(widget.toConfiguredTime(task.completedAtUtc!))}',
                     )
                   else ...[
                     Text(
-                      task.finalDueAtUtc.isAfter(nowUtc)
+                      task.finalDueAtUtc.isAfter(widget.nowUtc)
                           ? l10n.inProgressTab
                           : l10n.overdueTab,
                     ),
@@ -557,12 +710,12 @@ class _TaskCard extends StatelessWidget {
                             ? l10n.finalDeadline
                             : resolveMilestoneDisplayTitle(nextMilestone.title),
                         countdown: formatCountdownFromDates(
-                          now: nowUtc,
+                          now: widget.nowUtc,
                           target: nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
                           overduePrefix: l10n.countdownOverduePrefix,
                           daySuffix: l10n.countdownDaySuffix,
                         ),
-                        time: toConfiguredTime(
+                        time: widget.toConfiguredTime(
                           nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
                         ),
                       ),
@@ -572,12 +725,12 @@ class _TaskCard extends StatelessWidget {
                       label: l10n.finalDeadline,
                       title: null,
                       countdown: formatCountdownFromDates(
-                        now: nowUtc,
+                        now: widget.nowUtc,
                         target: task.finalDueAtUtc,
                         overduePrefix: l10n.countdownOverduePrefix,
                         daySuffix: l10n.countdownDaySuffix,
                       ),
-                      time: toConfiguredTime(task.finalDueAtUtc),
+                      time: widget.toConfiguredTime(task.finalDueAtUtc),
                     ),
                   ],
                 ],

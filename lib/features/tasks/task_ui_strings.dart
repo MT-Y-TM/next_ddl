@@ -17,6 +17,7 @@ class TaskUiStrings {
   String get reopenMilestone => t('撤销节点完成', 'Reopen milestone', '中間期限を未完了に戻す');
   String get complete => t('完成任务', 'Complete task', 'タスクを完了');
   String get restore => t('撤销完成', 'Reopen', '未完了に戻す');
+  String get edit => t('编辑任务', 'Edit task', 'タスクを編集');
   String get undo => t('撤销', 'Undo', '元に戻す');
   String get saved => t('已更新', 'Updated', '更新しました');
   String get failed => t(
