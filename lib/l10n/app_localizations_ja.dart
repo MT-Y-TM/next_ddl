@@ -628,6 +628,23 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeSettings => 'テーマ設定';
 
   @override
+  String get themeRecentBackgrounds => '最近使った背景';
+
+  @override
+  String get themeBackgroundSelected => '現在の背景';
+
+  @override
+  String themeUseRecentBackground(int index) {
+    return '最近の背景 $index を使う';
+  }
+
+  @override
+  String get themeBackgroundUnavailable => 'この画像は利用できません。もう一度選択してください。';
+
+  @override
+  String get themeSaveFailed => 'テーマを保存できませんでした。元の背景は保持されています。もう一度お試しください。';
+
+  @override
   String get themePrimaryColor => 'メインカラー';
 
   @override

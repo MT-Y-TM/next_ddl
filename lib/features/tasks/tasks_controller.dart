@@ -413,15 +413,21 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
   });
 
   Future<void> setThemeSettings(AppThemeSettings themeSettings) =>
-      _serialize(() async {
-        final snapshot = state.requireValue;
-        final nextSnapshot = snapshot.copyWith(
-          exportedAtUtc: DateTime.now().toUtc(),
-          themeSettings: themeSettings,
-        );
-        await _repository.saveSnapshot(nextSnapshot);
-        state = AsyncData(nextSnapshot);
-      });
+      updateThemeSettings((_) => themeSettings);
+
+  Future<void> updateThemeSettings(
+    AppThemeSettings Function(AppThemeSettings current) update,
+  ) => _serialize(() async {
+    final snapshot = state.requireValue;
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      themeSettings: update(
+        snapshot.themeSettings,
+      ).rememberBackgroundsFrom(snapshot.themeSettings),
+    );
+    await _repository.saveSnapshot(nextSnapshot);
+    state = AsyncData(nextSnapshot);
+  });
 
   Future<void> setAlarmSettings(AppAlarmSettings alarmSettings) =>
       _serialize(() async {

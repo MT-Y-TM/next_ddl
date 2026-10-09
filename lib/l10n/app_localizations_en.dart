@@ -639,6 +639,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeSettings => 'Theme';
 
   @override
+  String get themeRecentBackgrounds => 'Recent backgrounds';
+
+  @override
+  String get themeBackgroundSelected => 'Current background';
+
+  @override
+  String themeUseRecentBackground(int index) {
+    return 'Use recent background $index';
+  }
+
+  @override
+  String get themeBackgroundUnavailable =>
+      'This image is unavailable. Please select it again.';
+
+  @override
+  String get themeSaveFailed =>
+      'Could not save the theme. Your previous background has been kept. Please try again.';
+
+  @override
   String get themePrimaryColor => 'Primary color';
 
   @override

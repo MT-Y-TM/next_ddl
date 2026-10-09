@@ -31,6 +31,7 @@ class AppThemeSettings {
     double? imageRotationDegrees,
     this.imageOverlayOpacity = 0.35,
     this.imageBlurSigma = 0,
+    this.recentBackgroundImages = const [],
   }) : imageRotationDegrees =
            imageRotationDegrees ?? imageRotationQuarterTurns * 90.0;
 
@@ -48,6 +49,35 @@ class AppThemeSettings {
   final double imageRotationDegrees;
   final double imageOverlayOpacity;
   final double imageBlurSigma;
+  final List<BackgroundImagePreset> recentBackgroundImages;
+  static const recentBackgroundLimit = 5;
+
+  List<BackgroundImagePreset> get backgroundImageHistory => _uniqueBackgrounds([
+    if (backgroundImagePath?.isNotEmpty == true)
+      BackgroundImagePreset.fromTheme(this),
+    ...recentBackgroundImages,
+  ]);
+
+  AppThemeSettings rememberBackgroundsFrom(AppThemeSettings previous) =>
+      copyWith(
+        recentBackgroundImages: _uniqueBackgrounds([
+          if (backgroundImagePath?.isNotEmpty == true)
+            BackgroundImagePreset.fromTheme(this),
+          ...previous.backgroundImageHistory,
+          ...recentBackgroundImages,
+        ]),
+      );
+
+  static List<BackgroundImagePreset> _uniqueBackgrounds(
+    Iterable<BackgroundImagePreset> entries,
+  ) {
+    final paths = <String>{};
+    return List.unmodifiable(
+      entries
+          .where((entry) => entry.path.isNotEmpty && paths.add(entry.path))
+          .take(recentBackgroundLimit),
+    );
+  }
 
   factory AppThemeSettings.defaults() {
     return const AppThemeSettings();
@@ -68,10 +98,13 @@ class AppThemeSettings {
     double? imageRotationDegrees,
     double? imageOverlayOpacity,
     double? imageBlurSigma,
+    List<BackgroundImagePreset>? recentBackgroundImages,
   }) {
     final nextQuarterTurns =
         (imageRotationQuarterTurns ?? this.imageRotationQuarterTurns) % 4;
     return AppThemeSettings(
+      recentBackgroundImages:
+          recentBackgroundImages ?? this.recentBackgroundImages,
       seedColorValue: seedColorValue ?? this.seedColorValue,
       cornerRadius: (cornerRadius ?? this.cornerRadius).clamp(0, 32).toDouble(),
       backgroundMode: backgroundMode ?? this.backgroundMode,
@@ -117,6 +150,9 @@ class AppThemeSettings {
     'imageRotationDegrees': imageRotationDegrees,
     'imageOverlayOpacity': imageOverlayOpacity,
     'imageBlurSigma': imageBlurSigma,
+    'recentBackgroundImages': backgroundImageHistory
+        .map((item) => item.toJson())
+        .toList(),
   };
 
   factory AppThemeSettings.fromJson(Map<String, dynamic>? json) {
@@ -129,6 +165,15 @@ class AppThemeSettings {
             defaults.imageRotationQuarterTurns) %
         4;
     return AppThemeSettings(
+      recentBackgroundImages: _uniqueBackgrounds(
+        (json['recentBackgroundImages'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => BackgroundImagePreset.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            ),
+      ),
       seedColorValue:
           (json['seedColorValue'] as num?)?.toInt() ?? defaults.seedColorValue,
       cornerRadius:
@@ -175,6 +220,55 @@ class AppThemeSettings {
                   defaults.imageBlurSigma)
               .clamp(0, 20)
               .toDouble(),
+    );
+  }
+}
+
+/// Stores only image-specific settings, so restoring a wallpaper cannot undo
+/// a later change to the app color or control radius.
+class BackgroundImagePreset {
+  const BackgroundImagePreset({required this.path, required this.settings});
+
+  final String path;
+  final AppThemeSettings settings;
+
+  factory BackgroundImagePreset.fromTheme(AppThemeSettings theme) =>
+      BackgroundImagePreset(
+        path: theme.backgroundImagePath!,
+        settings: theme.copyWith(recentBackgroundImages: const []),
+      );
+
+  AppThemeSettings applyTo(AppThemeSettings current) => current.copyWith(
+    backgroundMode: ThemeBackgroundMode.image,
+    backgroundImagePath: path,
+    imageScale: settings.imageScale,
+    imageOffsetX: settings.imageOffsetX,
+    imageOffsetY: settings.imageOffsetY,
+    imageRotationQuarterTurns: settings.imageRotationQuarterTurns,
+    imageRotationDegrees: settings.imageRotationDegrees,
+    imageOverlayOpacity: settings.imageOverlayOpacity,
+    imageBlurSigma: settings.imageBlurSigma,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'backgroundImagePath': path,
+    'imageScale': settings.imageScale,
+    'imageOffsetX': settings.imageOffsetX,
+    'imageOffsetY': settings.imageOffsetY,
+    'imageRotationQuarterTurns': settings.imageRotationQuarterTurns,
+    'imageRotationDegrees': settings.imageRotationDegrees,
+    'imageOverlayOpacity': settings.imageOverlayOpacity,
+    'imageBlurSigma': settings.imageBlurSigma,
+  };
+
+  factory BackgroundImagePreset.fromJson(Map<String, dynamic> json) {
+    final theme = AppThemeSettings.fromJson({
+      ...json,
+      'recentBackgroundImages': <dynamic>[],
+    });
+    return BackgroundImagePreset(
+      path: theme.backgroundImagePath ?? '',
+      settings: theme,
     );
   }
 }

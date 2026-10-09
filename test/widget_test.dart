@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -345,6 +347,216 @@ void main() {
     expect(find.text('Reset image'), findsOneWidget);
     expect(find.text('Save background'), findsOneWidget);
   });
+
+  testWidgets(
+    'saving wallpaper then dragging radius retains image and history',
+    (tester) async {
+      final directory = (await tester.runAsync(_createThemeImages))!;
+      addTearDown(() => _deleteThemeImages(directory));
+      final oldPath = '${directory.path}/first.png';
+      final newPath = '${directory.path}/second.png';
+      final service = _FakeThemeAssetService(pickedBackgroundPath: newPath);
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final snapshot = AppSnapshot.empty().copyWith(
+        preferredLocale: AppLocalePreference.en,
+        themeSettings: AppThemeSettings.defaults().copyWith(
+          backgroundMode: ThemeBackgroundMode.image,
+          backgroundImagePath: oldPath,
+        ),
+      );
+      await tester.pumpWidget(
+        _buildApp(snapshot, now, themeAssetService: service),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      await _openSettingsSection(tester, 'Theme');
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('theme-radius'))),
+      );
+
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Image background'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save background'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const ValueKey('theme-radius')));
+      await tester.drag(
+        find.byKey(const ValueKey('theme-radius')),
+        const Offset(80, 0),
+      );
+      await tester.pumpAndSettle();
+
+      final theme = container.read(themeSettingsProvider);
+      expect(theme.backgroundMode, ThemeBackgroundMode.image);
+      expect(theme.backgroundImagePath, newPath);
+      expect(
+        theme.cornerRadius,
+        greaterThan(snapshot.themeSettings.cornerRadius),
+      );
+      expect(theme.backgroundImageHistory.map((item) => item.path), [
+        newPath,
+        oldPath,
+      ]);
+      expect(service.deletedPaths, isEmpty);
+      expect(await tester.runAsync(() => File(oldPath).exists()), isTrue);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'canceling replacement preserves wallpaper and discards only draft',
+    (tester) async {
+      final service = _FakeThemeAssetService(pickedBackgroundPath: 'draft.png');
+      final theme = AppThemeSettings.defaults().copyWith(
+        backgroundMode: ThemeBackgroundMode.image,
+        backgroundImagePath: 'existing.png',
+        imageBlurSigma: 4,
+      );
+      await tester.pumpWidget(
+        _buildSettingsApp(
+          AppSnapshot.empty().copyWith(
+            preferredLocale: AppLocalePreference.en,
+            themeSettings: theme,
+          ),
+          updateService: _FakeAppUpdateService(),
+          themeAssetService: service,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openSettingsSection(tester, 'Theme');
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('theme-radius'))),
+      );
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Image background'));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(themeSettingsProvider).backgroundImagePath,
+        'existing.png',
+      );
+      expect(container.read(themeSettingsProvider).imageBlurSigma, 4);
+      expect(service.deletedPaths, ['draft.png']);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'recent wallpaper restores image parameters without undoing theme',
+    (tester) async {
+      final directory = (await tester.runAsync(_createThemeImages))!;
+      addTearDown(() => _deleteThemeImages(directory));
+      final old = AppThemeSettings.defaults().copyWith(
+        backgroundMode: ThemeBackgroundMode.image,
+        backgroundImagePath: '${directory.path}/first.png',
+        imageScale: 1.7,
+        imageOffsetX: 0.3,
+        imageRotationDegrees: 37,
+        imageOverlayOpacity: 0.6,
+        imageBlurSigma: 4,
+      );
+      final current = old
+          .copyWith(
+            backgroundImagePath: '${directory.path}/second.png',
+            imageScale: 1,
+            imageOffsetX: 0,
+            imageRotationDegrees: 0,
+            cornerRadius: 25,
+            seedColorValue: 0xFF123456,
+          )
+          .rememberBackgroundsFrom(old);
+      await tester.pumpWidget(
+        _buildSettingsApp(
+          AppSnapshot.empty().copyWith(
+            preferredLocale: AppLocalePreference.en,
+            themeSettings: current,
+          ),
+          updateService: _FakeAppUpdateService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openSettingsSection(tester, 'Theme');
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('theme-radius'))),
+      );
+      final thumbnail = find.byKey(
+        ValueKey('recent-background-${old.backgroundImagePath}'),
+      );
+      await tester.ensureVisible(thumbnail);
+      await tester.tap(thumbnail);
+      // File I/O completes outside fake time; then pump the resulting state.
+      for (var attempt = 0; attempt < 100; attempt++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+        if (container.read(themeSettingsProvider).backgroundImagePath ==
+            old.backgroundImagePath) {
+          break;
+        }
+      }
+      await tester.pumpAndSettle();
+      final restored = container.read(themeSettingsProvider);
+      expect(restored.backgroundImagePath, old.backgroundImagePath);
+      expect(restored.imageScale, 1.7);
+      expect(restored.imageOffsetX, 0.3);
+      expect(restored.imageRotationDegrees, 37);
+      expect(restored.imageBlurSigma, 4);
+      expect(restored.imageOverlayOpacity, 0.6);
+      expect(restored.cornerRadius, 25);
+      expect(restored.seedColorValue, 0xFF123456);
+      expect(
+        restored.backgroundImageHistory.first.path,
+        old.backgroundImagePath,
+      );
+
+      final snapshot = AppSnapshot.fromJson(
+        container.read(tasksControllerProvider).requireValue.toJson(),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+        _buildSettingsApp(snapshot, updateService: _FakeAppUpdateService()),
+      );
+      await tester.pumpAndSettle();
+      await _openSettingsSection(tester, 'Theme');
+      final reloaded = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('theme-radius'))),
+      ).read(themeSettingsProvider);
+      expect(reloaded.backgroundImagePath, old.backgroundImagePath);
+      expect(reloaded.backgroundImageHistory, hasLength(2));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  for (final (locale, section, label) in [
+    (AppLocalePreference.en, 'Theme', 'Recent backgrounds'),
+    (AppLocalePreference.zh, '主题设置', '最近使用的背景'),
+    (AppLocalePreference.ja, 'テーマ設定', '最近使った背景'),
+  ]) {
+    testWidgets('recent wallpaper controls are localized in ${locale.name}', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _buildSettingsApp(
+          AppSnapshot.empty().copyWith(
+            preferredLocale: locale,
+            themeSettings: const AppThemeSettings(
+              backgroundImagePath: 'missing.png',
+            ),
+          ),
+          updateService: _FakeAppUpdateService(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await _openSettingsSection(tester, section);
+      await tester.ensureVisible(find.text(label));
+      expect(find.text(label), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('settings page checks updates and shows up-to-date state', (
     tester,
@@ -760,6 +972,7 @@ Widget _buildApp(
 Widget _buildSettingsApp(
   AppSnapshot snapshot, {
   required AppUpdateService updateService,
+  ThemeAssetService? themeAssetService,
 }) {
   return ProviderScope(
     overrides: [
@@ -769,7 +982,9 @@ Widget _buildSettingsApp(
       alarmAudioPickerServiceProvider.overrideWithValue(
         _FakeAlarmAudioPickerService(),
       ),
-      themeAssetServiceProvider.overrideWithValue(_FakeThemeAssetService()),
+      themeAssetServiceProvider.overrideWithValue(
+        themeAssetService ?? _FakeThemeAssetService(),
+      ),
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
@@ -792,6 +1007,56 @@ Widget _buildSettingsApp(
       home: const SettingsPage(),
     ),
   );
+}
+
+Future<Directory> _createThemeImages() async {
+  final directory = await Directory.systemTemp.createTemp('next_ddl_recent_');
+  final recorder = ui.PictureRecorder();
+  Canvas(recorder).drawColor(Colors.teal, BlendMode.src);
+  final picture = recorder.endRecording();
+  final image = await picture.toImage(16, 24);
+  try {
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    for (final name in ['first.png', 'second.png']) {
+      final file = await File(
+        '${directory.path}/$name',
+      ).writeAsBytes(bytes!.buffer.asUint8List());
+      for (final provider in <ImageProvider>[
+        FileImage(file),
+        ResizeImage(FileImage(file), width: 240),
+      ]) {
+        final loaded = Completer<void>();
+        final stream = provider.resolve(ImageConfiguration.empty);
+        final listener = ImageStreamListener((info, _) {
+          info.dispose();
+          loaded.complete();
+        }, onError: loaded.completeError);
+        stream.addListener(listener);
+        try {
+          await loaded.future;
+        } finally {
+          stream.removeListener(listener);
+        }
+      }
+    }
+  } finally {
+    image.dispose();
+    picture.dispose();
+  }
+  return directory;
+}
+
+Future<void> _deleteThemeImages(Directory directory) async {
+  // Windows may briefly hold PNG files while thumbnail decoding finishes.
+  for (var attempt = 0; ; attempt++) {
+    try {
+      await directory.delete(recursive: true);
+      return;
+    } on FileSystemException catch (error) {
+      if (attempt >= 9 || error.osError?.errorCode != 32) rethrow;
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+  }
 }
 
 Future<void> _openSettingsSection(WidgetTester tester, String title) async {
@@ -889,9 +1154,12 @@ class _FakeThemeAssetService implements ThemeAssetService {
   _FakeThemeAssetService({this.pickedBackgroundPath});
 
   final String? pickedBackgroundPath;
+  final List<String?> deletedPaths = [];
 
   @override
-  Future<void> deleteBackgroundImage(String? path) async {}
+  Future<void> deleteBackgroundImage(String? path) async {
+    deletedPaths.add(path);
+  }
 
   @override
   Future<String?> pickAndCopyBackgroundImage({String? oldPath}) async {

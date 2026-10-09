@@ -171,6 +171,14 @@ jobs:
       - name: Build Android release APK
         run: flutter build apk --release --target-platform android-arm64
 
+      - name: Verify ARM64-only APK
+        run: |
+          ABIS=$(unzip -Z -1 build/app/outputs/flutter-apk/app-release.apk | awk -F/ '$1 == "lib" && NF > 2 { print $2 }' | sort -u)
+          if [ "$ABIS" != "arm64-v8a" ]; then
+            echo "Unexpected APK ABIs: $ABIS"
+            exit 1
+          fi
+
       - name: Generate APK checksum
         working-directory: build/app/outputs/flutter-apk
         run: sha256sum app-release.apk > app-release.apk.sha256
@@ -201,24 +209,20 @@ jobs:
         with:
           body: |
             ## 中文
-            - 新增任务与节点完成状态、归档、快捷延期、搜索和标签筛选。
-            - 新增任务模板与重复计划、提醒状态检查及测试入口。
-            - 新增导入备份恢复、安装包完整性校验及 Android 桌面小组件。
-            - 新功能支持中文、英文、日文；项目许可证改为 MIT。
-            - 优化搜索栏下拉显示，支持回车快速创建标签和单个标签重命名。
-            - 修复任务卡片列表滚动时搜索栏显示状态，并更新应用图标。
-            - 精简关于应用与通知/闹钟页面的说明性备注，保留核心状态和操作。
-            - 新增首页任务卡片快捷完成/恢复、延后 1 小时/1 天和直接编辑，操作支持撤销。
+            - 修复调整控件圆角或主色时图片背景被旧设置覆盖的问题。
+            - 修复取消换图后原背景文件被提前删除的问题。
+            - 新增最近 5 张背景图片的缩略图入口，重启后仍可快速恢复。
+            - 恢复背景时同步恢复缩放、位置、旋转、遮罩和模糊参数，保留当前主色和圆角。
+            - 新增编辑当前背景入口及图片不可用提示，补齐中文、英文、日文界面。
+            - 明确限制 Android 发布包为 ARM64，排除插件附带的其他架构库。
 
             ## English
-            - Add task and milestone completion, archives, quick postponement, search, and tag filters.
-            - Add task templates, recurring schedules, reminder diagnostics, and test controls.
-            - Add import backups and restore, installer integrity checks, and an Android home screen widget.
-            - Localize new features in Chinese, English, and Japanese; license the project under MIT.
-            - Improve search reveal-on-pull behavior, Enter-to-add tags, and single-tag renaming.
-            - Fix search visibility while scrolling task cards and update the application icon.
-            - Reduce explanatory notes in About and Notifications/Alarms, keeping core statuses and actions.
-            - Add home task-card actions for complete/reopen, postpone by one hour/day, and edit with undo support.
+            - Fix stale theme settings overwriting the wallpaper when changing control radius or primary color.
+            - Keep the original background file when canceling a replacement.
+            - Add thumbnails for the five most recent backgrounds, retained across restarts for quick restoration.
+            - Restore scale, position, rotation, overlay, and blur without resetting the current color or corner radius.
+            - Add an entry to edit the current wallpaper and unavailable-image feedback in Chinese, English, and Japanese.
+            - Enforce ARM64-only Android releases and exclude other architectures bundled by plugins.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

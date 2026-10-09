@@ -189,6 +189,10 @@ class _ImageBackgroundState extends State<_ImageBackground> {
                 fit: BoxFit.cover,
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
+                gaplessPlayback: true,
+                errorBuilder: (_, _, _) => ColoredBox(
+                  color: Color(settings.solidBackgroundColorValue),
+                ),
               ),
             ),
           ),

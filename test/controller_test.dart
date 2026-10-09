@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
 import 'package:next_ddl/models/app_alarm_settings.dart';
+import 'package:next_ddl/models/app_theme_settings.dart';
 import 'package:next_ddl/services/alarm_scheduler.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/deadline_task.dart';
@@ -14,6 +15,51 @@ import 'package:timezone/timezone.dart' as tz;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+    'queued radius changes preserve newly saved background and history',
+    () async {
+      final repository = _MemoryRepository();
+      final container = ProviderContainer(
+        overrides: [
+          deadlineRepositoryProvider.overrideWithValue(repository),
+          notificationSchedulerProvider.overrideWithValue(
+            _FakeNotificationScheduler(),
+          ),
+          alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
+          timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(tasksControllerProvider.future);
+      final controller = container.read(tasksControllerProvider.notifier);
+      await Future.wait([
+        controller.updateThemeSettings(
+          (current) => current.copyWith(
+            backgroundMode: ThemeBackgroundMode.image,
+            backgroundImagePath: 'wallpaper.png',
+            imageBlurSigma: 4,
+            imageScale: 1.7,
+          ),
+        ),
+        controller.updateThemeSettings(
+          (current) => current.copyWith(cornerRadius: 24),
+        ),
+        controller.updateThemeSettings(
+          (current) => current.copyWith(seedColorValue: 0xFF123456),
+        ),
+      ]);
+      final stored = AppSnapshot.fromJson(
+        repository.saved!.toJson(),
+      ).themeSettings;
+      expect(stored.backgroundMode, ThemeBackgroundMode.image);
+      expect(stored.backgroundImagePath, 'wallpaper.png');
+      expect(stored.imageScale, 1.7);
+      expect(stored.imageBlurSigma, 4);
+      expect(stored.cornerRadius, 24);
+      expect(stored.backgroundImageHistory.single.path, 'wallpaper.png');
+    },
+  );
 
   test('completion cancels reminders and restoring reinstates only active nodes', () async {
     final now = DateTime.now().toUtc();
@@ -598,6 +644,3 @@ class _FakeTimezoneService extends DeviceTimezoneService {
     return true;
   }
 }
-
-
-

@@ -12,15 +12,27 @@ abstract class ThemeAssetService {
 }
 
 class LocalThemeAssetService implements ThemeAssetService {
+  LocalThemeAssetService({
+    Future<Directory> Function()? supportDirectory,
+    Future<String?> Function()? imagePicker,
+  }) : _supportDirectory = supportDirectory ?? getApplicationSupportDirectory,
+       _imagePicker = imagePicker ?? _pickImage;
+
+  final Future<Directory> Function() _supportDirectory;
+  final Future<String?> Function() _imagePicker;
   static const _folderName = 'theme_backgrounds';
 
-  @override
-  Future<String?> pickAndCopyBackgroundImage({String? oldPath}) async {
+  static Future<String?> _pickImage() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
     );
-    final sourcePath = result?.files.single.path;
+    return result?.files.single.path;
+  }
+
+  @override
+  Future<String?> pickAndCopyBackgroundImage({String? oldPath}) async {
+    final sourcePath = await _imagePicker();
     if (sourcePath == null || sourcePath.isEmpty) {
       return null;
     }
@@ -36,15 +48,18 @@ class LocalThemeAssetService implements ThemeAssetService {
       ),
     );
     await File(sourcePath).copy(target.path);
-    if (oldPath != null && oldPath != target.path) {
-      await deleteBackgroundImage(oldPath);
-    }
     return target.path;
   }
 
   @override
   Future<void> deleteBackgroundImage(String? path) async {
     if (path == null || path.isEmpty) {
+      return;
+    }
+    // Only drafts copied into our private folder may be removed. Imported JSON
+    // can contain paths outside that folder.
+    final directory = await _backgroundDirectory();
+    if (!p.equals(p.dirname(p.absolute(path)), p.absolute(directory.path))) {
       return;
     }
     final file = File(path);
@@ -54,7 +69,7 @@ class LocalThemeAssetService implements ThemeAssetService {
   }
 
   Future<Directory> _backgroundDirectory() async {
-    final base = await getApplicationSupportDirectory();
+    final base = await _supportDirectory();
     final directory = Directory(p.join(base.path, _folderName));
     if (!await directory.exists()) {
       await directory.create(recursive: true);

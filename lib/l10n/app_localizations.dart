@@ -1210,6 +1210,36 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get themeSettings;
 
+  /// No description provided for @themeRecentBackgrounds.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent backgrounds'**
+  String get themeRecentBackgrounds;
+
+  /// No description provided for @themeBackgroundSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Current background'**
+  String get themeBackgroundSelected;
+
+  /// No description provided for @themeUseRecentBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Use recent background {index}'**
+  String themeUseRecentBackground(int index);
+
+  /// No description provided for @themeBackgroundUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This image is unavailable. Please select it again.'**
+  String get themeBackgroundUnavailable;
+
+  /// No description provided for @themeSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the theme. Your previous background has been kept. Please try again.'**
+  String get themeSaveFailed;
+
   /// No description provided for @themePrimaryColor.
   ///
   /// In en, this message translates to:

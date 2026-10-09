@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +10,7 @@ import '../../../services/theme_asset_service.dart';
 import '../../tasks/tasks_controller.dart';
 import '../background_image_editor_page.dart';
 
-class ThemeSettingsCard extends ConsumerWidget {
+class ThemeSettingsCard extends ConsumerStatefulWidget {
   const ThemeSettingsCard({
     required this.settings,
     required this.enabled,
@@ -19,7 +21,17 @@ class ThemeSettingsCard extends ConsumerWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ThemeSettingsCard> createState() => _ThemeSettingsCardState();
+}
+
+class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
+  bool _busy = false;
+  double? _radiusPreview;
+  AppThemeSettings get settings => widget.settings;
+  bool get enabled => widget.enabled && !_busy;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Padding(
@@ -51,7 +63,7 @@ class ThemeSettingsCard extends ConsumerWidget {
                           ref,
                           l10n.themePrimaryColor,
                           Color(settings.seedColorValue),
-                          (color) => settings.copyWith(
+                          (current, color) => current.copyWith(
                             seedColorValue: color.toARGB32(),
                           ),
                         )
@@ -66,7 +78,7 @@ class ThemeSettingsCard extends ConsumerWidget {
                           ref,
                           l10n.themeSolidBackground,
                           Color(settings.solidBackgroundColorValue),
-                          (color) => settings.copyWith(
+                          (current, color) => current.copyWith(
                             backgroundMode: ThemeBackgroundMode.solid,
                             solidBackgroundColorValue: color.toARGB32(),
                           ),
@@ -87,18 +99,32 @@ class ThemeSettingsCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Text(l10n.themeCornerRadius(settings.cornerRadius.round())),
+            Text(
+              l10n.themeCornerRadius(
+                (_radiusPreview ?? settings.cornerRadius).round(),
+              ),
+            ),
             Slider(
-              value: settings.cornerRadius,
+              key: const ValueKey('theme-radius'),
+              value: _radiusPreview ?? settings.cornerRadius,
               min: 0,
               max: 32,
               divisions: 32,
               onChanged: enabled
-                  ? (value) => ref
-                        .read(tasksControllerProvider.notifier)
-                        .setThemeSettings(
-                          settings.copyWith(cornerRadius: value),
-                        )
+                  ? (value) => setState(() => _radiusPreview = value)
+                  : null,
+              onChangeEnd: enabled
+                  ? (value) async {
+                      await _run(
+                        () => ref
+                            .read(tasksControllerProvider.notifier)
+                            .updateThemeSettings(
+                              (current) =>
+                                  current.copyWith(cornerRadius: value),
+                            ),
+                      );
+                      if (mounted) setState(() => _radiusPreview = null);
+                    }
                   : null,
             ),
             const SizedBox(height: 8),
@@ -122,11 +148,14 @@ class ThemeSettingsCard extends ConsumerWidget {
               ],
               selected: {settings.backgroundMode},
               onSelectionChanged: enabled
-                  ? (values) => ref
-                        .read(tasksControllerProvider.notifier)
-                        .setThemeSettings(
-                          settings.copyWith(backgroundMode: values.single),
-                        )
+                  ? (values) => _run(
+                      () => ref
+                          .read(tasksControllerProvider.notifier)
+                          .updateThemeSettings(
+                            (current) =>
+                                current.copyWith(backgroundMode: values.single),
+                          ),
+                    )
                   : null,
             ),
             if (settings.backgroundMode == ThemeBackgroundMode.gradient) ...[
@@ -142,7 +171,7 @@ class ThemeSettingsCard extends ConsumerWidget {
                             ref,
                             l10n.themeGradientStart,
                             Color(settings.gradientStartColorValue),
-                            (color) => settings.copyWith(
+                            (current, color) => current.copyWith(
                               gradientStartColorValue: color.toARGB32(),
                             ),
                           )
@@ -159,7 +188,7 @@ class ThemeSettingsCard extends ConsumerWidget {
                             ref,
                             l10n.themeGradientEnd,
                             Color(settings.gradientEndColorValue),
-                            (color) => settings.copyWith(
+                            (current, color) => current.copyWith(
                               gradientEndColorValue: color.toARGB32(),
                             ),
                           )
@@ -173,12 +202,101 @@ class ThemeSettingsCard extends ConsumerWidget {
               ),
             ],
             if (settings.backgroundMode == ThemeBackgroundMode.image) ...[
+              if (settings.backgroundImagePath != null)
+                TextButton.icon(
+                  onPressed: enabled ? () => _editCurrentImage() : null,
+                  icon: const Icon(Icons.crop_rotate),
+                  label: Text(l10n.themeEditBackgroundImage),
+                ),
               const SizedBox(height: 12),
               Text(
                 settings.backgroundImagePath == null
                     ? l10n.themeNoBackgroundImage
                     : l10n.themeBackgroundImageReady,
                 style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            if (settings.backgroundImageHistory.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                l10n.themeRecentBackgrounds,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 100,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: settings.backgroundImageHistory.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final preset = settings.backgroundImageHistory[index];
+                    final selected =
+                        settings.backgroundMode == ThemeBackgroundMode.image &&
+                        settings.backgroundImagePath == preset.path;
+                    final label = selected
+                        ? l10n.themeBackgroundSelected
+                        : l10n.themeUseRecentBackground(index + 1);
+                    return Semantics(
+                      selected: selected,
+                      button: true,
+                      label: label,
+                      child: Tooltip(
+                        message: label,
+                        child: InkWell(
+                          key: ValueKey('recent-background-${preset.path}'),
+                          onTap: enabled ? () => _restoreImage(preset) : null,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            width: 96,
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                width: selected ? 3 : 1,
+                                color: selected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  Image.file(
+                                    File(preset.path),
+                                    fit: BoxFit.cover,
+                                    cacheWidth: 240,
+                                    errorBuilder: (_, _, _) => const Center(
+                                      child: Icon(Icons.broken_image_outlined),
+                                    ),
+                                  ),
+                                  if (selected)
+                                    const Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: Icon(
+                                        Icons.check_circle,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            blurRadius: 4,
+                                            color: Colors.black,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ],
@@ -192,7 +310,7 @@ class ThemeSettingsCard extends ConsumerWidget {
     WidgetRef ref,
     String title,
     Color initial,
-    AppThemeSettings Function(Color color) builder,
+    AppThemeSettings Function(AppThemeSettings current, Color color) builder,
   ) async {
     Color selected = initial;
     final confirmed = await showDialog<bool>(
@@ -222,41 +340,101 @@ class ThemeSettingsCard extends ConsumerWidget {
         ],
       ),
     );
-    if (confirmed == true) {
-      await ref
-          .read(tasksControllerProvider.notifier)
-          .setThemeSettings(builder(selected));
+    if (confirmed == true && mounted) {
+      await _run(
+        () => ref
+            .read(tasksControllerProvider.notifier)
+            .updateThemeSettings((current) => builder(current, selected)),
+      );
     }
   }
 
   Future<void> _editBackgroundImage(BuildContext context, WidgetRef ref) async {
-    final service = ref.read(themeAssetServiceProvider);
-    final copiedPath = await service.pickAndCopyBackgroundImage(
-      oldPath: settings.backgroundImagePath,
-    );
-    if (copiedPath == null || !context.mounted) {
+    await _run(() async {
+      final service = ref.read(themeAssetServiceProvider);
+      final copiedPath = await service.pickAndCopyBackgroundImage();
+      if (copiedPath == null) return;
+      var saved = false;
+      try {
+        if (!context.mounted) return;
+        final edited = await Navigator.of(context).push<AppThemeSettings>(
+          MaterialPageRoute(
+            builder: (_) => BackgroundImageEditorPage(
+              initial: ref
+                  .read(themeSettingsProvider)
+                  .copyWith(
+                    backgroundMode: ThemeBackgroundMode.image,
+                    backgroundImagePath: copiedPath,
+                    imageScale: 1,
+                    imageOffsetX: 0,
+                    imageOffsetY: 0,
+                    imageRotationQuarterTurns: 0,
+                    imageRotationDegrees: 0,
+                  ),
+            ),
+          ),
+        );
+        if (edited == null || !mounted) return;
+        await ref
+            .read(tasksControllerProvider.notifier)
+            .updateThemeSettings(
+              BackgroundImagePreset.fromTheme(edited).applyTo,
+            );
+        saved = true;
+      } finally {
+        if (!saved) await service.deleteBackgroundImage(copiedPath);
+      }
+    });
+  }
+
+  Future<void> _restoreImage(BackgroundImagePreset preset) => _run(() async {
+    if (!await File(preset.path).exists()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.themeBackgroundUnavailable,
+            ),
+          ),
+        );
+      }
       return;
     }
+    if (!mounted) return;
+    await ref
+        .read(tasksControllerProvider.notifier)
+        .updateThemeSettings(preset.applyTo);
+  });
+
+  Future<void> _editCurrentImage() => _run(() async {
+    final current = ref.read(themeSettingsProvider);
     final edited = await Navigator.of(context).push<AppThemeSettings>(
       MaterialPageRoute(
-        builder: (dialogContext) => BackgroundImageEditorPage(
-          initial: settings.copyWith(
-            backgroundMode: ThemeBackgroundMode.image,
-            backgroundImagePath: copiedPath,
-            imageScale: 1,
-            imageOffsetX: 0,
-            imageOffsetY: 0,
-            imageRotationQuarterTurns: 0,
-            imageRotationDegrees: 0,
-          ),
-        ),
+        builder: (_) => BackgroundImageEditorPage(initial: current),
       ),
     );
-    if (edited == null) {
-      await service.deleteBackgroundImage(copiedPath);
-      return;
+    if (edited == null || !mounted) return;
+    await ref
+        .read(tasksControllerProvider.notifier)
+        .updateThemeSettings(BackgroundImagePreset.fromTheme(edited).applyTo);
+  });
+
+  Future<void> _run(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.themeSaveFailed),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
-    await ref.read(tasksControllerProvider.notifier).setThemeSettings(edited);
   }
 }
 

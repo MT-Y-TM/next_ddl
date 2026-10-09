@@ -60,6 +60,10 @@ android {
 
     buildTypes {
         release {
+            ndk {
+                abiFilters.clear()
+                abiFilters.add("arm64-v8a")
+            }
             signingConfig =
                 if (keystorePropertiesFile.exists()) {
                     signingConfigs.getByName("release")

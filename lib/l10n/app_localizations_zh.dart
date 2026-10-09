@@ -619,6 +619,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeSettings => '主题设置';
 
   @override
+  String get themeRecentBackgrounds => '最近使用的背景';
+
+  @override
+  String get themeBackgroundSelected => '当前背景';
+
+  @override
+  String themeUseRecentBackground(int index) {
+    return '使用最近背景 $index';
+  }
+
+  @override
+  String get themeBackgroundUnavailable => '这张图片已不可用，请重新选择。';
+
+  @override
+  String get themeSaveFailed => '主题保存失败，已保留原背景，请重试。';
+
+  @override
   String get themePrimaryColor => '主色';
 
   @override
