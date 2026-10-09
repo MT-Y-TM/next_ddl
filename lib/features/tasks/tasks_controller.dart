@@ -429,6 +429,25 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
     state = AsyncData(nextSnapshot);
   });
 
+  Future<void> removeRecentBackground(String path) => _serialize(() async {
+    final snapshot = state.requireValue;
+    final current = snapshot.themeSettings;
+    final nextTheme = current.copyWith(
+      recentBackgroundImages: current.recentBackgroundImages
+          .where((item) => item.path != path)
+          .toList(),
+      hiddenRecentBackgroundPaths: current.backgroundImagePath == path
+          ? [...current.hiddenRecentBackgroundPaths, path]
+          : current.hiddenRecentBackgroundPaths,
+    );
+    final nextSnapshot = snapshot.copyWith(
+      exportedAtUtc: DateTime.now().toUtc(),
+      themeSettings: nextTheme,
+    );
+    await _repository.saveSnapshot(nextSnapshot);
+    state = AsyncData(nextSnapshot);
+  });
+
   Future<void> setAlarmSettings(AppAlarmSettings alarmSettings) =>
       _serialize(() async {
         final snapshot = state.requireValue;

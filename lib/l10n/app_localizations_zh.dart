@@ -636,6 +636,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeSaveFailed => '主题保存失败，已保留原背景，请重试。';
 
   @override
+  String get themeDeleteRecentBackgroundTitle => '删除最近使用的背景？';
+
+  @override
+  String get themeDeleteRecentBackgroundMessage =>
+      '这张图片会从最近使用列表中移除，当前正在使用的背景不会改变。';
+
+  @override
   String get themePrimaryColor => '主色';
 
   @override

@@ -215,6 +215,7 @@ jobs:
             - 恢复背景时同步恢复缩放、位置、旋转、遮罩和模糊参数，保留当前主色和圆角。
             - 新增编辑当前背景入口及图片不可用提示，补齐中文、英文、日文界面。
             - 明确限制 Android 发布包为 ARM64，排除插件附带的其他架构库。
+            - 图片编辑器初始完整显示原图，支持用户自由缩放和裁切；历史背景支持长按确认删除。
 
             ## English
             - Fix stale theme settings overwriting the wallpaper when changing control radius or primary color.
@@ -223,6 +224,7 @@ jobs:
             - Restore scale, position, rotation, overlay, and blur without resetting the current color or corner radius.
             - Add an entry to edit the current wallpaper and unavailable-image feedback in Chinese, English, and Japanese.
             - Enforce ARM64-only Android releases and exclude other architectures bundled by plugins.
+            - Show the full source image initially in the editor, allow free zoom/cropping, and support long-press removal of recent backgrounds.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

@@ -338,6 +338,8 @@
   "themeUseRecentBackground": "使用最近背景 {index}",
   "themeBackgroundUnavailable": "这张图片已不可用，请重新选择。",
   "themeSaveFailed": "主题保存失败，已保留原背景，请重试。",
+  "themeDeleteRecentBackgroundTitle": "删除最近使用的背景？",
+  "themeDeleteRecentBackgroundMessage": "这张图片会从最近使用列表中移除，当前正在使用的背景不会改变。",
   "themePrimaryColor": "主色",
   "themeSolidBackground": "纯色背景",
   "themeBackgroundSolid": "纯色",

@@ -645,6 +645,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeSaveFailed => 'テーマを保存できませんでした。元の背景は保持されています。もう一度お試しください。';
 
   @override
+  String get themeDeleteRecentBackgroundTitle => '最近の背景を削除しますか？';
+
+  @override
+  String get themeDeleteRecentBackgroundMessage =>
+      'この画像を最近使った背景の一覧から削除します。現在の壁紙は変更されません。';
+
+  @override
   String get themePrimaryColor => 'メインカラー';
 
   @override

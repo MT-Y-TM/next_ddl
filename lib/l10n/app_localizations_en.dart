@@ -658,6 +658,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not save the theme. Your previous background has been kept. Please try again.';
 
   @override
+  String get themeDeleteRecentBackgroundTitle => 'Remove recent background?';
+
+  @override
+  String get themeDeleteRecentBackgroundMessage =>
+      'This background will be removed from the recent list. The current wallpaper will stay unchanged.';
+
+  @override
   String get themePrimaryColor => 'Primary color';
 
   @override

@@ -339,6 +339,8 @@
   "@themeUseRecentBackground": {"placeholders": {"index": {"type": "int"}}},
   "themeBackgroundUnavailable": "This image is unavailable. Please select it again.",
   "themeSaveFailed": "Could not save the theme. Your previous background has been kept. Please try again.",
+  "themeDeleteRecentBackgroundTitle": "Remove recent background?",
+  "themeDeleteRecentBackgroundMessage": "This background will be removed from the recent list. The current wallpaper will stay unchanged.",
   "themePrimaryColor": "Primary color",
   "themeSolidBackground": "Solid background",
   "themeBackgroundSolid": "Solid",

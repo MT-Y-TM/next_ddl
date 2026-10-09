@@ -147,7 +147,10 @@ class _ImagePreview extends StatelessWidget {
                 angle: settings.imageRotationDegrees * math.pi / 180,
                 child: Image.file(
                   File(path),
-                  fit: BoxFit.cover,
+                  // Start with the whole source image visible. Users can then
+                  // zoom and pan to choose any crop rather than guessing what
+                  // was hidden by an initial cover fit.
+                  fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
                 ),

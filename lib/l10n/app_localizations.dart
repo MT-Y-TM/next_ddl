@@ -1240,6 +1240,18 @@ abstract class AppLocalizations {
   /// **'Could not save the theme. Your previous background has been kept. Please try again.'**
   String get themeSaveFailed;
 
+  /// No description provided for @themeDeleteRecentBackgroundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove recent background?'**
+  String get themeDeleteRecentBackgroundTitle;
+
+  /// No description provided for @themeDeleteRecentBackgroundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This background will be removed from the recent list. The current wallpaper will stay unchanged.'**
+  String get themeDeleteRecentBackgroundMessage;
+
   /// No description provided for @themePrimaryColor.
   ///
   /// In en, this message translates to:

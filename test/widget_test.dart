@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/app/app.dart';
 import 'package:next_ddl/features/settings/settings_page.dart';
+import 'package:next_ddl/features/settings/background_image_editor_page.dart';
 import 'package:next_ddl/features/tasks/task_edit_page.dart';
 import 'package:next_ddl/features/tasks/task_list_page.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
@@ -346,6 +347,104 @@ void main() {
     expect(find.text('Rotate 90 degrees'), findsOneWidget);
     expect(find.text('Reset image'), findsOneWidget);
     expect(find.text('Save background'), findsOneWidget);
+  });
+
+  testWidgets('image editor initially shows the complete source image', (
+    tester,
+  ) async {
+    final directory = (await tester.runAsync(_createThemeImages))!;
+    addTearDown(() => _deleteThemeImages(directory));
+    final settings = AppThemeSettings.defaults().copyWith(
+      backgroundMode: ThemeBackgroundMode.image,
+      backgroundImagePath: '${directory.path}/first.png',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: BackgroundImageEditorPage(initial: settings),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final image = tester.widget<Image>(find.byType(Image).first);
+    expect(image.fit, BoxFit.contain);
+  });
+
+  testWidgets('long pressing a recent background asks before removing it', (
+    tester,
+  ) async {
+    final directory = (await tester.runAsync(_createThemeImages))!;
+    addTearDown(() => _deleteThemeImages(directory));
+    final firstPath = '${directory.path}/first.png';
+    final secondPath = '${directory.path}/second.png';
+    final previous = AppThemeSettings.defaults().copyWith(
+      backgroundMode: ThemeBackgroundMode.image,
+      backgroundImagePath: firstPath,
+    );
+    final settings = previous
+        .copyWith(backgroundImagePath: secondPath)
+        .rememberBackgroundsFrom(previous);
+    final service = _FakeThemeAssetService();
+
+    await tester.pumpWidget(
+      _buildSettingsApp(
+        AppSnapshot.empty().copyWith(
+          preferredLocale: AppLocalePreference.en,
+          themeSettings: settings,
+        ),
+        updateService: _FakeAppUpdateService(),
+        themeAssetService: service,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'Theme');
+
+    final firstThumbnail = find.byKey(ValueKey('recent-background-$firstPath'));
+    await tester.longPress(firstThumbnail);
+    await tester.pumpAndSettle();
+    expect(find.text('Remove recent background?'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byKey(const ValueKey('theme-radius'))),
+    );
+    expect(
+      container
+          .read(themeSettingsProvider)
+          .backgroundImageHistory
+          .map((item) => item.path),
+      [secondPath],
+    );
+    expect(service.deletedPaths, [firstPath]);
+
+    await tester.longPress(
+      find.byKey(ValueKey('recent-background-$secondPath')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(
+      container.read(themeSettingsProvider).backgroundImagePath,
+      secondPath,
+    );
+    expect(
+      container
+          .read(themeSettingsProvider)
+          .backgroundImageHistory
+          .map((item) => item.path),
+      isEmpty,
+    );
+    expect(service.deletedPaths, [firstPath]);
   });
 
   testWidgets(

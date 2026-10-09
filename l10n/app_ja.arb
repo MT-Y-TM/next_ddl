@@ -338,6 +338,8 @@
   "themeUseRecentBackground": "最近の背景 {index} を使う",
   "themeBackgroundUnavailable": "この画像は利用できません。もう一度選択してください。",
   "themeSaveFailed": "テーマを保存できませんでした。元の背景は保持されています。もう一度お試しください。",
+  "themeDeleteRecentBackgroundTitle": "最近の背景を削除しますか？",
+  "themeDeleteRecentBackgroundMessage": "この画像を最近使った背景の一覧から削除します。現在の壁紙は変更されません。",
   "themePrimaryColor": "メインカラー",
   "themeSolidBackground": "単色背景",
   "themeBackgroundSolid": "単色",

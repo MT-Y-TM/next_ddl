@@ -32,6 +32,7 @@ class AppThemeSettings {
     this.imageOverlayOpacity = 0.35,
     this.imageBlurSigma = 0,
     this.recentBackgroundImages = const [],
+    this.hiddenRecentBackgroundPaths = const [],
   }) : imageRotationDegrees =
            imageRotationDegrees ?? imageRotationQuarterTurns * 90.0;
 
@@ -50,22 +51,35 @@ class AppThemeSettings {
   final double imageOverlayOpacity;
   final double imageBlurSigma;
   final List<BackgroundImagePreset> recentBackgroundImages;
+  final List<String> hiddenRecentBackgroundPaths;
   static const recentBackgroundLimit = 5;
 
   List<BackgroundImagePreset> get backgroundImageHistory => _uniqueBackgrounds([
-    if (backgroundImagePath?.isNotEmpty == true)
+    if (backgroundImagePath?.isNotEmpty == true &&
+        !hiddenRecentBackgroundPaths.contains(backgroundImagePath))
       BackgroundImagePreset.fromTheme(this),
-    ...recentBackgroundImages,
+    ...recentBackgroundImages.where(
+      (item) => !hiddenRecentBackgroundPaths.contains(item.path),
+    ),
   ]);
 
   AppThemeSettings rememberBackgroundsFrom(AppThemeSettings previous) =>
       copyWith(
         recentBackgroundImages: _uniqueBackgrounds([
-          if (backgroundImagePath?.isNotEmpty == true)
+          if (backgroundImagePath?.isNotEmpty == true &&
+              !previous.hiddenRecentBackgroundPaths.contains(
+                backgroundImagePath,
+              ))
             BackgroundImagePreset.fromTheme(this),
           ...previous.backgroundImageHistory,
           ...recentBackgroundImages,
         ]),
+        hiddenRecentBackgroundPaths:
+            backgroundImagePath == previous.backgroundImagePath
+            ? previous.hiddenRecentBackgroundPaths
+            : previous.hiddenRecentBackgroundPaths
+                  .where((path) => path != backgroundImagePath)
+                  .toList(),
       );
 
   static List<BackgroundImagePreset> _uniqueBackgrounds(
@@ -99,12 +113,15 @@ class AppThemeSettings {
     double? imageOverlayOpacity,
     double? imageBlurSigma,
     List<BackgroundImagePreset>? recentBackgroundImages,
+    List<String>? hiddenRecentBackgroundPaths,
   }) {
     final nextQuarterTurns =
         (imageRotationQuarterTurns ?? this.imageRotationQuarterTurns) % 4;
     return AppThemeSettings(
       recentBackgroundImages:
           recentBackgroundImages ?? this.recentBackgroundImages,
+      hiddenRecentBackgroundPaths:
+          hiddenRecentBackgroundPaths ?? this.hiddenRecentBackgroundPaths,
       seedColorValue: seedColorValue ?? this.seedColorValue,
       cornerRadius: (cornerRadius ?? this.cornerRadius).clamp(0, 32).toDouble(),
       backgroundMode: backgroundMode ?? this.backgroundMode,
@@ -153,6 +170,7 @@ class AppThemeSettings {
     'recentBackgroundImages': backgroundImageHistory
         .map((item) => item.toJson())
         .toList(),
+    'hiddenRecentBackgroundPaths': hiddenRecentBackgroundPaths,
   };
 
   factory AppThemeSettings.fromJson(Map<String, dynamic>? json) {
@@ -164,16 +182,27 @@ class AppThemeSettings {
         ((json['imageRotationQuarterTurns'] as num?)?.toInt() ??
             defaults.imageRotationQuarterTurns) %
         4;
+    final hasHistory = json.containsKey('recentBackgroundImages');
+    final history = hasHistory
+        ? (json['recentBackgroundImages'] as List? ?? const [])
+              .whereType<Map>()
+              .map(
+                (item) => BackgroundImagePreset.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+        : <BackgroundImagePreset>[];
     return AppThemeSettings(
-      recentBackgroundImages: _uniqueBackgrounds(
-        (json['recentBackgroundImages'] as List? ?? const [])
-            .whereType<Map>()
-            .map(
-              (item) => BackgroundImagePreset.fromJson(
-                Map<String, dynamic>.from(item),
-              ),
-            ),
-      ),
+      recentBackgroundImages: _uniqueBackgrounds([
+        ...history,
+        if (!hasHistory &&
+            (json['backgroundImagePath'] as String?)?.isNotEmpty == true)
+          BackgroundImagePreset.fromJson(json),
+      ]),
+      hiddenRecentBackgroundPaths:
+          (json['hiddenRecentBackgroundPaths'] as List? ?? const [])
+              .whereType<String>()
+              .toList(),
       seedColorValue:
           (json['seedColorValue'] as num?)?.toInt() ?? defaults.seedColorValue,
       cornerRadius:
@@ -248,6 +277,9 @@ class BackgroundImagePreset {
     imageRotationDegrees: settings.imageRotationDegrees,
     imageOverlayOpacity: settings.imageOverlayOpacity,
     imageBlurSigma: settings.imageBlurSigma,
+    hiddenRecentBackgroundPaths: current.hiddenRecentBackgroundPaths
+        .where((item) => item != path)
+        .toList(),
   );
 
   Map<String, dynamic> toJson() => {

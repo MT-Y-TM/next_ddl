@@ -246,6 +246,9 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
                         child: InkWell(
                           key: ValueKey('recent-background-${preset.path}'),
                           onTap: enabled ? () => _restoreImage(preset) : null,
+                          onLongPress: enabled
+                              ? () => _removeRecentImage(preset)
+                              : null,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             width: 96,
@@ -405,6 +408,42 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
         .read(tasksControllerProvider.notifier)
         .updateThemeSettings(preset.applyTo);
   });
+
+  Future<void> _removeRecentImage(BackgroundImagePreset preset) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.themeDeleteRecentBackgroundTitle),
+        content: Text(l10n.themeDeleteRecentBackgroundMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    await _run(() async {
+      final current = ref.read(themeSettingsProvider);
+      await ref
+          .read(tasksControllerProvider.notifier)
+          .removeRecentBackground(preset.path);
+      // Keep the currently rendered wallpaper alive. Other private copies can
+      // be removed because they are no longer reachable from recent history.
+      if (preset.path != current.backgroundImagePath) {
+        await ref
+            .read(themeAssetServiceProvider)
+            .deleteBackgroundImage(preset.path);
+      }
+    });
+  }
 
   Future<void> _editCurrentImage() => _run(() async {
     final current = ref.read(themeSettingsProvider);
