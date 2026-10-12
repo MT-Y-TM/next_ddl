@@ -7,17 +7,19 @@ object NextDdlWidgetSelectionTest {
         val now = 1000L
         val first = WidgetTask("first", "Task", 5000, 10, listOf(
             WidgetNode("past", 999), WidgetNode("  ", 1000), WidgetNode("future", 2000),
-        ))
+        ), 1000)
         check(first.next(now)?.due == 1000L)
         check(first.targetTitle(now) == "Task")
         check(first.next(1001)?.title == "future")
         check(first.activeDue(2001) == 5000L)
         check(first.targetTitle(2001) == "Task")
+        check(first.remainingProgress(1000) == 100)
+        check(first.remainingProgress(3000) == 50)
         check(NextDdlWidgetSnapshot().select(now) == null)
-        val overdue = WidgetTask("overdue", "Old", 900, 20, emptyList())
+        val overdue = WidgetTask("overdue", "Old", 900, 20, emptyList(), 0)
         check(NextDdlWidgetSnapshot(tasks = listOf(overdue, first)).select(now) == first)
         check(NextDdlWidgetSnapshot(tasks = listOf(overdue, first)).select(6000) == overdue)
-        val second = WidgetTask("second", "Second", 8000, 30, listOf(WidgetNode("soon", 1500)))
+        val second = WidgetTask("second", "Second", 8000, 30, listOf(WidgetNode("soon", 1500)), 1000)
         val snapshot = NextDdlWidgetSnapshot(tasks = listOf(first, second))
         check(snapshot.select(now) == first)
         check(snapshot.select(1001) == second)

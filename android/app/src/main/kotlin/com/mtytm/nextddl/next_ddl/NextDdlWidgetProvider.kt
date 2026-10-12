@@ -15,7 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import kotlin.math.ceil
+import kotlin.math.abs
 
 class NextDdlWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = refreshAll(context)
@@ -48,20 +48,18 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
             val localized = context.createConfigurationContext(config)
             val now = System.currentTimeMillis()
             val task = snapshot.select(now)
-            val datePattern = when (locale.language) {
-                "zh" -> "M月d日 HH:mm"
-                "ja" -> "M月d日 HH:mm"
-                else -> "MMM d, HH:mm z"
-            }
-            val formatter = SimpleDateFormat(datePattern, locale).apply {
+            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", locale).apply {
                 timeZone = TimeZone.getTimeZone(snapshot.timezoneId)
             }
             fun date(time: Long) = formatter.format(Date(time))
             fun countdown(due: Long): String {
                 val delta = due - now
-                val minutes = ceil(kotlin.math.abs(delta.toDouble()) / 60000.0).toLong()
-                val amount = if (minutes < 60) localized.getString(R.string.widget_minutes, minutes)
-                    else localized.getString(R.string.widget_hours_minutes, minutes / 60, minutes % 60)
+                val hours = abs(delta) / (60L * 60L * 1000L)
+                val amount = localized.getString(
+                    R.string.widget_days_hours,
+                    hours / 24L,
+                    hours % 24L,
+                )
                 return localized.getString(if (delta < 0) R.string.widget_overdue else R.string.widget_remaining, amount)
             }
             for (id in ids) {
@@ -74,18 +72,19 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
                 } else {
                     views.setViewVisibility(R.id.widget_empty_hint, View.GONE)
                     views.setViewVisibility(R.id.widget_details, View.VISIBLE)
-                    views.setTextViewText(R.id.widget_node, task.targetTitle(now))
-                    views.setTextViewText(R.id.widget_countdown, countdown(task.activeDue(now)))
+                    views.setTextViewText(R.id.widget_status, localized.getString(R.string.widget_focus_label))
+                    views.setTextViewText(R.id.widget_percent, "${task.remainingProgress(now)}%")
+                    views.setProgressBar(R.id.widget_progress, 100, task.remainingProgress(now), false)
+                    views.setTextViewText(R.id.widget_final_countdown, countdown(task.finalDue))
                     views.setTextViewText(R.id.widget_final, date(task.finalDue))
                     views.setTextColor(
-                        R.id.widget_countdown,
+                        R.id.widget_final_countdown,
                         context.resources.getColor(
                             if (task.finalDue < now) R.color.widget_warning else R.color.widget_accent,
                             context.theme,
                         ),
                     )
                 }
-                views.setTextViewText(R.id.widget_updated, localized.getString(R.string.widget_updated_at, date(now)))
                 val intent = Intent(context, MainActivity::class.java).apply {
                     action = OPEN_TASK
                     data = Uri.Builder().scheme("nextddl-widget").authority("task")

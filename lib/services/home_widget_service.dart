@@ -33,6 +33,7 @@ class HomeWidgetService {
           {
             'id': task.id,
             'title': task.title,
+            'createdAtUtc': task.createdAtUtc.millisecondsSinceEpoch,
             'finalDueAtUtc': task.finalDueAtUtc.millisecondsSinceEpoch,
             'updatedAtUtc': task.updatedAtUtc.millisecondsSinceEpoch,
             'milestones': [

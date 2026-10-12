@@ -66,6 +66,7 @@ void main() {
         tasks.single['finalDueAtUtc'],
         now.add(const Duration(days: 2)).millisecondsSinceEpoch,
       );
+      expect(tasks.single['createdAtUtc'], now.millisecondsSinceEpoch);
       expect(tasks.single.containsKey('note'), false);
       expect(result['timezoneId'], 'Asia/Tokyo');
       expect(result['schemaVersion'], 1);

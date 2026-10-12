@@ -9,10 +9,19 @@ internal data class WidgetTask(
     val finalDue: Long,
     val updated: Long,
     val nodes: List<WidgetNode>,
+    val created: Long = 0L,
 ) {
     fun next(now: Long): WidgetNode? = nodes.filter { it.due >= now }.minByOrNull { it.due }
     fun activeDue(now: Long): Long = next(now)?.due ?: finalDue
     fun targetTitle(now: Long): String = next(now)?.title?.trim()?.takeIf { it.isNotEmpty() } ?: title.trim()
+
+    fun remainingProgress(now: Long): Int {
+        val total = finalDue - created
+        if (total <= 0L) return if (finalDue >= now) 100 else 0
+        return (((finalDue - now).toDouble() / total) * 100.0)
+            .coerceIn(0.0, 100.0)
+            .toInt()
+    }
 }
 
 internal data class NextDdlWidgetSnapshot(
@@ -48,6 +57,7 @@ internal data class NextDdlWidgetSnapshot(
                         if (!node.isNull("completedAtUtc")) null
                         else WidgetNode(node.getString("title"), node.getLong("dueAtUtc"))
                     },
+                    task.optLong("createdAtUtc", task.getLong("updatedAtUtc")),
                 )
             }
             return NextDdlWidgetSnapshot(root.optString("locale", "system"), root.optString("timezoneId", "UTC"), tasks)
