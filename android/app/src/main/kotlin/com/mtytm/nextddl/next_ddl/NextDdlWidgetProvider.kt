@@ -41,10 +41,6 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == SWITCH_TASK) {
-            switchTask(context, intent.getIntExtra(EXTRA_WIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID))
-            return
-        }
         if (intent.action in setOf(Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED,
                 Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_LOCALE_CHANGED)) {
             refreshAll(context)
@@ -54,8 +50,7 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
     companion object {
         internal const val PREFS = "next_ddl_home_widget"
         const val OPEN_TASK = "com.mtytm.nextddl.next_ddl.WIDGET_OPEN_TASK"
-        private const val SWITCH_TASK = "com.mtytm.nextddl.next_ddl.WIDGET_SWITCH_TASK"
-        private const val EXTRA_WIDGET_ID = "next_ddl_widget_id"
+        internal const val EXTRA_WIDGET_ID = "next_ddl_widget_id"
 
         private fun selectedTaskKey(id: Int) = "selectedTask_$id"
         private fun manualSelectionKey(id: Int) = "manualSelection_$id"
@@ -88,8 +83,8 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
                     selectedId = selectedId,
                     manualSelection = manualSelection,
                 )
-                // Keep the rendered cursor even in automatic mode, so a switch
-                // starts from what was visible if time advanced between refreshes.
+                // Highlight the task actually rendered, even if automatic
+                // priority changes before the user opens the picker.
                 prefs.edit().putString(selectedTaskKey(id), task?.id)
                     .putBoolean(manualSelectionKey(id), manualSelection).commit()
                 val intent = Intent(context, MainActivity::class.java).apply {
@@ -102,18 +97,7 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
                 val openTask = PendingIntent.getActivity(
                     context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
-                val switchIntent = Intent(context, NextDdlWidgetProvider::class.java).apply {
-                    action = SWITCH_TASK
-                    data = Uri.Builder().scheme("nextddl-widget").authority("switch")
-                        .appendPath(id.toString()).build()
-                    putExtra(EXTRA_WIDGET_ID, id)
-                }
-                val switchTask = PendingIntent.getBroadcast(
-                    context,
-                    id,
-                    switchIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                )
+                val switchTask = taskPickerPendingIntent(context, id)
                 val views = NextDdlWidgetRenderer.render(
                     context, localized, manager.getAppWidgetOptions(id), snapshot, task, now, openTask, switchTask,
                 )
@@ -121,20 +105,35 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        fun switchTask(context: Context, widgetId: Int) {
-            if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return
+        internal fun taskPickerPendingIntent(context: Context, widgetId: Int): PendingIntent {
+            val intent = Intent(context, WidgetTaskPickerActivity::class.java).apply {
+                data = Uri.Builder().scheme("nextddl-widget").authority("switch")
+                    .appendPath(widgetId.toString()).build()
+                putExtra(EXTRA_WIDGET_ID, widgetId)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            }
+            return PendingIntent.getActivity(context, widgetId, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+
+        fun ownsWidget(context: Context, widgetId: Int): Boolean {
+            if (widgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return false
             val manager = AppWidgetManager.getInstance(context)
-            if (widgetId !in manager.getAppWidgetIds(ComponentName(context, NextDdlWidgetProvider::class.java))) return
+            return widgetId in manager.getAppWidgetIds(ComponentName(context, NextDdlWidgetProvider::class.java))
+        }
+
+        fun selectTask(context: Context, widgetId: Int, taskId: String): Boolean {
+            if (!ownsWidget(context, widgetId)) return false
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            val raw = prefs.getString("snapshot", null) ?: return
-            val snapshot = runCatching { NextDdlWidgetSnapshot.parse(raw) }.getOrNull() ?: return
-            val now = System.currentTimeMillis()
-            val next = snapshot.nextAfter(now, prefs.getString(selectedTaskKey(widgetId), null)) ?: return
-            prefs.edit()
-                .putString(selectedTaskKey(widgetId), next.id)
+            val raw = prefs.getString("snapshot", null) ?: return false
+            val snapshot = runCatching { NextDdlWidgetSnapshot.parse(raw) }.getOrNull() ?: return false
+            if (snapshot.tasks.none { it.id == taskId }) return false
+            if (!prefs.edit()
+                .putString(selectedTaskKey(widgetId), taskId)
                 .putBoolean(manualSelectionKey(widgetId), true)
-                .commit()
+                .commit()) return false
             refreshAll(context)
+            return true
         }
     }
 }

@@ -15,7 +15,11 @@
     <string name="widget_brand">NEXT DDL</string>
     <string name="widget_focus_label">IN PROGRESS</string>
     <string name="widget_name">Next DDL</string>
-    <string name="widget_switch_label">Switch task</string>
+    <string name="widget_switch_label">Choose a task</string>
+    <string name="widget_picker_title">Choose widget task</string>
+    <string name="widget_picker_cancel">Cancel</string>
+    <string name="widget_picker_selected">Currently displayed</string>
+    <string name="widget_picker_summary">%1$s · %2$s</string>
     <string name="widget_overdue_status">Overdue</string>
     <string name="widget_empty">No unfinished tasks</string>
     <string name="widget_empty_hint">Tap to open Next DDL</string>

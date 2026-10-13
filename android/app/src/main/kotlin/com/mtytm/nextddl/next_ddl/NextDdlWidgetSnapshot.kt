@@ -30,7 +30,7 @@ internal data class NextDdlWidgetSnapshot(
     val timezoneId: String = "UTC",
     val tasks: List<WidgetTask> = emptyList(),
 ) {
-    private fun orderedTasks(now: Long): List<WidgetTask> {
+    fun selectableTasks(now: Long): List<WidgetTask> {
         val future = tasks.filter { it.finalDue >= now }
         val upcoming = future.sortedWith(
                 compareBy<WidgetTask> { it.activeDue(now) }
@@ -61,7 +61,7 @@ internal data class NextDdlWidgetSnapshot(
         selectedId: String? = null,
         manualSelection: Boolean = false,
     ): WidgetTask? {
-        val ordered = orderedTasks(now)
+        val ordered = selectableTasks(now)
         if (manualSelection) {
             ordered.firstOrNull { it.id == selectedId }?.let { return it }
         }
@@ -69,7 +69,7 @@ internal data class NextDdlWidgetSnapshot(
     }
 
     fun nextAfter(now: Long, selectedId: String?): WidgetTask? {
-        val ordered = orderedTasks(now)
+        val ordered = selectableTasks(now)
         if (ordered.isEmpty()) return null
         val currentId = selectedId ?: select(now)?.id
         val index = ordered.indexOfFirst { it.id == currentId }

@@ -3,7 +3,11 @@
     <string name="widget_brand">NEXT DDL</string>
     <string name="widget_focus_label">進行中</string>
     <string name="widget_name">Next DDL 締め切り</string>
-    <string name="widget_switch_label">タスクを切り替え</string>
+    <string name="widget_switch_label">表示タスクを選択</string>
+    <string name="widget_picker_title">ウィジェットのタスクを選択</string>
+    <string name="widget_picker_cancel">キャンセル</string>
+    <string name="widget_picker_selected">現在表示中</string>
+    <string name="widget_picker_summary">%1$s · %2$s</string>
     <string name="widget_overdue_status">期限超過</string>
     <string name="widget_empty">未完了のタスクはありません</string>
     <string name="widget_empty_hint">タップして Next DDL を開く</string>

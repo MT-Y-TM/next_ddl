@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="WidgetTaskPickerWindow" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="colorPrimary">@color/widget_accent</item>
+        <item name="colorSecondary">@color/widget_accent</item>
+    </style>
+    <style name="WidgetTaskPickerSheet" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/WidgetTaskPickerSurface</item>
+        <item name="android:backgroundDimAmount">0.35</item>
+        <item name="enableEdgeToEdge">true</item>
+    </style>
+    <style name="WidgetTaskPickerSurface" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="shapeAppearanceOverlay">@style/WidgetTaskPickerShape</item>
+        <item name="backgroundTint">@color/widget_background</item>
+        <item name="paddingBottomSystemWindowInsets">true</item>
+    </style>
+    <style name="WidgetTaskPickerShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">24dp</item>
+        <item name="cornerSizeTopRight">24dp</item>
+        <item name="cornerSizeBottomLeft">0dp</item>
+        <item name="cornerSizeBottomRight">0dp</item>
+    </style>
+</resources>

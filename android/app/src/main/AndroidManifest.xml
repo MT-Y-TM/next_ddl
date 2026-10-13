@@ -13,6 +13,13 @@
         android:label="Next DDL"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".WidgetTaskPickerActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.widget_picker"
+            android:launchMode="singleTop"
+            android:theme="@style/WidgetTaskPickerWindow" />
         <receiver
             android:name=".NextDdlWidgetProvider"
             android:exported="false"

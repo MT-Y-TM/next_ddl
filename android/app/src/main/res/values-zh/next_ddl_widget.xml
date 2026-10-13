@@ -3,7 +3,11 @@
     <string name="widget_brand">NEXT DDL</string>
     <string name="widget_focus_label">进行中</string>
     <string name="widget_name">Next DDL 截止提醒</string>
-    <string name="widget_switch_label">切换任务</string>
+    <string name="widget_switch_label">选择展示任务</string>
+    <string name="widget_picker_title">选择小组件任务</string>
+    <string name="widget_picker_cancel">取消</string>
+    <string name="widget_picker_selected">当前展示</string>
+    <string name="widget_picker_summary">%1$s · %2$s</string>
     <string name="widget_overdue_status">已过期</string>
     <string name="widget_empty">暂无未完成任务</string>
     <string name="widget_empty_hint">点击打开 Next DDL</string>

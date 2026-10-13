@@ -150,6 +150,7 @@ class WidgetLayoutInstrumentation : Instrumentation() {
                 } catch (error: Throwable) { mainFailure = error }
             }
             mainFailure?.let { throw it }
+            assertions += WidgetPickerAssertions.run(this)
             result.putString("stream", "Android widget rendering: $assertions assertions passed\n")
             finish(Activity.RESULT_OK, result)
         } catch (error: Throwable) {

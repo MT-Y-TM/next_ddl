@@ -209,16 +209,16 @@ jobs:
         with:
           body: |
             ## 中文
-            - Android 小组件改为响应式任务卡片，根据设备屏幕、组件实际尺寸和系统字体动态调整内容排布、字号与间距。
-            - 默认添加尺寸为 3 列 × 2 行，支持缩放到相应小尺寸；小尺寸保留任务名、天/小时倒计时与切换按钮，较大尺寸展开状态、进度和截止日期。
-            - 宽组件自动切换为双栏布局，拖动缩放和横竖屏切换时重新适配；兼容未提供精确尺寸列表的桌面启动器。
-            - 保留每个组件的独立任务选择、应用内星标和中/英/日文本；更新 README 使用说明，Android 发布包继续仅包含 ARM64。
+            - 桌面小组件的任务切换改为底部弹出的可滚动列表，无需进入应用即可直接选择任务，不再盲目循环切换。
+            - 列表显示任务名称、剩余时间、截止日期及当前选中标记；取消、下拉关闭或返回不会改变选择，每个小组件独立保留展示任务。
+            - 保留 3×2 响应式布局、应用内星标和中/英/日适配，并防止已完成、已删除或被导入替换的任务被误选。
+            - 应用图标改为上半部分的方形头肩构图，移除完整竖图缩放造成的两侧窄边，统一更新 Android、Windows 和 README 图标。
 
             ## English
-            - Make Android task-card widgets responsive to device screens, actual widget dimensions and system font sizes, with dynamic spacing and typography.
-            - Default to a 3-column by 2-row widget and support resizing down to its compact size. Compact cards prioritize the task title, days/hours countdown and switch button; larger cards reveal status, progress and the deadline date.
-            - Use two columns for wide widgets and adapt on resize and orientation changes, including launchers that omit exact widget sizes.
-            - Preserve independent widget task selections, in-app stars and Chinese/English/Japanese text, update README instructions, and keep Android releases ARM64-only.
+            - Replace blind widget task cycling with a scrollable bottom-sheet picker on the home screen, without opening the main app.
+            - Preview task titles, remaining time and deadlines with a current-selection checkmark. Cancel, swipe down or go back without changing the selection; each widget keeps its own task.
+            - Preserve responsive 3×2 layouts, in-app stars and Chinese/English/Japanese text, and reject completed, deleted or replaced tasks.
+            - Reframe the app icon as a square upper-body portrait to remove the side letterboxing from fitting the full portrait, and update Android, Windows and README icons together.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk
