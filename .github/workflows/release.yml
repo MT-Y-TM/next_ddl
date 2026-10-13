@@ -209,18 +209,16 @@ jobs:
         with:
           body: |
             ## 中文
-            - Android 小组件新增桌面直接切换任务，应用关闭时也可轮换全部未完成任务，每个组件独立保存选择。
-            - 首页和详情页新增星标按钮，可指定或取消小组件默认任务；改变星标后同步切换小组件。
-            - 普通编辑、语言和主题修改保留桌面选择，任务删除或完成后自动回落，编辑和 JSON 备份保留星标。
-            - 全应用操作反馈统一为 3 秒，确认弹窗仍需手动确认。
-            - 新增交互支持中文、英文、日文；更新 README 使用说明，Android 发布包继续仅包含 ARM64。
+            - Android 小组件改为响应式任务卡片，根据设备屏幕、组件实际尺寸和系统字体动态调整内容排布、字号与间距。
+            - 默认添加尺寸为 3 列 × 2 行，支持缩放到相应小尺寸；小尺寸保留任务名、天/小时倒计时与切换按钮，较大尺寸展开状态、进度和截止日期。
+            - 宽组件自动切换为双栏布局，拖动缩放和横竖屏切换时重新适配；兼容未提供精确尺寸列表的桌面启动器。
+            - 保留每个组件的独立任务选择、应用内星标和中/英/日文本；更新 README 使用说明，Android 发布包继续仅包含 ARM64。
 
             ## English
-            - Cycle through unfinished tasks directly from Android widgets without opening the app; each widget retains its own selection.
-            - Add star buttons on task cards and details to select or clear the default widget task and refresh widgets immediately.
-            - Preserve manual widget selections during normal edits and settings changes, fall back after task deletion/completion, and retain stars in edits and JSON backups.
-            - Standardize app action feedback to three seconds while keeping confirmation dialogs user-controlled.
-            - Localize new interactions in Chinese, English, and Japanese, update README instructions, and keep Android releases ARM64-only.
+            - Make Android task-card widgets responsive to device screens, actual widget dimensions and system font sizes, with dynamic spacing and typography.
+            - Default to a 3-column by 2-row widget and support resizing down to its compact size. Compact cards prioritize the task title, days/hours countdown and switch button; larger cards reveal status, progress and the deadline date.
+            - Use two columns for wide widgets and adapt on resize and orientation changes, including launchers that omit exact widget sizes.
+            - Preserve independent widget task selections, in-app stars and Chinese/English/Japanese text, update README instructions, and keep Android releases ARM64-only.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

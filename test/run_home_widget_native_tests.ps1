@@ -24,7 +24,11 @@ $runtimeClasspath = @($output, $stdlib, $json, $annotations) -join [IO.Path]::Pa
 & java -cp $compilerClasspath org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect `
     -classpath $runtimeClasspath -d $output `
     "$root/android/app/src/main/kotlin/com/mtytm/nextddl/next_ddl/NextDdlWidgetSnapshot.kt" `
-    "$root/android/app/src/test/kotlin/com/mtytm/nextddl/next_ddl/NextDdlWidgetSelectionTest.kt"
+    "$root/android/app/src/main/kotlin/com/mtytm/nextddl/next_ddl/NextDdlWidgetLayout.kt" `
+    "$root/android/app/src/test/kotlin/com/mtytm/nextddl/next_ddl/NextDdlWidgetSelectionTest.kt" `
+    "$root/android/app/src/test/kotlin/com/mtytm/nextddl/next_ddl/NextDdlWidgetLayoutTest.kt"
 if ($LASTEXITCODE -ne 0) { throw 'Widget Kotlin compilation failed' }
 & java -cp $runtimeClasspath com.mtytm.nextddl.next_ddl.NextDdlWidgetSelectionTest
 if ($LASTEXITCODE -ne 0) { throw 'Widget native contract tests failed' }
+& java -cp $runtimeClasspath com.mtytm.nextddl.next_ddl.NextDdlWidgetLayoutTest
+if ($LASTEXITCODE -ne 0) { throw 'Widget responsive layout tests failed' }

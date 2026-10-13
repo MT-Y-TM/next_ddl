@@ -42,6 +42,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        testInstrumentationRunner = "com.mtytm.nextddl.next_ddl.WidgetLayoutInstrumentation"
         ndk {
             abiFilters += listOf("arm64-v8a")
         }
