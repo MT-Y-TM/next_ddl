@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
+import '../../../app/feedback.dart';
 import '../../update/app_update_controller.dart';
 import '../../update/app_update_state.dart';
 import '../settings_formatters.dart';
@@ -116,7 +117,7 @@ class UpdateSettingsCard extends ConsumerWidget {
                       return;
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      appSnackBar(
                         content: Text(
                           removed == 0
                               ? l10n.noCachedInstallers

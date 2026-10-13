@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timezone/timezone.dart' as tz;
+
+import '../../app/feedback.dart';
 import '../../models/deadline_task.dart';
 import '../../models/task_recurrence.dart';
 import '../../models/task_template.dart';
@@ -35,7 +37,7 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(s.text('error'))));
+        ).showSnackBar(appSnackBar(content: Text(s.text('error'))));
       }
     } finally {
       if (mounted) setState(() => _busy = false);

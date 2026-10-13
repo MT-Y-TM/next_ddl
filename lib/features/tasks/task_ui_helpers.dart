@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../app/feedback.dart';
 import '../../models/deadline_task.dart';
 import 'task_ui_strings.dart';
+import 'tasks_controller.dart';
 
 List<String> parseTaskTags(String value) => value
     .split(RegExp('[,，\\n]'))
@@ -44,7 +48,7 @@ Future<bool> runTaskUiAction(
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
+        appSnackBar(
           content: Text(strings.saved),
           action: undo == null
               ? null
@@ -55,12 +59,12 @@ Future<bool> runTaskUiAction(
                       await undo();
                       if (!messenger.mounted) return;
                       messenger.showSnackBar(
-                        SnackBar(content: Text(strings.saved)),
+                        appSnackBar(content: Text(strings.saved)),
                       );
                     } catch (_) {
                       if (!messenger.mounted) return;
                       messenger.showSnackBar(
-                        SnackBar(content: Text(strings.failed)),
+                        appSnackBar(content: Text(strings.failed)),
                       );
                     }
                   },
@@ -72,7 +76,7 @@ Future<bool> runTaskUiAction(
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(strings.failed)));
+      ).showSnackBar(appSnackBar(content: Text(strings.failed)));
     }
     return false;
   }
@@ -90,6 +94,63 @@ class TaskActionButton extends StatefulWidget {
   final Future<void> Function() onPressed;
   @override
   State<TaskActionButton> createState() => _TaskActionButtonState();
+}
+
+class TaskWidgetStarButton extends ConsumerStatefulWidget {
+  const TaskWidgetStarButton({
+    required this.task,
+    this.color,
+    this.enabled = true,
+    super.key,
+  });
+
+  final DeadlineTask task;
+  final Color? color;
+  final bool enabled;
+
+  @override
+  ConsumerState<TaskWidgetStarButton> createState() =>
+      _TaskWidgetStarButtonState();
+}
+
+class _TaskWidgetStarButtonState extends ConsumerState<TaskWidgetStarButton> {
+  bool _saving = false;
+
+  Future<void> _toggle() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      await runTaskUiAction(
+        context,
+        () => ref
+            .read(tasksControllerProvider.notifier)
+            .setWidgetPinned(widget.task.id, !widget.task.widgetPinned),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = TaskUiStrings(context);
+    return IconButton(
+      key: ValueKey('widget-star-${widget.task.id}'),
+      tooltip: widget.task.widgetPinned
+          ? strings.unpinWidget
+          : strings.pinWidget,
+      onPressed: _saving || !widget.enabled || widget.task.isCompleted
+          ? null
+          : _toggle,
+      color: widget.color,
+      iconSize: 22,
+      icon: Icon(
+        widget.task.widgetPinned
+            ? Icons.star_rounded
+            : Icons.star_border_rounded,
+      ),
+    );
+  }
 }
 
 class _TaskActionButtonState extends State<TaskActionButton> {

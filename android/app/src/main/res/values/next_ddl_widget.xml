@@ -15,6 +15,8 @@
     <string name="widget_brand">NEXT DDL</string>
     <string name="widget_focus_label">IN PROGRESS</string>
     <string name="widget_name">Next DDL</string>
+    <string name="widget_switch_label">Switch task</string>
+    <string name="widget_overdue_status">Overdue</string>
     <string name="widget_empty">No unfinished tasks</string>
     <string name="widget_empty_hint">Tap to open Next DDL</string>
     <string name="widget_next_label">NEXT KEY POINT</string>

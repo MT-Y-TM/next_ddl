@@ -16,6 +16,37 @@ import 'package:timezone/timezone.dart' as tz;
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('starring selects exactly one task, persists, and never re-registers reminders', () async {
+    final now = DateTime.now().toUtc();
+    DeadlineTask task(String id) => DeadlineTask(
+      id: id, title: id, note: '', timezoneId: 'UTC',
+      createdAtUtc: now, updatedAtUtc: now, finalDueAtUtc: now.add(const Duration(days: 1)),
+      milestones: const [], reminderOffsetsSeconds: const [], notificationsEnabled: false,
+    );
+    final repository = _MemoryRepository(initial: AppSnapshot.empty().copyWith(tasks: [task('one'), task('two')]));
+    final notifications = _FakeNotificationScheduler();
+    final container = ProviderContainer(overrides: [
+      deadlineRepositoryProvider.overrideWithValue(repository),
+      notificationSchedulerProvider.overrideWithValue(notifications),
+      alarmSchedulerProvider.overrideWithValue(_FakeAlarmScheduler()),
+      timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
+    ]);
+    addTearDown(container.dispose);
+    await container.read(tasksControllerProvider.future);
+    final controller = container.read(tasksControllerProvider.notifier);
+    await controller.setWidgetPinned('one', true);
+    await controller.setWidgetPinned('two', true);
+    expect(repository.saved!.tasks.where((task) => task.widgetPinned).single.id, 'two');
+    expect(AppSnapshot.fromJson(repository.saved!.toJson()).tasks.last.widgetPinned, isTrue);
+    expect(notifications.removeAllCount, 0);
+    expect(notifications.syncedTaskIds, isEmpty);
+    await controller.setWidgetPinned('two', false);
+    expect(repository.saved!.tasks.where((task) => task.widgetPinned), isEmpty);
+    await controller.setTaskCompleted('one', true);
+    await controller.setWidgetPinned('one', true);
+    expect(container.read(tasksControllerProvider).requireValue.tasks.first.widgetPinned, isFalse);
+  });
+
   test(
     'queued radius changes preserve newly saved background and history',
     () async {

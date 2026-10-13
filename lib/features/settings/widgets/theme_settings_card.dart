@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
+import '../../../app/feedback.dart';
 import '../../../models/app_theme_settings.dart';
 import '../../../services/theme_asset_service.dart';
 import '../../tasks/tasks_controller.dart';
@@ -394,7 +395,7 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
     if (!await File(preset.path).exists()) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          appSnackBar(
             content: Text(
               AppLocalizations.of(context)!.themeBackgroundUnavailable,
             ),
@@ -466,7 +467,7 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          appSnackBar(
             content: Text(AppLocalizations.of(context)!.themeSaveFailed),
           ),
         );

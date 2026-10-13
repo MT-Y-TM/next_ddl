@@ -212,6 +212,28 @@ class TasksController extends AsyncNotifier<AppSnapshot> {
         );
       });
 
+  Future<void> setWidgetPinned(String id, bool pinned) => _serialize(() async {
+    final task = _task(id);
+    if (pinned && task.isCompleted) return;
+    final snapshot = state.requireValue;
+    final now = DateTime.now().toUtc();
+    final next = snapshot.copyWith(
+      exportedAtUtc: now,
+      tasks: [
+        for (final current in snapshot.tasks)
+          if (current.id == id)
+            current.copyWith(widgetPinned: pinned, updatedAtUtc: now)
+          else if (pinned && current.widgetPinned)
+            current.copyWith(widgetPinned: false)
+          else
+            current,
+      ],
+    );
+    // Star changes affect only the widget; do not re-register task reminders.
+    await _repository.saveSnapshot(next);
+    state = AsyncData(next);
+  });
+
   Future<void> removeTag(String tag) => _serialize(() async {
     final snapshot = state.requireValue;
     final updated = snapshot.copyWith(

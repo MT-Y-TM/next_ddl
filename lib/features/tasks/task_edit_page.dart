@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
+import '../../app/feedback.dart';
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
 import '../../models/alarm_audio_item.dart';
@@ -568,6 +569,15 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     }.toList();
     final task = DeadlineTask(
       id: widget.existingTask?.id ?? _generateId(),
+      widgetPinned:
+          ref
+              .read(tasksControllerProvider)
+              .valueOrNull
+              ?.tasks
+              .where((task) => task.id == widget.existingTask?.id)
+              .firstOrNull
+              ?.widgetPinned ??
+          false,
       completedAtUtc: widget.existingTask?.completedAtUtc,
       tags: normalizedTags,
       title: title,
@@ -598,7 +608,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
     Navigator.of(context).pop();
     messenger.hideCurrentSnackBar();
     messenger.showSnackBar(
-      SnackBar(
+      appSnackBar(
         content: Text(
           widget.existingTask == null ? l10n.taskCreated : l10n.taskUpdated,
         ),
@@ -646,7 +656,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ).showSnackBar(appSnackBar(content: Text(error.toString())));
       }
     } finally {
       if (mounted) setState(() => _aiBusy = false);
@@ -735,7 +745,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
   void _showSnack(String message) {
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ).showSnackBar(appSnackBar(content: Text(message)));
   }
 
   String _generateId() => DateTime.now().microsecondsSinceEpoch.toString();

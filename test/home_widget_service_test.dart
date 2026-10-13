@@ -50,6 +50,29 @@ void main() {
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
   test(
+    'widget snapshot retains starred task across JSON and omits completed stars',
+    () {
+      final snapshot = AppSnapshot.empty().copyWith(
+        tasks: [
+          task('normal'),
+          task('starred').copyWith(widgetPinned: true),
+          task('done', completed: true).copyWith(widgetPinned: true),
+        ],
+      );
+      final encoded = HomeWidgetService.buildSnapshot(
+        AppSnapshot.fromJson(jsonDecode(jsonEncode(snapshot.toJson()))),
+        timezoneId: 'UTC',
+      );
+      final tasks = encoded['tasks'] as List;
+      expect(tasks, hasLength(2));
+      expect(
+        tasks.where((item) => item['widgetPinned'] == true).single['id'],
+        'starred',
+      );
+    },
+  );
+
+  test(
     'snapshot excludes completed tasks/nodes and private data; keeps future candidates',
     () {
       final result = HomeWidgetService.buildSnapshot(
@@ -67,6 +90,7 @@ void main() {
         now.add(const Duration(days: 2)).millisecondsSinceEpoch,
       );
       expect(tasks.single['createdAtUtc'], now.millisecondsSinceEpoch);
+      expect(tasks.single['widgetPinned'], false);
       expect(tasks.single.containsKey('note'), false);
       expect(result['timezoneId'], 'Asia/Tokyo');
       expect(result['schemaVersion'], 1);

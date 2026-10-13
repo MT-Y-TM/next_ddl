@@ -3,6 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
+import '../../app/feedback.dart';
 import '../../models/deadline_task.dart';
 import '../../services/timezone_service.dart';
 import '../../utils/countdown_formatter.dart';
@@ -122,7 +123,9 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                           if (renamed == null || !context.mounted) return;
                           if (renamed.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(strings.tagCannotBeEmpty)),
+                              appSnackBar(
+                                content: Text(strings.tagCannotBeEmpty),
+                              ),
                             );
                             return;
                           }
@@ -594,7 +597,7 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                     clipBehavior: Clip.none,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(right: 36),
+                        padding: const EdgeInsets.only(right: 76),
                         child: Text(
                           task.title,
                           style: Theme.of(context).textTheme.titleLarge
@@ -602,6 +605,15 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
                               ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 28,
+                        top: -8,
+                        child: TaskWidgetStarButton(
+                          task: task,
+                          color: Colors.white,
+                          enabled: !_busy,
                         ),
                       ),
                       Positioned(

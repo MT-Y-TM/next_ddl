@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
+import '../../app/feedback.dart';
 import '../../models/app_alarm_settings.dart';
 import '../../models/app_snapshot.dart';
 import '../../models/app_theme_settings.dart';
@@ -179,7 +180,7 @@ class _TaskDataSettingsPage extends ConsumerWidget {
                       return;
                     }
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      appSnackBar(
                         content: Text(
                           path == null
                               ? l10n.exportCancelled
@@ -313,7 +314,7 @@ class _NotificationAlarmSettingsPage extends ConsumerWidget {
                         return;
                       }
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        appSnackBar(
                           content: Text(
                             value
                                 ? l10n.persistentEnabled
@@ -458,7 +459,7 @@ class _LanguageTimezoneSettingsPage extends ConsumerWidget {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      appSnackBar(
         content: Text(
           changed ? l10n.timezoneUpdated(selected) : l10n.timezoneInvalid,
         ),
@@ -566,7 +567,7 @@ class _PredictionSettingsPageState
       });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(strings.save)));
+      ).showSnackBar(appSnackBar(content: Text(strings.save)));
     }
   }
 

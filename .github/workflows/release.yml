@@ -209,24 +209,18 @@ jobs:
         with:
           body: |
             ## 中文
-            - 修复调整控件圆角或主色时图片背景被旧设置覆盖的问题。
-            - 修复取消换图后原背景文件被提前删除的问题。
-            - 新增最近 5 张背景图片的缩略图入口，重启后仍可快速恢复。
-            - 恢复背景时同步恢复缩放、位置、旋转、遮罩和模糊参数，保留当前主色和圆角。
-            - 新增编辑当前背景入口及图片不可用提示，补齐中文、英文、日文界面。
-            - 明确限制 Android 发布包为 ARM64，排除插件附带的其他架构库。
-            - 图片编辑器初始完整显示原图，支持用户自由缩放和裁切；历史背景支持长按确认删除。
-            - Android 小组件改为任务卡片样式，加入状态、剩余进度、最终截止和“X天X小时”倒计时。
+            - Android 小组件新增桌面直接切换任务，应用关闭时也可轮换全部未完成任务，每个组件独立保存选择。
+            - 首页和详情页新增星标按钮，可指定或取消小组件默认任务；改变星标后同步切换小组件。
+            - 普通编辑、语言和主题修改保留桌面选择，任务删除或完成后自动回落，编辑和 JSON 备份保留星标。
+            - 全应用操作反馈统一为 3 秒，确认弹窗仍需手动确认。
+            - 新增交互支持中文、英文、日文；更新 README 使用说明，Android 发布包继续仅包含 ARM64。
 
             ## English
-            - Fix stale theme settings overwriting the wallpaper when changing control radius or primary color.
-            - Keep the original background file when canceling a replacement.
-            - Add thumbnails for the five most recent backgrounds, retained across restarts for quick restoration.
-            - Restore scale, position, rotation, overlay, and blur without resetting the current color or corner radius.
-            - Add an entry to edit the current wallpaper and unavailable-image feedback in Chinese, English, and Japanese.
-            - Enforce ARM64-only Android releases and exclude other architectures bundled by plugins.
-            - Show the full source image initially in the editor, allow free zoom/cropping, and support long-press removal of recent backgrounds.
-            - Redesign the Android widget as a task card with status, remaining progress, final deadline, and an “Xd Xh” countdown.
+            - Cycle through unfinished tasks directly from Android widgets without opening the app; each widget retains its own selection.
+            - Add star buttons on task cards and details to select or clear the default widget task and refresh widgets immediately.
+            - Preserve manual widget selections during normal edits and settings changes, fall back after task deletion/completion, and retain stars in edits and JSON backups.
+            - Standardize app action feedback to three seconds while keeping confirmation dialogs user-controlled.
+            - Localize new interactions in Chinese, English, and Japanese, update README instructions, and keep Android releases ARM64-only.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

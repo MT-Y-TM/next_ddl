@@ -18,6 +18,9 @@ class TaskUiStrings {
   String get complete => t('完成任务', 'Complete task', 'タスクを完了');
   String get restore => t('撤销完成', 'Reopen', '未完了に戻す');
   String get edit => t('编辑任务', 'Edit task', 'タスクを編集');
+  String get pinWidget => t('设为小组件任务', 'Show in widget', 'ウィジェットに表示');
+  String get unpinWidget =>
+      t('取消小组件任务', 'Stop showing in widget', 'ウィジェット表示を解除');
   String get undo => t('撤销', 'Undo', '元に戻す');
   String get saved => t('已更新', 'Updated', '更新しました');
   String get failed => t(

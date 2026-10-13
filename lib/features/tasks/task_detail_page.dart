@@ -51,6 +51,7 @@ class TaskDetailPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.taskDetails),
         actions: [
+          TaskWidgetStarButton(task: task),
           IconButton(
             tooltip: l10n.edit,
             onPressed: () {

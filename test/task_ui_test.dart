@@ -79,6 +79,26 @@ class _UiController extends TasksController {
   @override
   Future<void> restoreTask(DeadlineTask task) => addOrUpdateTask(task);
   @override
+  Future<void> setWidgetPinned(String id, bool pinned) async {
+    if (fail) throw StateError('private scheduling detail');
+    writes++;
+    state = AsyncData(
+      state.requireValue.copyWith(
+        tasks: [
+          for (final task in tasks)
+            task.copyWith(
+              widgetPinned: task.id == id
+                  ? pinned
+                  : pinned
+                  ? false
+                  : task.widgetPinned,
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Future<void> setTaskCompleted(String id, bool completed) => addOrUpdateTask(
     tasks
         .firstWhere((t) => t.id == id)
@@ -197,6 +217,86 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
 
 void main() {
   setUpAll(tz_data.initializeTimeZones);
+
+  for (final locale in ['zh', 'en', 'ja']) {
+    testWidgets(
+      '$locale task stars select the widget task and can be cleared in details',
+      (tester) async {
+        final controller = await _pump(
+          tester,
+          const TaskListPage(),
+          tasks: [_task('First'), _task('Second')],
+          locale: locale,
+        );
+        await _tap(tester, find.byKey(const ValueKey('widget-star-First')));
+        expect(controller.tasks.first.widgetPinned, isTrue);
+        final strings = TaskUiStrings(
+          tester.element(find.byType(TaskListPage)),
+        );
+        expect(find.byTooltip(strings.unpinWidget), findsOneWidget);
+        await _tap(tester, find.byKey(const ValueKey('widget-star-Second')));
+        expect(
+          controller.tasks.where((task) => task.widgetPinned).single.id,
+          'Second',
+        );
+        expect(
+          tester.widget<SnackBar>(find.byType(SnackBar)).duration,
+          const Duration(seconds: 3),
+        );
+        await _tap(tester, find.text('Second'));
+        expect(find.byType(TaskDetailPage), findsOneWidget);
+        await _tap(tester, find.byKey(const ValueKey('widget-star-Second')));
+        expect(controller.tasks.where((task) => task.widgetPinned), isEmpty);
+        expect(find.byTooltip(strings.pinWidget), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('editing a task preserves its current widget star', (
+    tester,
+  ) async {
+    final task = _task('Starred').copyWith(widgetPinned: true);
+    final controller = await _pump(
+      tester,
+      TaskEditPage(existingTask: task),
+      tasks: [task],
+    );
+    await tester.enterText(find.byType(TextField).first, 'Edited title');
+    final l = AppLocalizations.of(tester.element(find.byType(TaskEditPage)))!;
+    await tester.scrollUntilVisible(
+      find.text(l.saveChanges),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await _tap(tester, find.text(l.saveChanges));
+    expect(controller.tasks.single.title, 'Edited title');
+    expect(controller.tasks.single.widgetPinned, isTrue);
+  });
+
+  testWidgets('a stale editor cannot restore a star moved to another task', (
+    tester,
+  ) async {
+    final opened = _task('Old star').copyWith(widgetPinned: true);
+    final latest = opened.copyWith(widgetPinned: false);
+    final other = _task('New star').copyWith(widgetPinned: true);
+    final controller = await _pump(
+      tester,
+      TaskEditPage(existingTask: opened),
+      tasks: [latest, other],
+    );
+    final l = AppLocalizations.of(tester.element(find.byType(TaskEditPage)))!;
+    await tester.scrollUntilVisible(
+      find.text(l.saveChanges),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await _tap(tester, find.text(l.saveChanges));
+    expect(
+      controller.tasks.where((task) => task.widgetPinned).single.id,
+      'New star',
+    );
+  });
 
   test('tags normalize separators; multilingual filtering preserves order', () {
     expect(parseTaskTags(' work，学习\nwork, , 日本語 '), ['work', '学习', '日本語']);

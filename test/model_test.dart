@@ -22,6 +22,23 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tz_data.initializeTimeZones();
 
+  test('widget star survives task and snapshot JSON and defaults off for old backups', () {
+    final now = DateTime.utc(2026, 10, 13);
+    final task = DeadlineTask(
+      id: 'starred', title: 'Widget task', note: '', timezoneId: 'UTC',
+      createdAtUtc: now, updatedAtUtc: now, finalDueAtUtc: now.add(const Duration(days: 1)),
+      milestones: const [], reminderOffsetsSeconds: const [], notificationsEnabled: false,
+      widgetPinned: true,
+    );
+    expect(DeadlineTask.fromJson(task.toJson()).widgetPinned, isTrue);
+    expect(task.copyWith(title: 'Edited').widgetPinned, isTrue);
+    expect(task.copyWith(widgetPinned: false).widgetPinned, isFalse);
+    final legacy = task.toJson()..remove('widgetPinned');
+    expect(DeadlineTask.fromJson(legacy).widgetPinned, isFalse);
+    final snapshot = AppSnapshot.empty().copyWith(tasks: [task]);
+    expect(AppSnapshot.fromJson(snapshot.toJson()).tasks.single.widgetPinned, isTrue);
+  });
+
   test('snapshot json round trip keeps task data', () {
     final snapshot = AppSnapshot(
       schemaVersion: 1,

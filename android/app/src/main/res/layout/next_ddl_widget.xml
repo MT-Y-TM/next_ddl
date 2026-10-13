@@ -29,15 +29,15 @@
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
-        <TextView
+        <ImageView
             android:id="@+id/widget_menu_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginStart="8dp"
-            android:text="⋮"
-            android:textColor="@color/widget_header_text"
-            android:textSize="27sp"
-            android:textStyle="bold" />
+            android:padding="12dp"
+            android:src="@drawable/ic_widget_switch"
+            android:tint="@color/widget_header_text"
+            android:contentDescription="@string/widget_switch_label" />
     </LinearLayout>
 
     <LinearLayout

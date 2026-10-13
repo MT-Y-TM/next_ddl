@@ -10,6 +10,7 @@ internal data class WidgetTask(
     val updated: Long,
     val nodes: List<WidgetNode>,
     val created: Long = 0L,
+    val pinned: Boolean = false,
 ) {
     fun next(now: Long): WidgetNode? = nodes.filter { it.due >= now }.minByOrNull { it.due }
     fun activeDue(now: Long): Long = next(now)?.due ?: finalDue
@@ -29,15 +30,50 @@ internal data class NextDdlWidgetSnapshot(
     val timezoneId: String = "UTC",
     val tasks: List<WidgetTask> = emptyList(),
 ) {
+    private fun orderedTasks(now: Long): List<WidgetTask> {
+        val future = tasks.filter { it.finalDue >= now }
+        val upcoming = future.sortedWith(
+                compareBy<WidgetTask> { it.activeDue(now) }
+                    .thenByDescending { it.updated }
+                    .thenBy { it.id },
+            )
+        val overdue = tasks.filter { it.finalDue < now }.sortedWith(
+                compareBy<WidgetTask> { it.finalDue }
+                    .thenByDescending { it.updated }
+                    .thenBy { it.id },
+            )
+        return upcoming + overdue
+    }
+
+    // Imports from older snapshots may contain several stars. Choose the most
+    // recently selected one deterministically; new app actions keep one star.
+    fun pinnedTaskId(): String? = tasks.filter { it.pinned }
+        .sortedWith(compareByDescending<WidgetTask> { it.updated }.thenBy { it.id })
+        .firstOrNull()?.id
+
+    fun resetsManualSelectionFrom(previous: NextDdlWidgetSnapshot?): Boolean =
+        previous?.pinnedTaskId() != pinnedTaskId()
+
     // Match deadline_logic.dart: future tasks first, updated descending on ties.
     // Only when none remain do we show the earliest overdue final deadline.
-    fun select(now: Long): WidgetTask? {
-        val future = tasks.filter { it.finalDue >= now }
-        return if (future.isNotEmpty()) future.sortedWith(
-            compareBy<WidgetTask> { it.activeDue(now) }.thenByDescending { it.updated }.thenBy { it.id },
-        ).first() else tasks.sortedWith(
-            compareBy<WidgetTask> { it.finalDue }.thenByDescending { it.updated }.thenBy { it.id },
-        ).firstOrNull()
+    fun select(
+        now: Long,
+        selectedId: String? = null,
+        manualSelection: Boolean = false,
+    ): WidgetTask? {
+        val ordered = orderedTasks(now)
+        if (manualSelection) {
+            ordered.firstOrNull { it.id == selectedId }?.let { return it }
+        }
+        return tasks.firstOrNull { it.id == pinnedTaskId() } ?: ordered.firstOrNull()
+    }
+
+    fun nextAfter(now: Long, selectedId: String?): WidgetTask? {
+        val ordered = orderedTasks(now)
+        if (ordered.isEmpty()) return null
+        val currentId = selectedId ?: select(now)?.id
+        val index = ordered.indexOfFirst { it.id == currentId }
+        return ordered[(index + 1 + ordered.size) % ordered.size]
     }
 
     companion object {
@@ -58,6 +94,7 @@ internal data class NextDdlWidgetSnapshot(
                         else WidgetNode(node.getString("title"), node.getLong("dueAtUtc"))
                     },
                     task.optLong("createdAtUtc", task.getLong("updatedAtUtc")),
+                    task.optBoolean("widgetPinned", false),
                 )
             }
             return NextDdlWidgetSnapshot(root.optString("locale", "system"), root.optString("timezoneId", "UTC"), tasks)

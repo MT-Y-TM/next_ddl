@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../app/feedback.dart';
 import '../../models/app_snapshot.dart';
 import '../../services/backup_service.dart';
 import 'backup_localizations.dart';
@@ -98,7 +100,7 @@ class _BackupPageState extends State<BackupPage> {
       _pendingSync = null;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(BackupLocalizations.of(context).saved)),
+          appSnackBar(content: Text(BackupLocalizations.of(context).saved)),
         );
       }
     } catch (_) {

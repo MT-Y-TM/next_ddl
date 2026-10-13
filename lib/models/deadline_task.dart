@@ -17,6 +17,7 @@ class DeadlineTask {
     this.alarmAudioItemsOverride = const [],
     this.completedAtUtc,
     this.tags = const [],
+    this.widgetPinned = false,
   });
 
   final String id;
@@ -33,6 +34,7 @@ class DeadlineTask {
   final List<AlarmAudioItem> alarmAudioItemsOverride;
   final DateTime? completedAtUtc;
   final List<String> tags;
+  final bool widgetPinned;
   bool get isCompleted => completedAtUtc != null;
 
   DeadlineTask copyWith({
@@ -51,11 +53,13 @@ class DeadlineTask {
     DateTime? completedAtUtc,
     bool clearCompletedAt = false,
     List<String>? tags,
+    bool? widgetPinned,
   }) {
     return DeadlineTask(
       id: id ?? this.id,
       completedAtUtc: clearCompletedAt ? null : completedAtUtc ?? this.completedAtUtc,
       tags: tags ?? this.tags,
+      widgetPinned: widgetPinned ?? this.widgetPinned,
       title: title ?? this.title,
       note: note ?? this.note,
       timezoneId: timezoneId ?? this.timezoneId,
@@ -88,6 +92,7 @@ class DeadlineTask {
         'alarmEnabled': alarmEnabled,
         'alarmAudioItemsOverride':
             alarmAudioItemsOverride.map((item) => item.toJson()).toList(),
+        'widgetPinned': widgetPinned,
       };
 
   factory DeadlineTask.fromJson(Map<String, dynamic> json) {
@@ -118,6 +123,7 @@ class DeadlineTask {
               .map(AlarmAudioItem.fromJson)
               .where((item) => item.uri.trim().isNotEmpty)
               .toList(),
+      widgetPinned: (json['widgetPinned'] as bool?) ?? false,
     );
   }
 }

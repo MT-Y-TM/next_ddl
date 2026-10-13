@@ -28,10 +28,16 @@ class NextDdlWidgetPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCa
             when (call.method) {
                 "writeSnapshot" -> {
                     val raw = requireNotNull(call.argument<String>("snapshot"))
-                    NextDdlWidgetSnapshot.parse(raw)
+                    val snapshot = NextDdlWidgetSnapshot.parse(raw)
+                    val previous = prefs.getString("snapshot", null)?.let {
+                        runCatching { NextDdlWidgetSnapshot.parse(it) }.getOrNull()
+                    }
                     // Commit before acknowledging: receivers in a new process need durable data.
                     check(prefs.edit().putString("snapshot", raw).commit()) { "Snapshot persistence failed" }
-                    NextDdlWidgetProvider.refreshAll(context)
+                    NextDdlWidgetProvider.refreshAll(
+                        context,
+                        resetManualSelection = snapshot.resetsManualSelectionFrom(previous),
+                    )
                     result.success(null)
                 }
                 "consumePendingTaskId" -> {
