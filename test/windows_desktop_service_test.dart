@@ -31,12 +31,17 @@ void main() {
 
   test('uses the nearest milestone and compact remaining time', () {
     final summary = WindowsDesktopService.buildSummary(
-      AppSnapshot.empty().copyWith(tasks: [task()]),
+      AppSnapshot.empty().copyWith(
+        tasks: [task()],
+        persistentNotificationEnabled: true,
+        persistentNotificationTimeUnit: PersistentNotificationTimeUnit.hour,
+      ),
       now,
       l10n,
     );
     expect(summary['title'], 'Review');
-    expect(summary['remaining'], '1.3 days');
+    expect(summary['enabled'], isTrue);
+    expect(summary['remaining'], '30 hours');
     expect(summary['openLabel'], 'Open Next DDL');
   });
 
@@ -52,7 +57,10 @@ void main() {
       ],
     );
     final summary = WindowsDesktopService.buildSummary(
-      AppSnapshot.empty().copyWith(tasks: [current]),
+      AppSnapshot.empty().copyWith(
+        tasks: [current],
+        persistentNotificationEnabled: true,
+      ),
       now,
       l10n,
     );
@@ -61,11 +69,20 @@ void main() {
 
   test('uses the localized empty state when no task is active', () {
     final summary = WindowsDesktopService.buildSummary(
-      AppSnapshot.empty(),
+      AppSnapshot.empty().copyWith(persistentNotificationEnabled: true),
       now,
       l10n,
     );
     expect(summary['title'], 'No in-progress tasks right now');
     expect(summary['remaining'], '');
+  });
+
+  test('disabled persistent summaries tell the native layer to remove the icon', () {
+    final summary = WindowsDesktopService.buildSummary(
+      AppSnapshot.empty(),
+      now,
+      l10n,
+    );
+    expect(summary['enabled'], isFalse);
   });
 }

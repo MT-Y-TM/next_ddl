@@ -1,5 +1,5 @@
 {
-  "version": "1.2.12",
-  "zh": "- Windows 新增系统托盘截止摘要，显示最接近的任务关键节点与剩余时间，空节点名回退为任务名。\n- 支持点击托盘打开应用、右键查看摘要并退出，资源管理器重启后自动恢复托盘图标。\n- 修复不足 0.1 天时紧凑倒计时的边界计算。",
-  "en": "- Add a Windows system tray summary for the nearest active deadline, with milestone names and task-name fallback.\n- Open the app from the tray, view the summary or exit from its menu, and restore the icon after Explorer restarts.\n- Fix compact countdown formatting for durations below 0.1 days."
+  "version": "1.2.13",
+  "zh": "- Windows 托盘截止摘要现在遵循常驻消息栏开关，关闭后会移除托盘图标。\n- Windows 托盘剩余时间支持按天或按小时显示，并与设置中的单位选择保持一致。\n- 更新语言、任务或时间设置后，托盘摘要会自动同步。",
+  "en": "- The Windows tray deadline summary now follows the persistent notification toggle and removes its icon when disabled.\n- Windows tray remaining time supports the day/hour preference from settings.\n- The tray summary now syncs automatically after language, task or time-setting changes."
 }

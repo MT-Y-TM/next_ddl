@@ -33,11 +33,21 @@ NextDdlDesktop::NextDdlDesktop(HWND window, flutter::BinaryMessenger* messenger)
     if (call.method_name() != "syncSummary") { result->NotImplemented(); return; }
     const auto* args = call.arguments() ? std::get_if<EncodableMap>(call.arguments()) : nullptr;
     if (!args) { result->Error("invalid_arguments", "Expected desktop summary"); return; }
+    const auto enabled_it = args->find(EncodableValue("enabled"));
+    const auto* enabled_value = enabled_it == args->end()
+        ? nullptr
+        : std::get_if<bool>(&enabled_it->second);
+    enabled_ = enabled_value != nullptr && *enabled_value;
     title_ = ReadText(*args, "title");
     remaining_ = ReadText(*args, "remaining");
     open_label_ = ReadText(*args, "openLabel");
     exit_label_ = ReadText(*args, "exitLabel");
-    UpdateIcon();
+    if (enabled_) {
+      UpdateIcon();
+    } else {
+      RemoveIcon();
+    }
+    if (!enabled_) { result->Success(); return; }
     if (!added_) { result->Error("tray_unavailable", "Windows notification area unavailable"); return; }
     result->Success();
   });
@@ -47,6 +57,7 @@ NextDdlDesktop::~NextDdlDesktop() {
   if (added_) Shell_NotifyIconW(NIM_DELETE, &icon_);
 }
 void NextDdlDesktop::UpdateIcon() {
+  if (!enabled_) return;
   auto tooltip = title_ + (remaining_.empty() ? L"" : L"\n" + remaining_);
   if (tooltip.size() > 127) tooltip.resize(127);
   if (!tooltip.empty() && tooltip.back() >= 0xD800 && tooltip.back() <= 0xDBFF) tooltip.pop_back();
@@ -57,6 +68,11 @@ void NextDdlDesktop::UpdateIcon() {
     icon_.uVersion = NOTIFYICON_VERSION_4;
     Shell_NotifyIconW(NIM_SETVERSION, &icon_);
   }
+}
+void NextDdlDesktop::RemoveIcon() {
+  if (!added_) return;
+  Shell_NotifyIconW(NIM_DELETE, &icon_);
+  added_ = false;
 }
 void NextDdlDesktop::RestoreWindow() {
   ShowWindow(window_, IsIconic(window_) ? SW_RESTORE : SW_SHOW);
@@ -85,7 +101,7 @@ void NextDdlDesktop::ShowMenu() {
 std::optional<LRESULT> NextDdlDesktop::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
   if (message == taskbar_created_) {
     added_ = false;
-    if (!title_.empty()) UpdateIcon();
+    if (enabled_ && !title_.empty()) UpdateIcon();
     return 0;
   }
   if (message != kTrayMessage) return std::nullopt;

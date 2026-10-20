@@ -16,13 +16,18 @@ class WindowsDesktopService {
   String? _lastSummary;
   Future<void> _pending = Future.value();
 
-  static Map<String, Object> buildSummary(AppSnapshot snapshot, DateTime now, AppLocalizations l) {
+  static Map<String, Object> buildSummary(
+    AppSnapshot snapshot,
+    DateTime now,
+    AppLocalizations l,
+  ) {
     final task = resolveMostUrgentInProgressTask(snapshot.tasks, now);
     return {
+      'enabled': snapshot.persistentNotificationEnabled,
       'title': task == null ? l.ongoingNoTask : resolvePersistentNotificationTargetTitle(task, now),
       'remaining': task == null ? '' : formatCompactCountdown(
         resolveActiveDeadlinePoint(task, now).difference(now),
-        timeUnit: PersistentNotificationTimeUnit.day,
+        timeUnit: snapshot.persistentNotificationTimeUnit,
         daySuffix: l.compactDaySuffix, hourSuffix: l.compactHourSuffix),
       'openLabel': l.desktopOpenApp,
       'exitLabel': l.desktopExitApp,

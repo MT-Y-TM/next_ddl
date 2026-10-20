@@ -15,12 +15,14 @@ class NextDdlDesktop {
   std::optional<LRESULT> HandleMessage(UINT message, WPARAM wparam, LPARAM lparam);
  private:
   void UpdateIcon();
+  void RemoveIcon();
   void ShowMenu();
   void RestoreWindow();
   HWND window_;
   UINT taskbar_created_;
   NOTIFYICONDATAW icon_{};
   bool added_ = false;
+  bool enabled_ = false;
   std::wstring title_, remaining_, open_label_, exit_label_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
 };
