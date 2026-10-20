@@ -57,6 +57,15 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == kNextDdlExitMessage) {
+    SetQuitOnClose(true);
+    DestroyWindow(hwnd);
+    return 0;
+  }
+  if (message == WM_CLOSE) {
+    ShowWindow(hwnd, SW_HIDE);
+    return 0;
+  }
   if (desktop_) {
     const auto result = desktop_->HandleMessage(message, wparam, lparam);
     if (result) return *result;

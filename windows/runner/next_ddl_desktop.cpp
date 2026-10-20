@@ -42,22 +42,24 @@ NextDdlDesktop::NextDdlDesktop(HWND window, flutter::BinaryMessenger* messenger)
     remaining_ = ReadText(*args, "remaining");
     open_label_ = ReadText(*args, "openLabel");
     exit_label_ = ReadText(*args, "exitLabel");
-    if (enabled_) {
-      UpdateIcon();
-    } else {
-      RemoveIcon();
+    if (!enabled_) {
+      title_ = ReadText(*args, "appLabel");
+      remaining_.clear();
     }
-    if (!enabled_) { result->Success(); return; }
+    UpdateIcon();
     if (!added_) { result->Error("tray_unavailable", "Windows notification area unavailable"); return; }
     result->Success();
   });
+  title_ = L"Next DDL";
+  open_label_ = L"Open Next DDL";
+  exit_label_ = L"Exit Next DDL";
+  UpdateIcon();
 }
 NextDdlDesktop::~NextDdlDesktop() {
   channel_->SetMethodCallHandler(nullptr);
   if (added_) Shell_NotifyIconW(NIM_DELETE, &icon_);
 }
 void NextDdlDesktop::UpdateIcon() {
-  if (!enabled_) return;
   auto tooltip = title_ + (remaining_.empty() ? L"" : L"\n" + remaining_);
   if (tooltip.size() > 127) tooltip.resize(127);
   if (!tooltip.empty() && tooltip.back() >= 0xD800 && tooltip.back() <= 0xDBFF) tooltip.pop_back();
@@ -96,12 +98,12 @@ void NextDdlDesktop::ShowMenu() {
   DestroyMenu(menu);
   PostMessageW(window_, WM_NULL, 0, 0);
   if (action == kOpen) RestoreWindow();
-  if (action == kExit) DestroyWindow(window_);
+  if (action == kExit) PostMessageW(window_, kNextDdlExitMessage, 0, 0);
 }
 std::optional<LRESULT> NextDdlDesktop::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
   if (message == taskbar_created_) {
     added_ = false;
-    if (enabled_ && !title_.empty()) UpdateIcon();
+    if (!title_.empty()) UpdateIcon();
     return 0;
   }
   if (message != kTrayMessage) return std::nullopt;

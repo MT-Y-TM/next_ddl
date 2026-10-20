@@ -43,6 +43,7 @@ void main() {
     expect(summary['enabled'], isTrue);
     expect(summary['remaining'], '30 hours');
     expect(summary['openLabel'], 'Open Next DDL');
+    expect(summary['appLabel'], 'Next DDL');
   });
 
   test('falls back to the task title when the milestone title is blank', () {
@@ -77,7 +78,7 @@ void main() {
     expect(summary['remaining'], '');
   });
 
-  test('disabled persistent summaries tell the native layer to remove the icon', () {
+  test('disabled persistent summaries hide deadline content but keep tray controls', () {
     final summary = WindowsDesktopService.buildSummary(
       AppSnapshot.empty(),
       now,

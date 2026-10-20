@@ -1,5 +1,5 @@
 {
-  "version": "1.2.13",
-  "zh": "- Windows 托盘截止摘要现在遵循常驻消息栏开关，关闭后会移除托盘图标。\n- Windows 托盘剩余时间支持按天或按小时显示，并与设置中的单位选择保持一致。\n- 更新语言、任务或时间设置后，托盘摘要会自动同步。",
-  "en": "- The Windows tray deadline summary now follows the persistent notification toggle and removes its icon when disabled.\n- Windows tray remaining time supports the day/hour preference from settings.\n- The tray summary now syncs automatically after language, task or time-setting changes."
+  "version": "1.2.14",
+  "zh": "- Windows 托盘截止摘要继续遵循常驻消息栏开关，关闭时隐藏截止内容但保留托盘控制图标。\n- 关闭 Windows 主窗口时改为隐藏到托盘，应用进程和后台闹钟继续运行。\n- 托盘菜单新增明确的退出入口，退出应用前仍可正常停止后台调度。",
+  "en": "- The Windows tray deadline summary still follows the persistent notification toggle; disabling it hides deadline content while keeping tray controls available.\n- Closing the Windows main window now hides it to the tray while the process and background alarms continue running.\n- The tray menu provides an explicit exit action that cleanly stops background scheduling."
 }

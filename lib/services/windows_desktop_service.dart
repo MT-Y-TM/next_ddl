@@ -31,6 +31,7 @@ class WindowsDesktopService {
         daySuffix: l.compactDaySuffix, hourSuffix: l.compactHourSuffix),
       'openLabel': l.desktopOpenApp,
       'exitLabel': l.desktopExitApp,
+      'appLabel': l.appTitle,
     };
   }
   Future<void> sync(AppSnapshot snapshot, DateTime now) {

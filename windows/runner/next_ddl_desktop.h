@@ -8,6 +8,8 @@
 #include <optional>
 #include <string>
 
+inline constexpr UINT kNextDdlExitMessage = WM_APP + 74;
+
 class NextDdlDesktop {
  public:
   NextDdlDesktop(HWND window, flutter::BinaryMessenger* messenger);
