@@ -337,6 +337,7 @@
   "themeBackgroundSelected": "現在の背景",
   "themeUseRecentBackground": "最近の背景 {index} を使う",
   "themeBackgroundUnavailable": "この画像は利用できません。もう一度選択してください。",
+  "themeRestoreRecentBackground": "この背景を復元",
   "themeSaveFailed": "テーマを保存できませんでした。元の背景は保持されています。もう一度お試しください。",
   "themeDeleteRecentBackgroundTitle": "最近の背景を削除しますか？",
   "themeDeleteRecentBackgroundMessage": "この画像を最近使った背景の一覧から削除します。現在の壁紙は変更されません。",

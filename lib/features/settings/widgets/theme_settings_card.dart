@@ -338,6 +338,12 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
                           onLongPress: enabled
                               ? () => _removeRecentImage(preset)
                               : null,
+                          onSecondaryTapUp: Platform.isWindows && enabled
+                              ? (details) => _showRecentBackgroundMenu(
+                                  preset,
+                                  details.globalPosition,
+                                )
+                              : null,
                           borderRadius: BorderRadius.circular(10),
                           child: Container(
                             width: 96,
@@ -534,6 +540,41 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
     });
   }
 
+  Future<void> _showRecentBackgroundMenu(
+    BackgroundImagePreset preset,
+    Offset position,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final action = await showMenu<_RecentBackgroundAction>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        position.dx,
+        position.dy,
+        MediaQuery.sizeOf(context).width - position.dx,
+        MediaQuery.sizeOf(context).height - position.dy,
+      ),
+      items: [
+        PopupMenuItem(
+          value: _RecentBackgroundAction.restore,
+          child: Text(l10n.themeRestoreRecentBackground),
+        ),
+        PopupMenuItem(
+          value: _RecentBackgroundAction.delete,
+          child: Text(l10n.delete),
+        ),
+      ],
+    );
+    if (!mounted) return;
+    switch (action) {
+      case _RecentBackgroundAction.restore:
+        await _restoreImage(preset);
+      case _RecentBackgroundAction.delete:
+        await _removeRecentImage(preset);
+      case null:
+        break;
+    }
+  }
+
   Future<void> _editCurrentImage() => _run(() async {
     final current = ref.read(themeSettingsProvider);
     final edited = await Navigator.of(context).push<AppThemeSettings>(
@@ -565,6 +606,8 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
     }
   }
 }
+
+enum _RecentBackgroundAction { restore, delete }
 
 class _ColorSwatch extends StatelessWidget {
   const _ColorSwatch({required this.color});

@@ -642,6 +642,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeBackgroundUnavailable => 'この画像は利用できません。もう一度選択してください。';
 
   @override
+  String get themeRestoreRecentBackground => 'この背景を復元';
+
+  @override
   String get themeSaveFailed => 'テーマを保存できませんでした。元の背景は保持されています。もう一度お試しください。';
 
   @override

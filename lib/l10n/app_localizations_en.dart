@@ -654,6 +654,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'This image is unavailable. Please select it again.';
 
   @override
+  String get themeRestoreRecentBackground => 'Restore this background';
+
+  @override
   String get themeSaveFailed =>
       'Could not save the theme. Your previous background has been kept. Please try again.';
 

@@ -1,5 +1,5 @@
 {
-  "version": "1.2.17",
-  "zh": "- Windows 背景图片编辑支持鼠标滚轮缩放和拖动平移。\n- 新增 0–360° 精确旋转滑块，同时保留触摸手势和 90° 快捷旋转。\n- 中英日三语补齐旋转角度文案，保存和历史背景参数结构保持兼容。",
-  "en": "- Windows background editing now supports mouse-wheel zoom and drag panning.\n- Add a precise 0–360° rotation slider while keeping touch gestures and the 90° shortcut.\n- Add rotation-angle labels in Chinese, English and Japanese without changing saved background compatibility."
+  "version": "1.2.18",
+  "zh": "- Windows 最近背景缩略图新增右键菜单，可快速恢复背景或发起删除。\n- 删除仍需要二次确认，当前正在使用的背景不会被误删。\n- 触摸设备继续支持长按删除，补齐中英日菜单文案。",
+  "en": "- Add a Windows context menu to recent background thumbnails for quick restore or removal.\n- Removal still requires confirmation, and the currently active background is protected from accidental deletion.\n- Keep long-press deletion on touch devices and add Chinese, English and Japanese menu labels."
 }

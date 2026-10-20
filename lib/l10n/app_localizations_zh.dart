@@ -633,6 +633,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeBackgroundUnavailable => '这张图片已不可用，请重新选择。';
 
   @override
+  String get themeRestoreRecentBackground => '恢复此背景';
+
+  @override
   String get themeSaveFailed => '主题保存失败，已保留原背景，请重试。';
 
   @override

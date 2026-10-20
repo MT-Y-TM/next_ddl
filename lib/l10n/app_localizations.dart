@@ -1234,6 +1234,12 @@ abstract class AppLocalizations {
   /// **'This image is unavailable. Please select it again.'**
   String get themeBackgroundUnavailable;
 
+  /// No description provided for @themeRestoreRecentBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore this background'**
+  String get themeRestoreRecentBackground;
+
   /// No description provided for @themeSaveFailed.
   ///
   /// In en, this message translates to:
