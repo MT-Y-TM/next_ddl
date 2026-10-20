@@ -803,6 +803,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeGlassReset => 'ガラス設定をリセット';
 
   @override
+  String get themeFontFamily => 'フォント';
+
+  @override
+  String get themeSystemFont => 'システムの既定値';
+
+  @override
   String get desktopOpenApp => 'Next DDL を開く';
 
   @override

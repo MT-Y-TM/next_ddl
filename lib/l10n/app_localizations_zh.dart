@@ -789,6 +789,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeGlassReset => '恢复默认参数';
 
   @override
+  String get themeFontFamily => '字体';
+
+  @override
+  String get themeSystemFont => '系统默认';
+
+  @override
   String get desktopOpenApp => '打开 Next DDL';
 
   @override

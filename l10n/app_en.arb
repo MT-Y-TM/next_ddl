@@ -402,6 +402,8 @@
   "themeGlassPreview": "Live preview",
   "themeGlassPreviewText": "Liquid glass input",
   "themeGlassReset": "Reset glass parameters",
+  "themeFontFamily": "Font family",
+  "themeSystemFont": "System default",
   "desktopOpenApp": "Open Next DDL",
   "desktopExitApp": "Exit Next DDL"
 }

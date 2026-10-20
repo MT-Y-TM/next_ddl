@@ -1534,6 +1534,18 @@ abstract class AppLocalizations {
   /// **'Reset glass parameters'**
   String get themeGlassReset;
 
+  /// No description provided for @themeFontFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Font family'**
+  String get themeFontFamily;
+
+  /// No description provided for @themeSystemFont.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get themeSystemFont;
+
   /// No description provided for @desktopOpenApp.
   ///
   /// In en, this message translates to:

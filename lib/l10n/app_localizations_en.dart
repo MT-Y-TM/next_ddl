@@ -817,6 +817,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeGlassReset => 'Reset glass parameters';
 
   @override
+  String get themeFontFamily => 'Font family';
+
+  @override
+  String get themeSystemFont => 'System default';
+
+  @override
   String get desktopOpenApp => 'Open Next DDL';
 
   @override

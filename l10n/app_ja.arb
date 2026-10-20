@@ -401,6 +401,8 @@
   "themeGlassPreview": "リアルタイムプレビュー",
   "themeGlassPreviewText": "リキッドガラス入力欄",
   "themeGlassReset": "ガラス設定をリセット",
+  "themeFontFamily": "フォント",
+  "themeSystemFont": "システムの既定値",
   "desktopOpenApp": "Next DDL を開く",
   "desktopExitApp": "Next DDL を終了"
 }

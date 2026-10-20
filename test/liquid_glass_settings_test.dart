@@ -38,6 +38,7 @@ void main() {
         themeSettings: AppThemeSettings(
           liquidGlassInputsEnabled: true,
           liquidGlassSettings: p,
+          fontFamily: 'Segoe UI',
           backgroundImagePath: 'my-wallpaper.png',
           cornerRadius: 28,
         ),
@@ -47,6 +48,7 @@ void main() {
       );
       expect(stored.themeSettings.liquidGlassSettings.toJson(), p.toJson());
       expect(stored.themeSettings.backgroundImagePath, 'my-wallpaper.png');
+      expect(stored.themeSettings.fontFamily, 'Segoe UI');
       expect(
         stored.themeSettings
             .copyWith(liquidGlassInputsEnabled: false)
@@ -61,6 +63,10 @@ void main() {
       expect(reset.backgroundImagePath, 'my-wallpaper.png');
       expect(reset.liquidGlassInputsEnabled, isTrue);
       expect(reset.liquidGlassSettings.tintOpacity, isNull);
+      expect(
+        reset.copyWith(fontFamily: null).fontFamily,
+        isNull,
+      );
     },
   );
 

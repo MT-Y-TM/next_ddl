@@ -29,6 +29,7 @@ ThemeData buildNextDdlTheme({
     ],
     colorScheme: scheme,
     brightness: brightness,
+    fontFamily: settings.fontFamily,
     scaffoldBackgroundColor: Colors.transparent,
     pageTransitionsTheme: PageTransitionsTheme(
       builders: {

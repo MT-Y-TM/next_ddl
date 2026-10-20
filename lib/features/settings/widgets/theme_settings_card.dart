@@ -9,6 +9,7 @@ import '../../../app/feedback.dart';
 import '../../../models/app_theme_settings.dart';
 import '../../../models/liquid_glass_settings.dart';
 import '../../../services/theme_asset_service.dart';
+import '../../../services/windows_font_service.dart';
 import '../../tasks/tasks_controller.dart';
 import '../background_image_editor_page.dart';
 import 'liquid_glass_controls.dart';
@@ -30,6 +31,7 @@ class ThemeSettingsCard extends ConsumerStatefulWidget {
 class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
   bool _busy = false;
   double? _radiusPreview;
+  final WindowsFontService _fontService = WindowsFontService();
   AppThemeSettings get settings => widget.settings;
   bool get enabled => widget.enabled && !_busy;
 
@@ -96,6 +98,49 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
                       ),
                 ),
               ),
+            if (Platform.isWindows) ...[
+              const SizedBox(height: 12),
+              FutureBuilder<List<String>>(
+                future: _fontService.listFontFamilies(),
+                builder: (context, snapshot) {
+                  final fonts = [...snapshot.data ?? const <String>[]];
+                  final selected = settings.fontFamily;
+                  if (selected != null &&
+                      selected.isNotEmpty &&
+                      !fonts.contains(selected)) {
+                    fonts.insert(0, selected);
+                  }
+                  return DropdownButtonFormField<String>(
+                    key: const ValueKey('theme-font-family'),
+                    initialValue: selected ?? '',
+                    decoration: InputDecoration(
+                      labelText: l10n.themeFontFamily,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(l10n.themeSystemFont),
+                      ),
+                      for (final font in fonts)
+                        DropdownMenuItem(value: font, child: Text(font)),
+                    ],
+                    onChanged: enabled
+                        ? (value) => _run(
+                            () => ref
+                                .read(tasksControllerProvider.notifier)
+                                .updateThemeSettings(
+                                  (current) => current.copyWith(
+                                    fontFamily: value == null || value.isEmpty
+                                        ? null
+                                        : value,
+                                  ),
+                                ),
+                          )
+                        : null,
+                  );
+                },
+              ),
+            ],
             Wrap(
               spacing: 8,
               runSpacing: 8,

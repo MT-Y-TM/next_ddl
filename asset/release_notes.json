@@ -1,5 +1,5 @@
 {
-  "version": "1.2.14",
-  "zh": "- Windows 托盘截止摘要继续遵循常驻消息栏开关，关闭时隐藏截止内容但保留托盘控制图标。\n- 关闭 Windows 主窗口时改为隐藏到托盘，应用进程和后台闹钟继续运行。\n- 托盘菜单新增明确的退出入口，退出应用前仍可正常停止后台调度。",
-  "en": "- The Windows tray deadline summary still follows the persistent notification toggle; disabling it hides deadline content while keeping tray controls available.\n- Closing the Windows main window now hides it to the tray while the process and background alarms continue running.\n- The tray menu provides an explicit exit action that cleanly stops background scheduling."
+  "version": "1.2.15",
+  "zh": "- Windows 主题设置新增系统字体选择，会枚举电脑中已安装的字体并立即应用到全局界面。\n- 选择系统默认即可恢复原有字体；字体选择会写入主题设置并兼容旧 JSON。\n- 保持 Windows 托盘摘要、关闭窗口后台响铃和三语主题设置能力。",
+  "en": "- Add a Windows theme setting that enumerates installed system fonts and applies the selected family to the entire interface.\n- Choose System default to restore the original font; the selection is persisted in theme settings and remains compatible with old JSON.\n- Keep the Windows tray summary, background alarms after closing the window and localized theme settings."
 }

@@ -29,6 +29,8 @@ bool FlutterWindow::OnCreate() {
       flutter_controller_->engine()->messenger());
   desktop_ = std::make_unique<NextDdlDesktop>(
       GetHandle(), flutter_controller_->engine()->messenger());
+  fonts_ = std::make_unique<NextDdlFonts>(
+      flutter_controller_->engine()->messenger());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -44,6 +46,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  fonts_ = nullptr;
   desktop_ = nullptr;
   alarm_scheduler_ = nullptr;
   if (flutter_controller_) {

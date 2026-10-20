@@ -20,6 +20,7 @@ enum ThemeBackgroundMode {
 class AppThemeSettings {
   const AppThemeSettings({
     this.seedColorValue = 0xFF0E7490,
+    this.fontFamily,
     this.cornerRadius = 8,
     this.liquidGlassInputsEnabled = false,
     this.liquidGlassSettings = const LiquidGlassSettings(),
@@ -41,6 +42,7 @@ class AppThemeSettings {
            imageRotationDegrees ?? imageRotationQuarterTurns * 90.0;
 
   final int seedColorValue;
+  final String? fontFamily;
   final double cornerRadius;
   final bool liquidGlassInputsEnabled;
   final LiquidGlassSettings liquidGlassSettings;
@@ -105,6 +107,7 @@ class AppThemeSettings {
 
   AppThemeSettings copyWith({
     int? seedColorValue,
+    Object? fontFamily = _unset,
     double? cornerRadius,
     bool? liquidGlassInputsEnabled,
     LiquidGlassSettings? liquidGlassSettings,
@@ -131,6 +134,9 @@ class AppThemeSettings {
       hiddenRecentBackgroundPaths:
           hiddenRecentBackgroundPaths ?? this.hiddenRecentBackgroundPaths,
       seedColorValue: seedColorValue ?? this.seedColorValue,
+      fontFamily: identical(fontFamily, _unset)
+          ? this.fontFamily
+          : fontFamily as String?,
       cornerRadius: (cornerRadius ?? this.cornerRadius).clamp(0, 32).toDouble(),
       liquidGlassInputsEnabled:
           liquidGlassInputsEnabled ?? this.liquidGlassInputsEnabled,
@@ -165,6 +171,7 @@ class AppThemeSettings {
 
   Map<String, dynamic> toJson() => {
     'seedColorValue': seedColorValue,
+    'fontFamily': fontFamily,
     'cornerRadius': cornerRadius,
     'liquidGlassInputsEnabled': liquidGlassInputsEnabled,
     'liquidGlassSettings': liquidGlassSettings.toJson(),
@@ -218,6 +225,9 @@ class AppThemeSettings {
               .toList(),
       seedColorValue:
           (json['seedColorValue'] as num?)?.toInt() ?? defaults.seedColorValue,
+      fontFamily: (json['fontFamily'] as String?)?.trim().isNotEmpty == true
+          ? (json['fontFamily'] as String).trim()
+          : null,
       liquidGlassInputsEnabled:
           json['liquidGlassInputsEnabled'] as bool? ?? false,
       liquidGlassSettings: LiquidGlassSettings.fromJson(

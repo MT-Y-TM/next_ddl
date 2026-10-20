@@ -401,6 +401,8 @@
   "themeGlassPreview": "实时预览",
   "themeGlassPreviewText": "液态玻璃输入框",
   "themeGlassReset": "恢复默认参数",
+  "themeFontFamily": "字体",
+  "themeSystemFont": "系统默认",
   "desktopOpenApp": "打开 Next DDL",
   "desktopExitApp": "退出 Next DDL"
 }
