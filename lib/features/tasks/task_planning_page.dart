@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/background_readability.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../app/feedback.dart';
@@ -242,9 +243,9 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
             padding: const EdgeInsets.all(16),
             children: [
               if (_busy) const LinearProgressIndicator(),
-              Text(s.text('policy')),
+              WallpaperText(s.text('policy')),
               const SizedBox(height: 16),
-              Text(
+              WallpaperText(
                 s.text('templates'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
@@ -261,35 +262,38 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
                     child: Text(s.text('new')),
                   ),
                   if (widget.sourceTasks.isNotEmpty)
-                    OutlinedButton(
-                      onPressed: () => _run(() async {
-                        final task = await showDialog<DeadlineTask>(
-                          context: context,
-                          builder: (context) => SimpleDialog(
-                            title: Text(s.text('fromTask')),
-                            children: [
-                              for (final task in widget.sourceTasks)
-                                SimpleDialogOption(
-                                  onPressed: () => Navigator.pop(context, task),
-                                  child: Text(task.title),
-                                ),
-                            ],
-                          ),
-                        );
-                        if (task != null) {
-                          await widget.service.saveTemplate(
-                            TaskTemplate.fromTask(
-                              task,
-                              id: TaskPlanningService.newId(),
+                    WallpaperRegion(
+                      child: OutlinedButton(
+                        onPressed: () => _run(() async {
+                          final task = await showDialog<DeadlineTask>(
+                            context: context,
+                            builder: (context) => SimpleDialog(
+                              title: Text(s.text('fromTask')),
+                              children: [
+                                for (final task in widget.sourceTasks)
+                                  SimpleDialogOption(
+                                    onPressed: () =>
+                                        Navigator.pop(context, task),
+                                    child: Text(task.title),
+                                  ),
+                              ],
                             ),
                           );
-                        }
-                      }),
-                      child: Text(s.text('fromTask')),
+                          if (task != null) {
+                            await widget.service.saveTemplate(
+                              TaskTemplate.fromTask(
+                                task,
+                                id: TaskPlanningService.newId(),
+                              ),
+                            );
+                          }
+                        }),
+                        child: Text(s.text('fromTask')),
+                      ),
                     ),
                 ],
               ),
-              if (snapshot.templates.isEmpty) Text(s.text('empty')),
+              if (snapshot.templates.isEmpty) WallpaperText(s.text('empty')),
               for (final template in snapshot.templates.values)
                 Card(
                   child: Padding(
@@ -341,11 +345,11 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
                     ),
                   ),
                 ),
-              Text(
+              WallpaperText(
                 s.text('series'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              Text(s.text('followingPolicy')),
+              WallpaperText(s.text('followingPolicy')),
               for (final series in snapshot.series.values)
                 Card(
                   child: Padding(
@@ -433,26 +437,28 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
                     ),
                   ),
                 ),
-              Text(
+              WallpaperText(
                 s.text('upcoming'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               for (final occurrence in upcoming)
-                ListTile(
-                  title: Text(occurrence.task.title),
-                  subtitle: Text(
-                    '${occurrence.date} · ${tz.TZDateTime.from(occurrence.task.finalDueAtUtc, tz.getLocation(occurrence.task.timezoneId))}',
-                  ),
-                  trailing: TextButton(
-                    onPressed: () => _run(() async {
-                      if (await _confirm('confirmSkip')) {
-                        await widget.service.skip(
-                          occurrence.seriesId,
-                          occurrence.date,
-                        );
-                      }
-                    }),
-                    child: Text(s.text('skip')),
+                WallpaperRegion(
+                  child: ListTile(
+                    title: Text(occurrence.task.title),
+                    subtitle: Text(
+                      '${occurrence.date} · ${tz.TZDateTime.from(occurrence.task.finalDueAtUtc, tz.getLocation(occurrence.task.timezoneId))}',
+                    ),
+                    trailing: TextButton(
+                      onPressed: () => _run(() async {
+                        if (await _confirm('confirmSkip')) {
+                          await widget.service.skip(
+                            occurrence.seriesId,
+                            occurrence.date,
+                          );
+                        }
+                      }),
+                      child: Text(s.text('skip')),
+                    ),
                   ),
                 ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/background_readability.dart';
 
 import '../../app/feedback.dart';
 import '../../models/app_snapshot.dart';
@@ -116,35 +117,47 @@ class _BackupPageState extends State<BackupPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(l.retention(widget.service.retentionCount)),
+          WallpaperText(l.retention(widget.service.retentionCount)),
           if (_busy) const LinearProgressIndicator(),
           if (_error != null) ...[
-            Text(_error!),
-            TextButton(onPressed: _busy ? null : _load, child: Text(l.retry)),
+            WallpaperText(_error!),
+            WallpaperRegion(
+              child: TextButton(
+                onPressed: _busy ? null : _load,
+                child: Text(l.retry),
+              ),
+            ),
           ],
           if (_pendingSync != null) ...[
-            Text(l.scheduleFailed),
-            TextButton(
-              onPressed: _busy
-                  ? null
-                  : () async {
-                      setState(() => _busy = true);
-                      await _sync();
-                      if (mounted) setState(() => _busy = false);
-                    },
-              child: Text(l.retry),
+            WallpaperText(l.scheduleFailed),
+            WallpaperRegion(
+              child: TextButton(
+                onPressed: _busy
+                    ? null
+                    : () async {
+                        setState(() => _busy = true);
+                        await _sync();
+                        if (mounted) setState(() => _busy = false);
+                      },
+                child: Text(l.retry),
+              ),
             ),
           ],
           if (_entries.isEmpty)
-            Padding(padding: const EdgeInsets.all(24), child: Text(l.empty)),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: WallpaperText(l.empty),
+            ),
           for (final entry in _entries)
-            ListTile(
-              title: Text(entry.createdAtUtc.toLocal().toString()),
-              trailing: TextButton(
-                onPressed: _busy || _pendingSync != null
-                    ? null
-                    : () => _restore(entry),
-                child: Text(l.restore),
+            WallpaperRegion(
+              child: ListTile(
+                title: Text(entry.createdAtUtc.toLocal().toString()),
+                trailing: TextButton(
+                  onPressed: _busy || _pendingSync != null
+                      ? null
+                      : () => _restore(entry),
+                  child: Text(l.restore),
+                ),
               ),
             ),
         ],

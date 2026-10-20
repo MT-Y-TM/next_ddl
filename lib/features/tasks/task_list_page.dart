@@ -15,6 +15,7 @@ import 'task_edit_page.dart';
 import 'tasks_controller.dart';
 import 'task_ui_helpers.dart';
 import 'task_ui_strings.dart';
+import '../../app/background_readability.dart';
 
 class TaskListPage extends ConsumerStatefulWidget {
   const TaskListPage({super.key});
@@ -272,16 +273,18 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                            child: TextField(
-                              controller: _search,
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                labelText: strings.search,
-                                prefixIcon: const Icon(Icons.search),
-                                suffixIcon: IconButton(
-                                  tooltip: strings.clear,
-                                  onPressed: _clear,
-                                  icon: const Icon(Icons.clear),
+                            child: WallpaperRegion(
+                              child: TextField(
+                                controller: _search,
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  labelText: strings.search,
+                                  prefixIcon: const Icon(Icons.search),
+                                  suffixIcon: IconButton(
+                                    tooltip: strings.clear,
+                                    onPressed: _clear,
+                                    icon: const Icon(Icons.clear),
+                                  ),
                                 ),
                               ),
                             ),
@@ -291,7 +294,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                               horizontal: 16,
                               vertical: 4,
                             ),
-                            child: Text(
+                            child: WallpaperText(
                               strings.scope,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
@@ -380,7 +383,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
           error: (error, stackTrace) => Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(error.toString()),
+              child: WallpaperText(error.toString()),
             ),
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -445,17 +448,19 @@ class _TaskTabViewState extends State<_TaskTabView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(TaskUiStrings(context).noResults),
-              TextButton(
-                onPressed: widget.onClear,
-                child: Text(TaskUiStrings(context).clear),
+              WallpaperText(TaskUiStrings(context).noResults),
+              WallpaperRegion(
+                child: TextButton(
+                  onPressed: widget.onClear,
+                  child: Text(TaskUiStrings(context).clear),
+                ),
               ),
             ],
           ),
         );
       }
       if (widget.emptyMessage != null) {
-        return Center(child: Text(widget.emptyMessage!));
+        return Center(child: WallpaperText(widget.emptyMessage!));
       }
       return _EmptyState(
         onCreate: () {
@@ -474,7 +479,7 @@ class _TaskTabViewState extends State<_TaskTabView> {
         itemBuilder: (context, index) => index == 0
             ? Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
+                child: WallpaperText(
                   widget.summary,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -872,15 +877,17 @@ class _EmptyState extends StatelessWidget {
             Icon(
               Icons.event_busy_outlined,
               size: 64,
-              color: Theme.of(context).colorScheme.primary,
+              color:
+                  WallpaperReadability.maybeOf(context)?.foreground ??
+                  Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text(
+            WallpaperText(
               l10n.noTasksTitle,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
-            Text(
+            WallpaperText(
               l10n.noTasksBody,
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,

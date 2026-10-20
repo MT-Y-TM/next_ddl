@@ -209,16 +209,16 @@ jobs:
         with:
           body: |
             ## 中文
-            - 桌面小组件的任务切换改为底部弹出的可滚动列表，无需进入应用即可直接选择任务，不再盲目循环切换。
-            - 列表显示任务名称、剩余时间、截止日期及当前选中标记；取消、下拉关闭或返回不会改变选择，每个小组件独立保留展示任务。
-            - 保留 3×2 响应式布局、应用内星标和中/英/日适配，并防止已完成、已删除或被导入替换的任务被误选。
-            - 应用图标改为上半部分的方形头肩构图，移除完整竖图缩放造成的两侧窄边，统一更新 Android、Windows 和 README 图标。
+            - 新增背景文字自动对比度：分析实际背景的主色调与相对亮度，深色背景使用浅字，浅色背景使用深字，混合明暗区域辅以细微文字光晕。
+            - 覆盖时间线、提醒标题、首页摘要与空状态、透明编辑表单、备份和规划页；卡片、带底色的控件和弹窗保留原有配色。
+            - 背景裁切、缩放、旋转、模糊和遮罩后的最终画面参与判断；低分辨率采样仅随背景重绘更新，不随倒计时或页面切换重复解码壁纸。
+            - 保留中/英/日适配、Android 小组件任务选择和原有数据格式，补充对比度、背景稳定性及 Android 渲染验证。
 
             ## English
-            - Replace blind widget task cycling with a scrollable bottom-sheet picker on the home screen, without opening the main app.
-            - Preview task titles, remaining time and deadlines with a current-selection checkmark. Cancel, swipe down or go back without changing the selection; each widget keeps its own task.
-            - Preserve responsive 3×2 layouts, in-app stars and Chinese/English/Japanese text, and reject completed, deleted or replaced tasks.
-            - Reframe the app icon as a square upper-body portrait to remove the side letterboxing from fitting the full portrait, and update Android, Windows and README icons together.
+            - Add automatic wallpaper text contrast using the rendered background's dominant colors and relative luminance: light text on dark backgrounds, dark text on light backgrounds, and subtle halos for mixed areas.
+            - Cover timelines, reminder headings, home summaries and empty states, transparent forms, backups and planning while preserving card, filled-control and dialog color pairs.
+            - Analyze the final crop, zoom, rotation, blur and overlay with low-resolution samples on background repaints, without re-decoding wallpaper during countdown ticks or navigation.
+            - Preserve Chinese/English/Japanese support, Android widget task picking and existing data formats, with contrast, wallpaper stability and Android-renderer tests.
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

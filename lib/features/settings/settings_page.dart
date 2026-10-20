@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/background_readability.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -779,10 +780,10 @@ class _ImportDataPageState extends ConsumerState<_ImportDataPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.importJsonHint),
+            WallpaperText(l10n.importJsonHint),
             const SizedBox(height: 16),
             if (_busy) const LinearProgressIndicator(),
-            if (_message != null) Text(_message!),
+            if (_message != null) WallpaperText(_message!),
             FilledButton(
               onPressed: _busy
                   ? null

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/tasks/tasks_controller.dart';
 import '../models/app_theme_settings.dart';
+import 'background_readability.dart';
 
 ThemeData buildNextDdlTheme({
   Brightness brightness = Brightness.light,
@@ -84,14 +85,7 @@ class NextDdlAppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      alignment: Alignment.topLeft,
-      children: [
-        RepaintBoundary(child: background),
-        child,
-      ],
-    );
+    return BackgroundReadabilityHost(background: background, child: child);
   }
 }
 
@@ -200,6 +194,7 @@ class _ImageBackgroundState extends State<_ImageBackground> {
         return Stack(
           fit: StackFit.expand,
           children: [
+            ColoredBox(color: Color(settings.solidBackgroundColorValue)),
             ImageFiltered(
               imageFilter: ImageFilter.blur(
                 sigmaX: settings.imageBlurSigma,
@@ -227,7 +222,8 @@ class _ImageBackgroundState extends State<_ImageBackground> {
       if (!mounted) {
         return;
       }
-      precacheImage(imageProvider, context);
+      // Image.errorBuilder already renders the configured fallback.
+      precacheImage(imageProvider, context, onError: (_, _) {});
     });
   }
 }

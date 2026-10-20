@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../app/feedback.dart';
+import '../../app/background_readability.dart';
 import '../../models/deadline_task.dart';
 import '../../models/milestone.dart';
 import '../../models/alarm_audio_item.dart';
@@ -96,102 +97,121 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: l10n.taskTitle,
-              hintText: l10n.taskTitleHint,
+          WallpaperRegion(
+            child: TextField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText: l10n.taskTitle,
+                hintText: l10n.taskTitleHint,
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _noteController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: l10n.note,
-              hintText: l10n.noteHint,
+          WallpaperRegion(
+            child: TextField(
+              controller: _noteController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: l10n.note,
+                hintText: l10n.noteHint,
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          InputDecorator(
-            decoration: InputDecoration(
-              labelText: TaskUiStrings(context).tags,
-              helperText: TaskUiStrings(context).addTag,
-              border: const OutlineInputBorder(),
-            ),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                for (final tag in _tags)
-                  InputChip(
-                    label: Text(tag),
-                    onDeleted: () => setState(() => _tags.remove(tag)),
-                  ),
-                SizedBox(
-                  width: 180,
-                  child: TextField(
-                    controller: _tagInputController,
-                    decoration: InputDecoration(
-                      hintText: TaskUiStrings(context).tagName,
-                      border: InputBorder.none,
+          WallpaperRegion(
+            child: InputDecorator(
+              decoration: InputDecoration(
+                labelText: TaskUiStrings(context).tags,
+                helperText: TaskUiStrings(context).addTag,
+                border: const OutlineInputBorder(),
+              ),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  for (final tag in _tags)
+                    Theme(
+                      data: Theme.of(context),
+                      child: InputChip(
+                        label: Text(tag),
+                        onDeleted: () => setState(() => _tags.remove(tag)),
+                      ),
                     ),
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: _addTag,
+                  SizedBox(
+                    width: 180,
+                    child: TextField(
+                      controller: _tagInputController,
+                      decoration: InputDecoration(
+                        hintText: TaskUiStrings(context).tagName,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: _addTag,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.event_outlined),
-            title: Text(l10n.finalDeadline),
-            subtitle: Text(_formatDateTime(_finalDueLocal)),
-            trailing: FilledButton.tonal(
-              onPressed: _pickFinalDue,
-              child: Text(l10n.pickTime),
+          WallpaperRegion(
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.event_outlined),
+              title: Text(l10n.finalDeadline),
+              subtitle: Text(_formatDateTime(_finalDueLocal)),
+              trailing: FilledButton.tonal(
+                onPressed: _pickFinalDue,
+                child: Text(l10n.pickTime),
+              ),
             ),
           ),
           if (ref.watch(predictionSettingsProvider).aiEnabled &&
               widget.existingTask == null)
             Align(
               alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                onPressed: _aiBusy ? null : _generateAiSuggestion,
-                icon: _aiBusy
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.auto_awesome_outlined),
-                label: Text(PredictionUiStrings(context).title),
+              child: WallpaperRegion(
+                child: OutlinedButton.icon(
+                  onPressed: _aiBusy ? null : _generateAiSuggestion,
+                  icon: _aiBusy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.auto_awesome_outlined),
+                  label: Text(PredictionUiStrings(context).title),
+                ),
               ),
             ),
           const SizedBox(height: 16),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _notificationsEnabled,
-            onChanged: (value) {
-              setState(() {
-                _notificationsEnabled = value;
-              });
-            },
-            title: Text(l10n.enableNotifications),
-            subtitle: Text(l10n.enableNotificationsHint),
+          WallpaperRegion(
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _notificationsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _notificationsEnabled = value;
+                });
+              },
+              title: Text(l10n.enableNotifications),
+              subtitle: Text(l10n.enableNotificationsHint),
+            ),
           ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _alarmEnabled,
-            onChanged: (value) {
-              setState(() {
-                _alarmEnabled = value;
-              });
-            },
-            title: Text(l10n.enableAlarm),
-            subtitle: Text(l10n.enableAlarmHint),
+          WallpaperRegion(
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _alarmEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _alarmEnabled = value;
+                });
+              },
+              title: Text(l10n.enableAlarm),
+              subtitle: Text(l10n.enableAlarmHint),
+            ),
           ),
           if (_alarmEnabled) ...[
             const SizedBox(height: 8),
@@ -764,7 +784,10 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+          child: WallpaperText(
+            title,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
         ),
         action,
       ],

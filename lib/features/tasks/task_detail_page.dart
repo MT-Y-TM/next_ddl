@@ -8,6 +8,7 @@ import '../../utils/countdown_formatter.dart';
 import '../../utils/deadline_logic.dart';
 import '../../utils/milestone_utils.dart';
 import '../../utils/timezone_labels.dart';
+import '../../app/background_readability.dart';
 import 'task_edit_page.dart';
 import 'tasks_controller.dart';
 import 'task_ui_helpers.dart';
@@ -35,7 +36,7 @@ class TaskDetailPage extends ConsumerWidget {
     if (task == null) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.taskDetails)),
-        body: Center(child: Text(l10n.taskNotFound)),
+        body: Center(child: WallpaperText(l10n.taskNotFound)),
       );
     }
 
@@ -194,67 +195,74 @@ class TaskDetailPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(l10n.timeline, style: Theme.of(context).textTheme.titleLarge),
+          WallpaperText(
+            l10n.timeline,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 8),
           for (final milestone in timeline)
-            ListTile(
-              leading: Checkbox(
-                semanticLabel: milestone.isCompleted
-                    ? strings.reopenMilestone
-                    : strings.completeMilestone,
-                value: milestone.isCompleted,
-                onChanged: (value) {
-                  runTaskUiAction(
-                    context,
-                    () => controller.setMilestoneCompleted(
-                      task.id,
-                      milestone.id,
-                      value!,
+            WallpaperRegion(
+              child: ListTile(
+                leading: Checkbox(
+                  semanticLabel: milestone.isCompleted
+                      ? strings.reopenMilestone
+                      : strings.completeMilestone,
+                  value: milestone.isCompleted,
+                  onChanged: (value) {
+                    runTaskUiAction(
+                      context,
+                      () => controller.setMilestoneCompleted(
+                        task.id,
+                        milestone.id,
+                        value!,
+                      ),
+                      undo: () => controller.restoreTask(task),
+                    );
+                  },
+                ),
+                title: switch (resolveMilestoneDisplayTitle(milestone.title)) {
+                  final title when title.isNotEmpty => Text(
+                    title,
+                    style: TextStyle(
+                      decoration: milestone.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
                     ),
-                    undo: () => controller.restoreTask(task),
-                  );
+                  ),
+                  _ => Text(
+                    l10n.milestoneTime,
+                    style: TextStyle(
+                      decoration: milestone.isCompleted
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
+                  ),
                 },
-              ),
-              title: switch (resolveMilestoneDisplayTitle(milestone.title)) {
-                final title when title.isNotEmpty => Text(
-                  title,
-                  style: TextStyle(
-                    decoration: milestone.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
-                  ),
+                subtitle: Text(
+                  '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? l10n.generatedNode : l10n.manualNode}',
                 ),
-                _ => Text(
-                  l10n.milestoneTime,
-                  style: TextStyle(
-                    decoration: milestone.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
-                  ),
+                trailing: Text(
+                  milestone.isCompleted
+                      ? strings.completed
+                      : !milestone.dueAtUtc.isAfter(now)
+                      ? l10n.overdueTab
+                      : l10n.inProgressTab,
                 ),
-              },
-              subtitle: Text(
-                '${_formatDateTime(timezoneService.utcToConfigured(milestone.dueAtUtc))} · ${milestone.source == MilestoneSource.generated ? l10n.generatedNode : l10n.manualNode}',
-              ),
-              trailing: Text(
-                milestone.isCompleted
-                    ? strings.completed
-                    : !milestone.dueAtUtc.isAfter(now)
-                    ? l10n.overdueTab
-                    : l10n.inProgressTab,
               ),
             ),
-          ListTile(
-            leading: const Icon(Icons.verified_outlined),
-            title: Text(l10n.finalDeadline),
-            subtitle: Text(
-              _formatDateTime(
-                timezoneService.utcToConfigured(task.finalDueAtUtc),
+          WallpaperRegion(
+            child: ListTile(
+              leading: const Icon(Icons.verified_outlined),
+              title: Text(l10n.finalDeadline),
+              subtitle: Text(
+                _formatDateTime(
+                  timezoneService.utcToConfigured(task.finalDueAtUtc),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          Text(
+          WallpaperText(
             l10n.reminderRules,
             style: Theme.of(context).textTheme.titleLarge,
           ),

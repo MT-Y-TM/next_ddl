@@ -1,7 +1,7 @@
 name: next_ddl
 description: "Next DDL deadline app."
 publish_to: 'none'
-version: 1.2.8+1
+version: 1.2.9+1
 
 environment:
   sdk: ^3.10.1
@@ -31,6 +31,8 @@ dependencies:
 
   intl: ^0.20.2
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
