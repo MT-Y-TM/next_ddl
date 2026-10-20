@@ -360,6 +360,7 @@
   "themeBackgroundImageReady": "Background image is set",
   "themeEditBackgroundImage": "Edit background image",
   "themeImageScale": "Scale",
+  "themeImageRotation": "Rotation angle",
   "themeImageOffsetX": "Horizontal position",
   "themeImageOffsetY": "Vertical position",
   "themeImageOverlay": "Overlay strength",

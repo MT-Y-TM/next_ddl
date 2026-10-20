@@ -690,6 +690,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeImageScale => '拡大率';
 
   @override
+  String get themeImageRotation => '回転角度';
+
+  @override
   String get themeImageOffsetX => '横位置';
 
   @override

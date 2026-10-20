@@ -681,6 +681,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeImageScale => '缩放';
 
   @override
+  String get themeImageRotation => '旋转角度';
+
+  @override
   String get themeImageOffsetX => '水平位置';
 
   @override

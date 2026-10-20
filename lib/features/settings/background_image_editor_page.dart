@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -67,6 +68,25 @@ class _BackgroundImageEditorPageState extends State<BackgroundImageEditorPage> {
                 );
               });
             },
+            onPointerScroll: (event) {
+              if (event.scrollDelta.dy == 0) return;
+              final factor = event.scrollDelta.dy < 0 ? 1.08 : 0.92;
+              setState(
+                () => _settings = _settings.copyWith(
+                  imageScale: _settings.imageScale * factor,
+                ),
+              );
+            },
+            onPointerPan: (delta, size) {
+              final width = size.width <= 0 ? 1.0 : size.width;
+              final height = size.height <= 0 ? 1.0 : size.height;
+              setState(
+                () => _settings = _settings.copyWith(
+                  imageOffsetX: _settings.imageOffsetX + delta.dx / (width / 2),
+                  imageOffsetY: _settings.imageOffsetY + delta.dy / (height / 2),
+                ),
+              );
+            },
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -99,31 +119,67 @@ class _BackgroundImageEditorPageState extends State<BackgroundImageEditorPage> {
   }
 }
 
-class _GesturePreview extends StatelessWidget {
+class _GesturePreview extends StatefulWidget {
   const _GesturePreview({
     required this.settings,
     required this.onScaleStart,
     required this.onScaleUpdate,
+    required this.onPointerScroll,
+    required this.onPointerPan,
   });
 
   final AppThemeSettings settings;
   final VoidCallback onScaleStart;
   final void Function(ScaleUpdateDetails details, Size size) onScaleUpdate;
+  final ValueChanged<PointerScrollEvent> onPointerScroll;
+  final void Function(Offset delta, Size size) onPointerPan;
+
+  @override
+  State<_GesturePreview> createState() => _GesturePreviewState();
+}
+
+class _GesturePreviewState extends State<_GesturePreview> {
+  Offset? _mousePosition;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
-        return GestureDetector(
+        return Listener(
           behavior: HitTestBehavior.opaque,
-          onScaleStart: (_) => onScaleStart(),
-          onScaleUpdate: (details) => onScaleUpdate(details, size),
-          child: _ImagePreview(settings: settings),
+          onPointerDown: (event) {
+            if (event.kind == PointerDeviceKind.mouse &&
+                event.buttons & kPrimaryMouseButton != 0) {
+              _mousePosition = event.position;
+            }
+          },
+          onPointerMove: (event) {
+            if (_mousePosition == null ||
+                event.kind != PointerDeviceKind.mouse ||
+                event.buttons & kPrimaryMouseButton == 0) {
+              return;
+            }
+            final delta = event.position - _mousePosition!;
+            _mousePosition = event.position;
+            widget.onPointerPan(delta, size);
+          },
+          onPointerUp: (_) => _mousePosition = null,
+          onPointerCancel: (_) => _mousePosition = null,
+          onPointerSignal: (event) {
+            if (event is PointerScrollEvent) widget.onPointerScroll(event);
+          },
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onScaleStart: (_) => widget.onScaleStart(),
+            onScaleUpdate: (details) => widget.onScaleUpdate(details, size),
+            child: _ImagePreview(settings: widget.settings),
+          ),
         );
       },
     );
   }
+
 }
 
 class _ImagePreview extends StatelessWidget {
@@ -221,6 +277,16 @@ class _EditorControls extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _LabeledSlider(
+              label: l10n.themeImageRotation,
+              value: settings.imageRotationDegrees,
+              min: 0,
+              max: 360,
+              divisions: 360,
+              valueLabel: (value) => '${value.round()}°',
+              onChanged: (value) =>
+                  onChanged(settings.copyWith(imageRotationDegrees: value)),
+            ),
+            _LabeledSlider(
               label: l10n.themeImageOverlay,
               value: settings.imageOverlayOpacity,
               min: 0,
@@ -277,6 +343,8 @@ class _LabeledSlider extends StatelessWidget {
     required this.value,
     required this.min,
     required this.max,
+    this.divisions,
+    this.valueLabel,
     required this.onChanged,
   });
 
@@ -284,6 +352,8 @@ class _LabeledSlider extends StatelessWidget {
   final double value;
   final double min;
   final double max;
+  final int? divisions;
+  final String Function(double value)? valueLabel;
   final ValueChanged<double> onChanged;
 
   @override
@@ -294,10 +364,16 @@ class _LabeledSlider extends StatelessWidget {
         Row(
           children: [
             Expanded(child: Text(label)),
-            Text(value.toStringAsFixed(2)),
+            Text(valueLabel?.call(value) ?? value.toStringAsFixed(2)),
           ],
         ),
-        Slider(value: value, min: min, max: max, onChanged: onChanged),
+        Slider(
+          value: value,
+          min: min,
+          max: max,
+          divisions: divisions,
+          onChanged: onChanged,
+        ),
       ],
     );
   }

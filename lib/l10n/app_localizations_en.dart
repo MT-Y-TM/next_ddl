@@ -703,6 +703,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeImageScale => 'Scale';
 
   @override
+  String get themeImageRotation => 'Rotation angle';
+
+  @override
   String get themeImageOffsetX => 'Horizontal position';
 
   @override

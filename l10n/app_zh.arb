@@ -359,6 +359,7 @@
   "themeBackgroundImageReady": "背景图片已设置",
   "themeEditBackgroundImage": "编辑背景图片",
   "themeImageScale": "缩放",
+  "themeImageRotation": "旋转角度",
   "themeImageOffsetX": "水平位置",
   "themeImageOffsetY": "垂直位置",
   "themeImageOverlay": "遮罩强度",

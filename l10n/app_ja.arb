@@ -359,6 +359,7 @@
   "themeBackgroundImageReady": "背景画像が設定されています",
   "themeEditBackgroundImage": "背景画像を編集",
   "themeImageScale": "拡大率",
+  "themeImageRotation": "回転角度",
   "themeImageOffsetX": "横位置",
   "themeImageOffsetY": "縦位置",
   "themeImageOverlay": "オーバーレイ強度",

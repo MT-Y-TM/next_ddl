@@ -1324,6 +1324,12 @@ abstract class AppLocalizations {
   /// **'Scale'**
   String get themeImageScale;
 
+  /// No description provided for @themeImageRotation.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotation angle'**
+  String get themeImageRotation;
+
   /// No description provided for @themeImageOffsetX.
   ///
   /// In en, this message translates to:
