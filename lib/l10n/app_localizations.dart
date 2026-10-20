@@ -1533,6 +1533,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset glass parameters'**
   String get themeGlassReset;
+
+  /// No description provided for @desktopOpenApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Next DDL'**
+  String get desktopOpenApp;
+
+  /// No description provided for @desktopExitApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Next DDL'**
+  String get desktopExitApp;
 }
 
 class _AppLocalizationsDelegate

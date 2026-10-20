@@ -401,5 +401,7 @@
   "themeGlassHighlight": "Highlight strength",
   "themeGlassPreview": "Live preview",
   "themeGlassPreviewText": "Liquid glass input",
-  "themeGlassReset": "Reset glass parameters"
+  "themeGlassReset": "Reset glass parameters",
+  "desktopOpenApp": "Open Next DDL",
+  "desktopExitApp": "Exit Next DDL"
 }

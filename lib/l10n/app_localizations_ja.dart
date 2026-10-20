@@ -801,4 +801,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get themeGlassReset => 'ガラス設定をリセット';
+
+  @override
+  String get desktopOpenApp => 'Next DDL を開く';
+
+  @override
+  String get desktopExitApp => 'Next DDL を終了';
 }

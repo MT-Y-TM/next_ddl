@@ -787,4 +787,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get themeGlassReset => '恢复默认参数';
+
+  @override
+  String get desktopOpenApp => '打开 Next DDL';
+
+  @override
+  String get desktopExitApp => '退出 Next DDL';
 }

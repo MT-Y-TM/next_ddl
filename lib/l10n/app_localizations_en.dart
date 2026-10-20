@@ -815,4 +815,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeGlassReset => 'Reset glass parameters';
+
+  @override
+  String get desktopOpenApp => 'Open Next DDL';
+
+  @override
+  String get desktopExitApp => 'Exit Next DDL';
 }

@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "next_ddl_alarm_scheduler.h"
+#include "next_ddl_desktop.h"
 #include "win32_window.h"
 
 // A window that does nothing but host a Flutter view.
@@ -32,6 +33,7 @@ class FlutterWindow : public Win32Window {
 
   // Windows implementation for the shared alarm MethodChannel.
   std::unique_ptr<NextDdlAlarmScheduler> alarm_scheduler_;
+  std::unique_ptr<NextDdlDesktop> desktop_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

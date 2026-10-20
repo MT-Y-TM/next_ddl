@@ -400,5 +400,7 @@
   "themeGlassHighlight": "ハイライトの強さ",
   "themeGlassPreview": "リアルタイムプレビュー",
   "themeGlassPreviewText": "リキッドガラス入力欄",
-  "themeGlassReset": "ガラス設定をリセット"
+  "themeGlassReset": "ガラス設定をリセット",
+  "desktopOpenApp": "Next DDL を開く",
+  "desktopExitApp": "Next DDL を終了"
 }

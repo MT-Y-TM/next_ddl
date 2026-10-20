@@ -16,6 +16,7 @@ import '../features/update/app_update_state.dart';
 import '../models/update_release.dart';
 import '../models/app_snapshot.dart';
 import '../services/home_widget_service.dart';
+import '../services/windows_desktop_service.dart';
 import '../services/release_notes_service.dart';
 import '../services/timezone_service.dart';
 import '../services/local_notification_scheduler.dart';
@@ -36,6 +37,8 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   ProviderSubscription<AppUpdateState>? _updateSubscription;
   String? _shownReleaseTag;
   final _homeWidget = HomeWidgetService();
+  final _desktop = WindowsDesktopService();
+  ProviderSubscription<AsyncValue<DateTime>>? _desktopClockSubscription;
   ProviderSubscription<AsyncValue<AppSnapshot>>? _widgetSubscription;
   ProviderSubscription<int>? _widgetTimezoneSubscription;
   bool _refreshingPlans = false;
@@ -46,15 +49,29 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     WidgetsBinding.instance.addObserver(this);
     _widgetSubscription = ref.listenManual(tasksControllerProvider, (_, next) {
       final snapshot = next.valueOrNull;
-      if (snapshot != null) _syncWidget(snapshot);
+      if (snapshot != null) {
+        _syncWidget(snapshot);
+        _syncDesktop(snapshot);
+      }
     });
     _widgetTimezoneSubscription = ref.listenManual(timezoneRevisionProvider, (
       _,
       _,
     ) {
       final snapshot = ref.read(tasksControllerProvider).valueOrNull;
-      if (snapshot != null) _syncWidget(snapshot);
+      if (snapshot != null) {
+        _syncWidget(snapshot);
+        _syncDesktop(snapshot);
+      }
     });
+    if (Platform.isWindows) {
+      _desktopClockSubscription = ref.listenManual(nowProvider, (_, next) {
+        final snapshot = ref.read(tasksControllerProvider).valueOrNull;
+        if (snapshot != null && next.valueOrNull != null) {
+          _syncDesktop(snapshot);
+        }
+      });
+    }
     _tapSubscription = LocalNotificationScheduler.notificationTapStream.listen((
       taskId,
     ) {
@@ -114,11 +131,20 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     }
   }
 
+  Future<void> _syncDesktop(AppSnapshot snapshot) async {
+    try {
+      await _desktop.sync(snapshot, DateTime.now().toUtc());
+    } catch (error) {
+      debugPrint('Desktop summary sync failed: ${error.runtimeType}');
+    }
+  }
+
   Future<void> _initializeWidget() async {
     try {
       final snapshot = await ref.read(tasksControllerProvider.future);
       if (!mounted) return;
       await _syncWidget(snapshot);
+      await _syncDesktop(snapshot);
       if (!mounted) return;
       await _homeWidget.listenForTaskTaps((id) {
         if (!mounted) return;
@@ -151,6 +177,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     _tapSubscription?.cancel();
     _widgetSubscription?.close();
     _widgetTimezoneSubscription?.close();
+    _desktopClockSubscription?.close();
     _homeWidget.dispose();
     super.dispose();
   }

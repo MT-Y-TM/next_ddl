@@ -1,5 +1,5 @@
 {
-  "version": "1.2.11",
-  "zh": "- 液态玻璃设置新增六个强度滑块：模糊、折射厚度、折射强度、色散、不透明度和高光。\n- 主题设置提供实时输入框预览，拖动时即时显示效果，松手后保存，并支持一键恢复默认参数。\n- 参数随主题保存和 JSON 备份恢复，兼容旧版本；调整或重置玻璃参数不会重置壁纸、圆角或开关状态。\n- 完善透明输入框的深浅文字适配，保持无描边样式，并补齐中文、英文和日语界面。",
-  "en": "- Add six liquid glass sliders for blur, refraction thickness, refraction strength, dispersion, opacity and highlights.\n- Preview the input surface live while dragging, save on release, and restore all glass parameters with one reset action.\n- Persist parameters with theme settings and JSON backups while preserving compatibility, wallpapers, corner radius and the glass toggle.\n- Adapt text colors for transparent inputs without outlines, with Chinese, English and Japanese controls."
+  "version": "1.2.12",
+  "zh": "- Windows 新增系统托盘截止摘要，显示最接近的任务关键节点与剩余时间，空节点名回退为任务名。\n- 支持点击托盘打开应用、右键查看摘要并退出，资源管理器重启后自动恢复托盘图标。\n- 修复不足 0.1 天时紧凑倒计时的边界计算。",
+  "en": "- Add a Windows system tray summary for the nearest active deadline, with milestone names and task-name fallback.\n- Open the app from the tray, view the summary or exit from its menu, and restore the icon after Explorer restarts.\n- Fix compact countdown formatting for durations below 0.1 days."
 }

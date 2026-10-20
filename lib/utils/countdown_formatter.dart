@@ -27,7 +27,7 @@ String formatCompactCountdown(
       Duration.millisecondsPerMinute;
   if (timeUnit == PersistentNotificationTimeUnit.day) {
     final days = absoluteMinutes / 60 / 24;
-    final display = duration == Duration.zero ? 0 : days.clamp(0.1, days);
+    final display = duration == Duration.zero ? 0 : (days < 0.1 ? 0.1 : days);
     return '${display.toStringAsFixed(1)}$daySuffix';
   }
   final hours = absoluteMinutes / 60;
