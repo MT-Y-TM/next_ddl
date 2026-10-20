@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/update_release.dart';
 import '../features/update/update_integrity.dart';
 import '../utils/version_utils.dart';
+import 'release_notes_service.dart';
 
 class DownloadProgress {
   const DownloadProgress({
@@ -132,7 +133,9 @@ class GithubAppUpdateService implements AppUpdateService {
     bool? isAndroid,
     Future<void> Function(String)? installerOpener,
     this.networkTimeout = const Duration(seconds: 30),
-  }) : _client = client ?? http.Client(),
+    ReleaseNotesService? releaseNotesService,
+  }) : _releaseNotes = releaseNotesService ?? ReleaseNotesService(),
+       _client = client ?? http.Client(),
        _cacheDirectory = cacheDirectory,
        _isAndroid = isAndroid ?? Platform.isAndroid,
        _installerOpener = installerOpener,
@@ -144,6 +147,7 @@ class GithubAppUpdateService implements AppUpdateService {
   static final RegExp _installerPattern = RegExp(r'^app-release-v(.+)\.apk$');
 
   final http.Client _client;
+  final ReleaseNotesService _releaseNotes;
   final MethodChannel _methodChannel;
   final Future<Directory> Function()? _cacheDirectory;
   final bool _isAndroid;
@@ -204,6 +208,7 @@ class GithubAppUpdateService implements AppUpdateService {
     } catch (_) {
       throw const AppUpdateException(AppUpdateErrorType.serviceUnavailable);
     }
+    await _releaseNotes.remember(release.version, release.body);
     if (!isNewerSemanticVersion(release.version, currentVersion)) {
       return null;
     }

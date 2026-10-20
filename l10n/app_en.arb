@@ -390,5 +390,7 @@
   "enableAlarmHint": "At this task's reminder times, play a random ringtone. The notification can stop the current alarm.",
   "taskAlarmPlaylist": "Task ringtone playlist",
   "taskAlarmUsesGlobalPlaylist": "Uses the global playlist when no task ringtones are configured",
-  "useGlobalAlarmPlaylist": "Use global playlist"
+  "useGlobalAlarmPlaylist": "Use global playlist",
+  "themeLiquidGlassInputs": "Liquid glass inputs",
+  "versionReleaseNotes": "What's new"
 }

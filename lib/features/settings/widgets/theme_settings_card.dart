@@ -53,6 +53,23 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
               ],
             ),
             const SizedBox(height: 12),
+            SwitchListTile(
+              key: const ValueKey('theme-liquid-glass-inputs'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.themeLiquidGlassInputs),
+              value: settings.liquidGlassInputsEnabled,
+              onChanged: enabled
+                  ? (value) => _run(
+                      () => ref
+                          .read(tasksControllerProvider.notifier)
+                          .updateThemeSettings(
+                            (current) => current.copyWith(
+                              liquidGlassInputsEnabled: value,
+                            ),
+                          ),
+                    )
+                  : null,
+            ),
             Wrap(
               spacing: 8,
               runSpacing: 8,

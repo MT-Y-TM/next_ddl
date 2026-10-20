@@ -16,6 +16,7 @@ import '../features/update/app_update_state.dart';
 import '../models/update_release.dart';
 import '../models/app_snapshot.dart';
 import '../services/home_widget_service.dart';
+import '../services/release_notes_service.dart';
 import '../services/timezone_service.dart';
 import '../services/local_notification_scheduler.dart';
 import '../utils/locale_utils.dart';
@@ -47,7 +48,10 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
       final snapshot = next.valueOrNull;
       if (snapshot != null) _syncWidget(snapshot);
     });
-    _widgetTimezoneSubscription = ref.listenManual(timezoneRevisionProvider, (_, _) {
+    _widgetTimezoneSubscription = ref.listenManual(timezoneRevisionProvider, (
+      _,
+      _,
+    ) {
       final snapshot = ref.read(tasksControllerProvider).valueOrNull;
       if (snapshot != null) _syncWidget(snapshot);
     });
@@ -101,7 +105,10 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
 
   Future<void> _syncWidget(AppSnapshot snapshot) async {
     try {
-      await _homeWidget.sync(snapshot, timezoneId: ref.read(timezoneServiceProvider).currentTimezoneId);
+      await _homeWidget.sync(
+        snapshot,
+        timezoneId: ref.read(timezoneServiceProvider).currentTimezoneId,
+      );
     } catch (error) {
       debugPrint('Home widget sync failed: ${error.runtimeType}');
     }
@@ -116,10 +123,18 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
       await _homeWidget.listenForTaskTaps((id) {
         if (!mounted) return;
         final navigator = _navigatorKey.currentState;
-        final exists = ref.read(tasksControllerProvider).valueOrNull?.tasks.any((task) => task.id == id) ?? false;
+        final exists =
+            ref
+                .read(tasksControllerProvider)
+                .valueOrNull
+                ?.tasks
+                .any((task) => task.id == id) ??
+            false;
         if (navigator == null) return;
         if (exists) {
-          navigator.push(MaterialPageRoute<void>(builder: (_) => TaskDetailPage(taskId: id)));
+          navigator.push(
+            MaterialPageRoute<void>(builder: (_) => TaskDetailPage(taskId: id)),
+          );
         } else {
           navigator.popUntil((route) => route.isFirst);
         }
@@ -143,7 +158,9 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      ref.read(appUpdateControllerProvider.notifier).resumePendingInstallIfPossible();
+      ref
+          .read(appUpdateControllerProvider.notifier)
+          .resumePendingInstallIfPossible();
       _refreshPlans();
     }
   }
@@ -200,49 +217,64 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
           }
           return AlertDialog(
             title: Text(l10n.updateDialogTitle),
-            content: SingleChildScrollView(child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.updateDialogMessage(release.version)),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.publishedAtLabel(
-                    '${release.publishedAtUtc.toLocal().year}-${release.publishedAtUtc.toLocal().month.toString().padLeft(2, '0')}-${release.publishedAtUtc.toLocal().day.toString().padLeft(2, '0')}',
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  release.body.isEmpty ? l10n.noReleaseNotes : release.body,
-                  maxLines: 6,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (state.hasReusableLocalInstaller) ...[
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.updateDialogMessage(release.version)),
                   const SizedBox(height: 8),
                   Text(
-                    l10n.updateUsingCachedInstaller(
-                      state.localInstallerVersion ?? release.version,
+                    l10n.publishedAtLabel(
+                      '${release.publishedAtUtc.toLocal().year}-${release.publishedAtUtc.toLocal().month.toString().padLeft(2, '0')}-${release.publishedAtUtc.toLocal().day.toString().padLeft(2, '0')}',
                     ),
-                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                ],
-                if (isDownloading) ...[
-                  const SizedBox(height: 16),
-                  LinearProgressIndicator(value: state.downloadProgress),
                   const SizedBox(height: 8),
                   Text(
-                    _downloadProgressText(l10n, state),
-                    style: Theme.of(context).textTheme.bodySmall,
+                    localizedReleaseNotes(
+                          release.body,
+                          Localizations.localeOf(context).languageCode,
+                        ).isEmpty
+                        ? l10n.noReleaseNotes
+                        : localizedReleaseNotes(
+                            release.body,
+                            Localizations.localeOf(context).languageCode,
+                          ),
+                    maxLines: 6,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (state.hasReusableLocalInstaller) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.updateUsingCachedInstaller(
+                        state.localInstallerVersion ?? release.version,
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  if (isDownloading) ...[
+                    const SizedBox(height: 16),
+                    LinearProgressIndicator(value: state.downloadProgress),
+                    const SizedBox(height: 8),
+                    Text(
+                      _downloadProgressText(l10n, state),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                  if (state.status == AppUpdateStatus.error ||
+                      state.requiresInstallPermission)
+                    UpdateReliabilityPanel(
+                      state: state,
+                      onRetry: () => ref
+                          .read(appUpdateControllerProvider.notifier)
+                          .downloadAndInstall(),
+                      onOpenRelease: () => ref
+                          .read(appUpdateControllerProvider.notifier)
+                          .openReleasePage(),
+                    ),
                 ],
-                if (state.status == AppUpdateStatus.error || state.requiresInstallPermission)
-                  UpdateReliabilityPanel(
-                    state: state,
-                    onRetry: () => ref.read(appUpdateControllerProvider.notifier).downloadAndInstall(),
-                    onOpenRelease: () => ref.read(appUpdateControllerProvider.notifier).openReleasePage(),
-                  ),
-              ],
-            )),
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: isDownloading
@@ -279,8 +311,9 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   String _downloadProgressText(AppLocalizations l10n, AppUpdateState state) {
     final percent = state.downloadPercent;
     final speed = state.downloadSpeedBytesPerSecond;
-    final percentText =
-        percent == null ? l10n.downloadProgressUnknown : l10n.downloadPercent(percent);
+    final percentText = percent == null
+        ? l10n.downloadProgressUnknown
+        : l10n.downloadPercent(percent);
     final speedText = speed == null || speed <= 0
         ? l10n.downloadSpeedUnknown
         : l10n.downloadSpeed(_formatSpeed(speed));

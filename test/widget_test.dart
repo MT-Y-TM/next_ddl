@@ -25,6 +25,7 @@ import 'package:next_ddl/services/alarm_audio_picker_service.dart';
 import 'package:next_ddl/services/alarm_scheduler.dart';
 import 'package:next_ddl/services/app_info_service.dart';
 import 'package:next_ddl/services/app_update_service.dart';
+import 'package:next_ddl/services/release_notes_service.dart';
 import 'package:next_ddl/services/deadline_repository.dart';
 import 'package:next_ddl/services/file_export_service.dart';
 import 'package:next_ddl/services/notification_scheduler.dart';
@@ -36,6 +37,69 @@ import 'package:timezone/timezone.dart' as tz;
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tz_data.initializeTimeZones();
+
+  for (final locale in [
+    AppLocalePreference.zh,
+    AppLocalePreference.en,
+    AppLocalePreference.ja,
+  ]) {
+    testWidgets('current version card shows localized cached notes ($locale)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _buildSettingsApp(
+          AppSnapshot.empty().copyWith(preferredLocale: locale),
+          updateService: _FakeAppUpdateService(),
+          versionNotes: const VersionReleaseNotes(
+            version: '1.2.10',
+            body: '## 中文\n本次中文内容\n## English\nCurrent English notes',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final l = AppLocalizations.of(tester.element(find.byType(SettingsPage)))!;
+      await _openSettingsSection(tester, l.settingsAboutApp);
+      expect(find.text('1.2.10'), findsOneWidget);
+      expect(find.text(l.versionReleaseNotes), findsOneWidget);
+      expect(
+        find.text(
+          locale == AppLocalePreference.zh ? '本次中文内容' : 'Current English notes',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          locale == AppLocalePreference.zh ? 'Current English notes' : '本次中文内容',
+        ),
+        findsNothing,
+      );
+    });
+  }
+
+  testWidgets('theme glass switch defaults off and saves its preference', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildApp(
+        AppSnapshot.empty().copyWith(preferredLocale: AppLocalePreference.en),
+        DateTime.utc(2026, 10, 20),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    await _openSettingsSection(tester, 'Theme');
+    final toggle = find.byKey(const ValueKey('theme-liquid-glass-inputs'));
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+    final container = ProviderScope.containerOf(tester.element(toggle));
+    final stored = await container
+        .read(deadlineRepositoryProvider)
+        .loadSnapshot();
+    expect(stored.themeSettings.liquidGlassInputsEnabled, isTrue);
+  });
 
   testWidgets(
     'home page defaults to in-progress tab and separates overdue tasks',
@@ -407,6 +471,8 @@ void main() {
     await _openSettingsSection(tester, 'Theme');
 
     final firstThumbnail = find.byKey(ValueKey('recent-background-$firstPath'));
+    await tester.ensureVisible(firstThumbnail);
+    await tester.pumpAndSettle();
     await tester.longPress(firstThumbnail);
     await tester.pumpAndSettle();
     expect(find.text('Remove recent background?'), findsOneWidget);
@@ -584,6 +650,7 @@ void main() {
         ValueKey('recent-background-${old.backgroundImagePath}'),
       );
       await tester.ensureVisible(thumbnail);
+      await tester.pumpAndSettle();
       await tester.tap(thumbnail);
       // File I/O completes outside fake time; then pump the resulting state.
       for (var attempt = 0; attempt < 100; attempt++) {
@@ -1044,6 +1111,7 @@ Widget _buildApp(
   DateTime now, {
   AppUpdateService? updateService,
   ThemeAssetService? themeAssetService,
+  VersionReleaseNotes? versionNotes,
 }) {
   return ProviderScope(
     overrides: [
@@ -1059,6 +1127,7 @@ Widget _buildApp(
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+      currentVersionNotesProvider.overrideWith((ref) async => versionNotes),
       appUpdateServiceProvider.overrideWithValue(
         updateService ?? _FakeAppUpdateService(),
       ),
@@ -1072,6 +1141,7 @@ Widget _buildSettingsApp(
   AppSnapshot snapshot, {
   required AppUpdateService updateService,
   ThemeAssetService? themeAssetService,
+  VersionReleaseNotes? versionNotes,
 }) {
   return ProviderScope(
     overrides: [
@@ -1087,6 +1157,7 @@ Widget _buildSettingsApp(
       timezoneServiceProvider.overrideWithValue(_FakeTimezoneService()),
       fileExportServiceProvider.overrideWithValue(_FakeFileExportService()),
       appInfoServiceProvider.overrideWithValue(_FakeAppInfoService()),
+      currentVersionNotesProvider.overrideWith((ref) async => versionNotes),
       appUpdateServiceProvider.overrideWithValue(updateService),
     ],
     child: MaterialApp(
@@ -1398,5 +1469,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.1.9';
+  Future<String> getVersionLabel() async => '1.2.10';
 }

@@ -782,4 +782,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get useGlobalAlarmPlaylist => 'Use global playlist';
+
+  @override
+  String get themeLiquidGlassInputs => 'Liquid glass inputs';
+
+  @override
+  String get versionReleaseNotes => 'What\'s new';
 }

@@ -1,0 +1,5 @@
+{
+  "version": "1.2.10",
+  "zh": "- 移除背景文字的描边和光晕，保留根据背景明暗自动选择文字颜色。\n- 主题设置新增液态玻璃输入框开关，默认关闭；开启后输入框使用背景模糊、折射和高光，跟随自定义圆角。\n- 关于应用的当前版本卡片展示本次更新说明，按版本缓存；中文显示中文，其他语言显示英文，离线时仍可查看已缓存内容。\n- 固定接入 liquid-glass-flutter 源码并适配 Flutter 3.38.3，保留原有背景、数据与小组件能力。",
+  "en": "- Remove outlines and halos from wallpaper text while retaining automatic light/dark text colors.\n- Add an opt-in liquid glass input style in theme settings, disabled by default, with background blur, refraction, highlights and the configured corner radius.\n- Show version-specific release notes in the current-version card and cache them for offline reading. Chinese uses Chinese notes; all other languages use English.\n- Integrate a pinned liquid-glass-flutter source snapshot compatible with Flutter 3.38.3, preserving wallpapers, data and home widgets."
+}

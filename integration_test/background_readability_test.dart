@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:kyant_glass/kyant_glass.dart';
 import 'package:next_ddl/app/background_readability.dart';
+import 'package:next_ddl/app/liquid_glass_input.dart';
 import 'package:next_ddl/app/theme.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
 import 'package:next_ddl/models/app_theme_settings.dart';
@@ -115,12 +117,123 @@ void main() {
     await verify(Colors.black);
     settings.value = settings.value.copyWith(imageOverlayOpacity: 0.85);
     await verify(Colors.white);
-    if (Platform.isAndroid) {
-      await binding.convertFlutterSurfaceToImage();
-      await tester.pumpAndSettle();
-      await binding.takeScreenshot('background-readability-device');
-    }
     await tester.pumpWidget(const SizedBox.shrink());
     await FileImage(file).evict();
   });
+
+  testWidgets(
+    'device renders glass inputs, typing and native back navigation',
+    (tester) async {
+      await KyantGlass.precache();
+      final enabled = ValueNotifier(false);
+      final controller = TextEditingController(text: 'Next DDL');
+      final navigator = GlobalKey<NavigatorState>();
+      addTearDown(enabled.dispose);
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        ValueListenableBuilder(
+          valueListenable: enabled,
+          builder: (_, value, _) => MaterialApp(
+            navigatorKey: navigator,
+            theme: buildNextDdlTheme(
+              settings: AppThemeSettings(
+                liquidGlassInputsEnabled: value,
+                cornerRadius: 24,
+              ),
+            ),
+            builder: (_, child) => NextDdlAppShell(
+              background: const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF182D58),
+                      Color(0xFF76B8BD),
+                      Color(0xFFD3B780),
+                    ],
+                  ),
+                ),
+              ),
+              child: child!,
+            ),
+            home: Scaffold(
+              appBar: AppBar(title: const Text('Next DDL')),
+              body: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  const WallpaperText('Liquid glass inputs'),
+                  const SizedBox(height: 24),
+                  LiquidGlassInput(
+                    child: TextField(
+                      controller: controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Task title',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const LiquidGlassInput(
+                    child: TextField(
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Plan the next milestone',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text('Cards keep their original colors'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(KyantGlass), findsNothing);
+      enabled.value = true;
+      await tester.pumpAndSettle();
+      expect(find.byType(KyantGlass), findsNWidgets(2));
+      await tester.enterText(find.byType(TextField).first, 'Task planning 日本語');
+      await tester.pumpAndSettle();
+      expect(controller.text, 'Task planning 日本語');
+      expect(KyantDiagnostics.explicitPaints, greaterThan(0));
+      final source = KyantBackdropScope.maybeOf(
+        tester.element(find.byType(TextField).first),
+      )!;
+      final revision = source.revision;
+      navigator.currentState!.push(
+        MaterialPageRoute<void>(
+          builder: (_) =>
+              const Scaffold(body: Center(child: WallpaperText('Second page'))),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(controller.text, 'Task planning 日本語');
+      expect(source.revision, revision);
+      for (final editable in tester.widgetList<EditableText>(
+        find.byType(EditableText),
+      )) {
+        expect(editable.style.shadows ?? [], isEmpty);
+      }
+      expect(tester.takeException(), isNull);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      if (Platform.isAndroid) {
+        await binding.convertFlutterSurfaceToImage();
+        await tester.pumpAndSettle();
+        await binding.takeScreenshot('liquid-glass-inputs');
+      }
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
 }

@@ -198,27 +198,30 @@ jobs:
       - build-windows
       - build-android
     steps:
+      - name: Checkout release metadata
+        uses: actions/checkout@v6
+
       - name: Download all build artifacts
         uses: actions/download-artifact@v4
         with:
           path: release-assets
           merge-multiple: true
 
+      - name: Prepare bilingual release notes
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          notes = json.loads(Path('asset/release_notes.json').read_text(encoding='utf-8'))
+          if os.environ['GITHUB_REF_NAME'] not in (notes['version'], 'v' + notes['version']):
+              raise SystemExit('Release notes version does not match the tag')
+          Path('release-notes.md').write_text('## 中文\n' + notes['zh'] + '\n\n## English\n' + notes['en'] + '\n', encoding='utf-8')
+          PY
+
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: |
-            ## 中文
-            - 新增背景文字自动对比度：分析实际背景的主色调与相对亮度，深色背景使用浅字，浅色背景使用深字，混合明暗区域辅以细微文字光晕。
-            - 覆盖时间线、提醒标题、首页摘要与空状态、透明编辑表单、备份和规划页；卡片、带底色的控件和弹窗保留原有配色。
-            - 背景裁切、缩放、旋转、模糊和遮罩后的最终画面参与判断；低分辨率采样仅随背景重绘更新，不随倒计时或页面切换重复解码壁纸。
-            - 保留中/英/日适配、Android 小组件任务选择和原有数据格式，补充对比度、背景稳定性及 Android 渲染验证。
-
-            ## English
-            - Add automatic wallpaper text contrast using the rendered background's dominant colors and relative luminance: light text on dark backgrounds, dark text on light backgrounds, and subtle halos for mixed areas.
-            - Cover timelines, reminder headings, home summaries and empty states, transparent forms, backups and planning while preserving card, filled-control and dialog color pairs.
-            - Analyze the final crop, zoom, rotation, blur and overlay with low-resolution samples on background repaints, without re-decoding wallpaper during countdown ticks or navigation.
-            - Preserve Chinese/English/Japanese support, Android widget task picking and existing data formats, with contrast, wallpaper stability and Android-renderer tests.
+          body_path: release-notes.md
           files: |
             release-assets/windows-release.zip
             release-assets/app-release.apk

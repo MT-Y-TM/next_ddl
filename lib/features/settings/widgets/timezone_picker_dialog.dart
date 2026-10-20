@@ -1,3 +1,4 @@
+import '../../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -50,19 +51,21 @@ class _TimezonePickerDialogState extends State<TimezonePickerDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: _searchController,
-              autofocus: true,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                labelText: l10n.searchTimezone,
-                hintText: l10n.searchTimezoneHint,
+            LiquidGlassInput(
+              child: TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  labelText: l10n.searchTimezone,
+                  hintText: l10n.searchTimezoneHint,
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _query = value.trim().toLowerCase();
+                  });
+                },
               ),
-              onChanged: (value) {
-                setState(() {
-                  _query = value.trim().toLowerCase();
-                });
-              },
             ),
             const SizedBox(height: 12),
             Flexible(

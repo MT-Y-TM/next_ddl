@@ -1,3 +1,4 @@
+import '../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
 import '../../app/background_readability.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,7 @@ import 'widgets/timezone_picker_dialog.dart';
 import 'widgets/update_settings_card.dart';
 import 'prediction_ui_strings.dart';
 import '../../services/ai_secret_store.dart';
+import '../../services/release_notes_service.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -476,6 +478,10 @@ class _AboutAppSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final versionAsync = ref.watch(appVersionProvider);
     final updateState = ref.watch(appUpdateControllerProvider);
+    final releaseNotes = ref.watch(currentVersionNotesProvider).valueOrNull;
+    final notes =
+        releaseNotes?.textFor(Localizations.localeOf(context).languageCode) ??
+        '';
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -484,10 +490,30 @@ class _AboutAppSettingsPage extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: Text(l10n.currentVersion),
-              subtitle: Text(versionAsync.valueOrNull ?? l10n.loading),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: Text(l10n.currentVersion),
+                  subtitle: Text(versionAsync.valueOrNull ?? l10n.loading),
+                ),
+                if (notes.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.versionReleaseNotes,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(notes),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
           UpdateSettingsCard(state: updateState),
@@ -640,35 +666,43 @@ class _PredictionSettingsPageState
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: _baseUrlController,
-                      decoration: InputDecoration(labelText: strings.baseUrl),
-                      keyboardType: TextInputType.url,
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _modelController,
-                      decoration: InputDecoration(labelText: strings.model),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _apiKeyController,
-                      keyboardType: TextInputType.text,
-                      autocorrect: false,
-                      enableSuggestions: false,
-                      decoration: InputDecoration(
-                        labelText: strings.apiKey,
-                        helperText: _apiKeySaved ? strings.apiKeySaved : null,
+                    LiquidGlassInput(
+                      child: TextField(
+                        controller: _baseUrlController,
+                        decoration: InputDecoration(labelText: strings.baseUrl),
+                        keyboardType: TextInputType.url,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: _promptController,
-                      minLines: 3,
-                      maxLines: 8,
-                      decoration: InputDecoration(
-                        labelText: strings.prompt,
-                        hintText: strings.promptHint,
+                    LiquidGlassInput(
+                      child: TextField(
+                        controller: _modelController,
+                        decoration: InputDecoration(labelText: strings.model),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    LiquidGlassInput(
+                      child: TextField(
+                        controller: _apiKeyController,
+                        keyboardType: TextInputType.text,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        decoration: InputDecoration(
+                          labelText: strings.apiKey,
+                          helperText: _apiKeySaved ? strings.apiKeySaved : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    LiquidGlassInput(
+                      child: TextField(
+                        controller: _promptController,
+                        minLines: 3,
+                        maxLines: 8,
+                        decoration: InputDecoration(
+                          labelText: strings.prompt,
+                          hintText: strings.promptHint,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),

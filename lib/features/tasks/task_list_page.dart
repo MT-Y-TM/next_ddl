@@ -1,3 +1,4 @@
+import '../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -93,16 +94,18 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                             context: context,
                             builder: (dialogContext) => AlertDialog(
                               title: Text(strings.editTag),
-                              content: TextField(
-                                controller: controller,
-                                autofocus: true,
-                                textInputAction: TextInputAction.done,
-                                decoration: InputDecoration(
-                                  labelText: strings.tagName,
-                                ),
-                                onSubmitted: (_) => Navigator.pop(
-                                  dialogContext,
-                                  controller.text,
+                              content: LiquidGlassInput(
+                                child: TextField(
+                                  controller: controller,
+                                  autofocus: true,
+                                  textInputAction: TextInputAction.done,
+                                  decoration: InputDecoration(
+                                    labelText: strings.tagName,
+                                  ),
+                                  onSubmitted: (_) => Navigator.pop(
+                                    dialogContext,
+                                    controller.text,
+                                  ),
                                 ),
                               ),
                               actions: [
@@ -274,16 +277,18 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                             child: WallpaperRegion(
-                              child: TextField(
-                                controller: _search,
-                                onChanged: (_) => setState(() {}),
-                                decoration: InputDecoration(
-                                  labelText: strings.search,
-                                  prefixIcon: const Icon(Icons.search),
-                                  suffixIcon: IconButton(
-                                    tooltip: strings.clear,
-                                    onPressed: _clear,
-                                    icon: const Icon(Icons.clear),
+                              child: LiquidGlassInput(
+                                child: TextField(
+                                  controller: _search,
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: InputDecoration(
+                                    labelText: strings.search,
+                                    prefixIcon: const Icon(Icons.search),
+                                    suffixIcon: IconButton(
+                                      tooltip: strings.clear,
+                                      onPressed: _clear,
+                                      icon: const Icon(Icons.clear),
+                                    ),
                                   ),
                                 ),
                               ),

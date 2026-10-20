@@ -19,6 +19,7 @@ class AppThemeSettings {
   const AppThemeSettings({
     this.seedColorValue = 0xFF0E7490,
     this.cornerRadius = 8,
+    this.liquidGlassInputsEnabled = false,
     this.backgroundMode = ThemeBackgroundMode.solid,
     this.solidBackgroundColorValue = 0xFFF4F7F8,
     this.gradientStartColorValue = 0xFFF4F7F8,
@@ -38,6 +39,7 @@ class AppThemeSettings {
 
   final int seedColorValue;
   final double cornerRadius;
+  final bool liquidGlassInputsEnabled;
   final ThemeBackgroundMode backgroundMode;
   final int solidBackgroundColorValue;
   final int gradientStartColorValue;
@@ -100,6 +102,7 @@ class AppThemeSettings {
   AppThemeSettings copyWith({
     int? seedColorValue,
     double? cornerRadius,
+    bool? liquidGlassInputsEnabled,
     ThemeBackgroundMode? backgroundMode,
     int? solidBackgroundColorValue,
     int? gradientStartColorValue,
@@ -124,6 +127,8 @@ class AppThemeSettings {
           hiddenRecentBackgroundPaths ?? this.hiddenRecentBackgroundPaths,
       seedColorValue: seedColorValue ?? this.seedColorValue,
       cornerRadius: (cornerRadius ?? this.cornerRadius).clamp(0, 32).toDouble(),
+      liquidGlassInputsEnabled:
+          liquidGlassInputsEnabled ?? this.liquidGlassInputsEnabled,
       backgroundMode: backgroundMode ?? this.backgroundMode,
       solidBackgroundColorValue:
           solidBackgroundColorValue ?? this.solidBackgroundColorValue,
@@ -155,6 +160,7 @@ class AppThemeSettings {
   Map<String, dynamic> toJson() => {
     'seedColorValue': seedColorValue,
     'cornerRadius': cornerRadius,
+    'liquidGlassInputsEnabled': liquidGlassInputsEnabled,
     'backgroundMode': backgroundMode.value,
     'solidBackgroundColorValue': solidBackgroundColorValue,
     'gradientStartColorValue': gradientStartColorValue,
@@ -205,6 +211,8 @@ class AppThemeSettings {
               .toList(),
       seedColorValue:
           (json['seedColorValue'] as num?)?.toInt() ?? defaults.seedColorValue,
+      liquidGlassInputsEnabled:
+          json['liquidGlassInputsEnabled'] as bool? ?? false,
       cornerRadius:
           ((json['cornerRadius'] as num?)?.toDouble() ?? defaults.cornerRadius)
               .clamp(0, 32)

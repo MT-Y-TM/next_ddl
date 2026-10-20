@@ -37,7 +37,6 @@ void main() {
           ),
         ),
       );
-      expect(result.needsHalo, isFalse);
     }
   });
 
@@ -54,7 +53,7 @@ void main() {
   });
 
   test(
-    'dominant area wins over a bright highlight, mixed backgrounds get halos',
+    'dominant area wins over a bright highlight without text decoration',
     () {
       final pixels = Uint8List.fromList([
         for (var i = 0; i < 70; i++) ...[16, 16, 16, 255],
@@ -64,9 +63,6 @@ void main() {
       expect(result.foreground, Colors.white);
       expect(result.dominantColor, const Color(0xFF101010));
       expect(result.readableFraction, 0.7);
-      expect(result.needsHalo, isTrue);
-      expect(result.shadows, hasLength(4));
-      expect(result.shadows.first.color.a, greaterThan(0.8));
     },
   );
 
@@ -253,31 +249,30 @@ void main() {
     },
   );
 
-  testWidgets(
-    'mixed painted wallpaper adds a halo without changing surface widgets',
-    (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildNextDdlTheme(),
-          builder: (_, child) => NextDdlAppShell(
-            background: CustomPaint(painter: _MixedPainter()),
-            child: child!,
-          ),
-          home: const Scaffold(
-            body: Column(
-              children: [
-                WallpaperText('mixed'),
-                Card(child: Text('surface')),
-              ],
-            ),
+  testWidgets('mixed painted wallpaper keeps text free of outlines and halos', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildNextDdlTheme(),
+        builder: (_, child) => NextDdlAppShell(
+          background: CustomPaint(painter: _MixedPainter()),
+          child: child!,
+        ),
+        home: const Scaffold(
+          body: Column(
+            children: [
+              WallpaperText('mixed'),
+              Card(child: Text('surface')),
+            ],
           ),
         ),
-      );
-      await _readback(tester);
-      expect(_style(tester, 'mixed').shadows, isNotEmpty);
-      expect(_style(tester, 'surface').shadows, isNull);
-    },
-  );
+      ),
+    );
+    await _readback(tester);
+    expect(_style(tester, 'mixed').shadows, isEmpty);
+    expect(_style(tester, 'surface').shadows, isNull);
+  });
 
   testWidgets(
     'navigation and foreground updates do not repaint/reanalyze the background',

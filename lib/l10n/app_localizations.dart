@@ -1467,6 +1467,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use global playlist'**
   String get useGlobalAlarmPlaylist;
+
+  /// No description provided for @themeLiquidGlassInputs.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass inputs'**
+  String get themeLiquidGlassInputs;
+
+  /// No description provided for @versionReleaseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get versionReleaseNotes;
 }
 
 class _AppLocalizationsDelegate

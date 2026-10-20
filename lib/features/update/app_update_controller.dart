@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../services/app_info_service.dart';
 import '../../services/app_update_service.dart';
+import '../../services/release_notes_service.dart';
 import 'app_update_state.dart';
 
 final appUpdateControllerProvider =
@@ -33,6 +34,7 @@ class AppUpdateController extends Notifier<AppUpdateState> {
       final release = await _service.checkForUpdate(
         currentVersion: currentVersion,
       );
+      ref.invalidate(currentVersionNotesProvider);
       if (release == null) {
         state = state.copyWith(
           status: AppUpdateStatus.upToDate,

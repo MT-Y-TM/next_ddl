@@ -389,5 +389,7 @@
   "enableAlarmHint": "このタスクのリマインダー時刻にランダムな着信音を再生します。通知から今回の鳴動を停止できます。",
   "taskAlarmPlaylist": "タスク着信音プレイリスト",
   "taskAlarmUsesGlobalPlaylist": "タスク着信音が未設定の場合は共通プレイリストを使用します",
-  "useGlobalAlarmPlaylist": "共通プレイリストを使う"
+  "useGlobalAlarmPlaylist": "共通プレイリストを使う",
+  "themeLiquidGlassInputs": "リキッドガラス入力欄",
+  "versionReleaseNotes": "更新内容"
 }

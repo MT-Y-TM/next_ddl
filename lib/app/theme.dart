@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/tasks/tasks_controller.dart';
 import '../models/app_theme_settings.dart';
-import 'background_readability.dart';
+import 'liquid_glass_input.dart';
 
 ThemeData buildNextDdlTheme({
   Brightness brightness = Brightness.light,
@@ -20,6 +20,12 @@ ThemeData buildNextDdlTheme({
 
   return ThemeData(
     useMaterial3: true,
+    extensions: [
+      InputGlassTheme(
+        enabled: settings.liquidGlassInputsEnabled,
+        radius: settings.cornerRadius,
+      ),
+    ],
     colorScheme: scheme,
     brightness: brightness,
     scaffoldBackgroundColor: Colors.transparent,
@@ -85,7 +91,7 @@ class NextDdlAppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BackgroundReadabilityHost(background: background, child: child);
+    return InputGlassBackdropShell(background: background, child: child);
   }
 }
 

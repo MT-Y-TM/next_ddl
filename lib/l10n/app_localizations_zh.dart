@@ -754,4 +754,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get useGlobalAlarmPlaylist => '改用全局播放列表';
+
+  @override
+  String get themeLiquidGlassInputs => '液态玻璃输入框';
+
+  @override
+  String get versionReleaseNotes => '本次更新';
 }

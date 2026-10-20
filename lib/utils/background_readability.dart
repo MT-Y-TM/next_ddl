@@ -16,28 +16,6 @@ class BackgroundReadability {
   final Color foreground;
   final double readableFraction;
 
-  bool get needsHalo => readableFraction < 0.95;
-
-  List<Shadow> get shadows => needsHalo
-      ? [
-          for (final offset in const [
-            Offset(-0.6, 0),
-            Offset(0.6, 0),
-            Offset(0, -0.6),
-            Offset(0, 0.6),
-          ])
-            Shadow(
-              color:
-                  (foreground == const Color(0xFFFFFFFF)
-                          ? const Color(0xFF000000)
-                          : const Color(0xFFFFFFFF))
-                      .withValues(alpha: 0.85),
-              offset: offset,
-              blurRadius: 1.5,
-            ),
-        ]
-      : const [];
-
   factory BackgroundReadability.forColor(Color color) =>
       analyzeBackgroundPixels(
         Uint8List.fromList([

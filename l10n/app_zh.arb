@@ -389,5 +389,7 @@
   "enableAlarmHint": "到达该任务的提醒时间时播放随机铃声，通知栏可停止本次响铃。",
   "taskAlarmPlaylist": "任务铃声播放列表",
   "taskAlarmUsesGlobalPlaylist": "未配置任务铃声时使用全局播放列表",
-  "useGlobalAlarmPlaylist": "改用全局播放列表"
+  "useGlobalAlarmPlaylist": "改用全局播放列表",
+  "themeLiquidGlassInputs": "液态玻璃输入框",
+  "versionReleaseNotes": "本次更新"
 }

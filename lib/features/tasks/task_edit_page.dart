@@ -1,3 +1,4 @@
+import '../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
@@ -98,60 +99,66 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
         padding: const EdgeInsets.all(16),
         children: [
           WallpaperRegion(
-            child: TextField(
-              controller: _titleController,
-              decoration: InputDecoration(
-                labelText: l10n.taskTitle,
-                hintText: l10n.taskTitleHint,
+            child: LiquidGlassInput(
+              child: TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  labelText: l10n.taskTitle,
+                  hintText: l10n.taskTitleHint,
+                ),
               ),
             ),
           ),
           const SizedBox(height: 16),
           WallpaperRegion(
-            child: TextField(
-              controller: _noteController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                labelText: l10n.note,
-                hintText: l10n.noteHint,
+            child: LiquidGlassInput(
+              child: TextField(
+                controller: _noteController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: l10n.note,
+                  hintText: l10n.noteHint,
+                ),
               ),
             ),
           ),
           const SizedBox(height: 20),
           WallpaperRegion(
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: TaskUiStrings(context).tags,
-                helperText: TaskUiStrings(context).addTag,
-                border: const OutlineInputBorder(),
-              ),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  for (final tag in _tags)
-                    Theme(
-                      data: Theme.of(context),
-                      child: InputChip(
-                        label: Text(tag),
-                        onDeleted: () => setState(() => _tags.remove(tag)),
+            child: LiquidGlassInput(
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: TaskUiStrings(context).tags,
+                  helperText: TaskUiStrings(context).addTag,
+                  border: const OutlineInputBorder(),
+                ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    for (final tag in _tags)
+                      Theme(
+                        data: Theme.of(context),
+                        child: InputChip(
+                          label: Text(tag),
+                          onDeleted: () => setState(() => _tags.remove(tag)),
+                        ),
+                      ),
+                    SizedBox(
+                      width: 180,
+                      child: TextField(
+                        controller: _tagInputController,
+                        decoration: InputDecoration(
+                          hintText: TaskUiStrings(context).tagName,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: _addTag,
                       ),
                     ),
-                  SizedBox(
-                    width: 180,
-                    child: TextField(
-                      controller: _tagInputController,
-                      decoration: InputDecoration(
-                        hintText: TaskUiStrings(context).tagName,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: _addTag,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -423,9 +430,11 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: l10n.milestoneName),
+              LiquidGlassInput(
+                child: TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: l10n.milestoneName),
+                ),
               ),
               const SizedBox(height: 12),
               ListTile(
@@ -494,10 +503,12 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l10n.quantity),
+              LiquidGlassInput(
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: l10n.quantity),
+                ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<_ReminderUnit>(

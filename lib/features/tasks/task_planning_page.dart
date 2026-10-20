@@ -1,3 +1,4 @@
+import '../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
 import '../../app/background_readability.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -599,10 +600,12 @@ class _PlanningEditorState extends State<_PlanningEditor> {
     final s = TaskPlanningStrings(Localizations.localeOf(context));
     Widget field(String key, {int lines = 1}) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: fields[key],
-        maxLines: lines,
-        decoration: InputDecoration(labelText: s.text(key)),
+      child: LiquidGlassInput(
+        child: TextField(
+          controller: fields[key],
+          maxLines: lines,
+          decoration: InputDecoration(labelText: s.text(key)),
+        ),
       ),
     );
     return AlertDialog(

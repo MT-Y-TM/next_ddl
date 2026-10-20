@@ -21,8 +21,7 @@ class WallpaperReadability extends InheritedWidget {
 
   @override
   bool updateShouldNotify(WallpaperReadability oldWidget) =>
-      oldWidget.value.foreground != value.foreground ||
-      oldWidget.value.needsHalo != value.needsHalo;
+      oldWidget.value.foreground != value.foreground;
 }
 
 /// Only opt transparent content into this theme. Cards, chips, filled buttons,
@@ -38,7 +37,7 @@ class WallpaperRegion extends StatelessWidget {
     final base = Theme.of(context);
     final foreground = readability.foreground;
     TextStyle readable(TextStyle? style) => (style ?? const TextStyle())
-        .copyWith(color: foreground, shadows: readability.shadows);
+        .copyWith(color: foreground, shadows: const []);
     final textTheme = base.textTheme.copyWith(
       displayLarge: readable(base.textTheme.displayLarge),
       displayMedium: readable(base.textTheme.displayMedium),
@@ -119,7 +118,7 @@ class WallpaperRegion extends StatelessWidget {
         ),
       ),
       child: DefaultTextStyle.merge(
-        style: TextStyle(color: foreground, shadows: readability.shadows),
+        style: TextStyle(color: foreground, shadows: const []),
         child: child,
       ),
     );
@@ -150,7 +149,7 @@ class WallpaperText extends StatelessWidget {
           ? style
           : (style ?? const TextStyle()).copyWith(
               color: readability.foreground,
-              shadows: readability.shadows,
+              shadows: const [],
             ),
       textAlign: textAlign,
       maxLines: maxLines,
@@ -163,10 +162,12 @@ class BackgroundReadabilityHost extends StatefulWidget {
   const BackgroundReadabilityHost({
     required this.background,
     required this.child,
+    this.onBackgroundPainted,
     super.key,
   });
   final Widget background;
   final Widget child;
+  final ValueChanged<RenderRepaintBoundary>? onBackgroundPainted;
 
   @override
   State<BackgroundReadabilityHost> createState() =>
@@ -181,6 +182,7 @@ class _BackgroundReadabilityHostState extends State<BackgroundReadabilityHost> {
   var _capturing = false;
 
   void _painted(RenderRepaintBoundary boundary) {
+    widget.onBackgroundPainted?.call(boundary);
     _boundary = boundary;
     _revision++;
     _schedule();
@@ -213,8 +215,7 @@ class _BackgroundReadabilityHostState extends State<BackgroundReadabilityHost> {
       final result = analyzeBackgroundPixels(
         bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
       );
-      if (_value?.foreground != result.foreground ||
-          _value?.needsHalo != result.needsHalo) {
+      if (_value?.foreground != result.foreground) {
         setState(() => _value = result);
       } else {
         _value = result;

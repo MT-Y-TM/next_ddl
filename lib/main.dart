@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'services/app_info_service.dart';
 import 'services/app_update_service.dart';
+import 'services/release_notes_service.dart';
 import 'services/alarm_scheduler.dart';
 import 'services/alarm_audio_picker_service.dart';
 import 'services/bootstrap_service.dart';
@@ -25,7 +26,10 @@ Future<void> main() async {
   final repository = SharedPrefsDeadlineRepository(
     fileExportService: fileExportService,
   );
-  final appUpdateService = GithubAppUpdateService();
+  final releaseNotesService = ReleaseNotesService();
+  final appUpdateService = GithubAppUpdateService(
+    releaseNotesService: releaseNotesService,
+  );
   final alarmScheduler = MethodChannelAlarmScheduler();
   final notificationScheduler = LocalNotificationScheduler(
     timezoneService: timezoneService,
@@ -49,6 +53,7 @@ Future<void> main() async {
         fileExportServiceProvider.overrideWithValue(fileExportService),
         appInfoServiceProvider.overrideWithValue(PackageInfoAppInfoService()),
         appUpdateServiceProvider.overrideWithValue(appUpdateService),
+        releaseNotesServiceProvider.overrideWithValue(releaseNotesService),
       ],
       child: const NextDdlApp(),
     ),

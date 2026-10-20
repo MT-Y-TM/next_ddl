@@ -332,6 +332,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.11.0"
+  kyant_glass:
+    dependency: "direct main"
+    description:
+      path: "third_party/kyant_glass"
+      relative: true
+    source: path
+    version: "0.2.0-dev.1"
   leak_tracker:
     dependency: transitive
     description:

@@ -768,4 +768,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get useGlobalAlarmPlaylist => '共通プレイリストを使う';
+
+  @override
+  String get themeLiquidGlassInputs => 'リキッドガラス入力欄';
+
+  @override
+  String get versionReleaseNotes => '更新内容';
 }
