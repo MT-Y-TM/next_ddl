@@ -7,9 +7,11 @@ import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../../app/feedback.dart';
 import '../../../models/app_theme_settings.dart';
+import '../../../models/liquid_glass_settings.dart';
 import '../../../services/theme_asset_service.dart';
 import '../../tasks/tasks_controller.dart';
 import '../background_image_editor_page.dart';
+import 'liquid_glass_controls.dart';
 
 class ThemeSettingsCard extends ConsumerStatefulWidget {
   const ThemeSettingsCard({
@@ -70,6 +72,30 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
                     )
                   : null,
             ),
+            if (settings.liquidGlassInputsEnabled)
+              LiquidGlassControls(
+                settings: settings,
+                enabled: enabled,
+                onSave: (parameter, value) => _run(
+                  () => ref
+                      .read(tasksControllerProvider.notifier)
+                      .updateThemeSettings(
+                        (current) => current.copyWith(
+                          liquidGlassSettings: current.liquidGlassSettings
+                              .withValue(parameter, value),
+                        ),
+                      ),
+                ),
+                onReset: () => _run(
+                  () => ref
+                      .read(tasksControllerProvider.notifier)
+                      .updateThemeSettings(
+                        (current) => current.copyWith(
+                          liquidGlassSettings: const LiquidGlassSettings(),
+                        ),
+                      ),
+                ),
+              ),
             Wrap(
               spacing: 8,
               runSpacing: 8,

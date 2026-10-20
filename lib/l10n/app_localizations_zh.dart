@@ -760,4 +760,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get versionReleaseNotes => '本次更新';
+
+  @override
+  String get themeGlassBlur => '模糊强度';
+
+  @override
+  String get themeGlassRefractionHeight => '折射厚度';
+
+  @override
+  String get themeGlassRefractionAmount => '折射强度';
+
+  @override
+  String get themeGlassDispersion => '色散强度';
+
+  @override
+  String get themeGlassTintOpacity => '不透明度';
+
+  @override
+  String get themeGlassHighlight => '高光强度';
+
+  @override
+  String get themeGlassPreview => '实时预览';
+
+  @override
+  String get themeGlassPreviewText => '液态玻璃输入框';
+
+  @override
+  String get themeGlassReset => '恢复默认参数';
 }

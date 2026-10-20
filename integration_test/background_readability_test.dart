@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -10,7 +11,10 @@ import 'package:next_ddl/app/background_readability.dart';
 import 'package:next_ddl/app/liquid_glass_input.dart';
 import 'package:next_ddl/app/theme.dart';
 import 'package:next_ddl/features/tasks/tasks_controller.dart';
+import 'package:next_ddl/features/settings/widgets/liquid_glass_controls.dart';
+import 'package:next_ddl/l10n/app_localizations.dart';
 import 'package:next_ddl/models/app_theme_settings.dart';
+import 'package:next_ddl/models/liquid_glass_settings.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() {
@@ -125,22 +129,28 @@ void main() {
     'device renders glass inputs, typing and native back navigation',
     (tester) async {
       await KyantGlass.precache();
-      final enabled = ValueNotifier(false);
+      final settings = ValueNotifier(const AppThemeSettings(cornerRadius: 24));
+      final scroll = ScrollController();
+      var saves = 0;
       final controller = TextEditingController(text: 'Next DDL');
       final navigator = GlobalKey<NavigatorState>();
-      addTearDown(enabled.dispose);
+      addTearDown(settings.dispose);
+      addTearDown(scroll.dispose);
       addTearDown(controller.dispose);
       await tester.pumpWidget(
         ValueListenableBuilder(
-          valueListenable: enabled,
+          valueListenable: settings,
           builder: (_, value, _) => MaterialApp(
             navigatorKey: navigator,
-            theme: buildNextDdlTheme(
-              settings: AppThemeSettings(
-                liquidGlassInputsEnabled: value,
-                cornerRadius: 24,
-              ),
-            ),
+            locale: const Locale('en'),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            theme: buildNextDdlTheme(settings: value),
             builder: (_, child) => NextDdlAppShell(
               background: const DecoratedBox(
                 decoration: BoxDecoration(
@@ -160,6 +170,7 @@ void main() {
             home: Scaffold(
               appBar: AppBar(title: const Text('Next DDL')),
               body: ListView(
+                controller: scroll,
                 padding: const EdgeInsets.all(24),
                 children: [
                   const WallpaperText('Liquid glass inputs'),
@@ -189,6 +200,26 @@ void main() {
                       child: Text('Cards keep their original colors'),
                     ),
                   ),
+                  if (value.liquidGlassInputsEnabled)
+                    LiquidGlassControls(
+                      settings: value,
+                      enabled: true,
+                      onSave: (parameter, amount) async {
+                        saves++;
+                        settings.value = settings.value.copyWith(
+                          liquidGlassSettings: settings
+                              .value
+                              .liquidGlassSettings
+                              .withValue(parameter, amount),
+                        );
+                      },
+                      onReset: () async {
+                        settings.value = settings.value.copyWith(
+                          liquidGlassSettings: const LiquidGlassSettings(),
+                        );
+                      },
+                    ),
+                  const SizedBox(height: 200),
                 ],
               ),
             ),
@@ -197,9 +228,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(KyantGlass), findsNothing);
-      enabled.value = true;
+      settings.value = settings.value.copyWith(liquidGlassInputsEnabled: true);
       await tester.pumpAndSettle();
-      expect(find.byType(KyantGlass), findsNWidgets(2));
+      expect(find.byType(KyantGlass), findsNWidgets(3));
       await tester.enterText(find.byType(TextField).first, 'Task planning 日本語');
       await tester.pumpAndSettle();
       expect(controller.text, 'Task planning 日本語');
@@ -219,6 +250,38 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.text, 'Task planning 日本語');
       expect(source.revision, revision);
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      for (final parameter in LiquidGlassParameter.values) {
+        final slider = find.byKey(ValueKey('theme-glass-${parameter.name}'));
+        await tester.ensureVisible(slider);
+        await tester.pumpAndSettle();
+        final before = settings.value.liquidGlassSettings.valueFor(
+          parameter,
+          dark: false,
+        );
+        await tester.drag(slider, const Offset(80, 0));
+        await tester.pumpAndSettle();
+        expect(
+          settings.value.liquidGlassSettings.valueFor(parameter, dark: false),
+          isNot(before),
+        );
+      }
+      expect(saves, 6);
+      final reset = find.byKey(const ValueKey('theme-glass-reset'));
+      await tester.ensureVisible(reset);
+      await tester.pumpAndSettle();
+      await tester.tap(reset);
+      await tester.pumpAndSettle();
+      expect(
+        settings.value.liquidGlassSettings.toJson(),
+        const LiquidGlassSettings().toJson(),
+      );
+      expect(source.revision, revision);
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('theme-glass-preview')),
+      );
+      await tester.pumpAndSettle();
       for (final editable in tester.widgetList<EditableText>(
         find.byType(EditableText),
       )) {
@@ -230,7 +293,7 @@ void main() {
       if (Platform.isAndroid) {
         await binding.convertFlutterSurfaceToImage();
         await tester.pumpAndSettle();
-        await binding.takeScreenshot('liquid-glass-inputs');
+        await binding.takeScreenshot('liquid-glass-controls');
       }
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump();

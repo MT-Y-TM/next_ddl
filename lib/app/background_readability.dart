@@ -21,7 +21,8 @@ class WallpaperReadability extends InheritedWidget {
 
   @override
   bool updateShouldNotify(WallpaperReadability oldWidget) =>
-      oldWidget.value.foreground != value.foreground;
+      oldWidget.value.foreground != value.foreground ||
+      oldWidget.value.dominantColor != value.dominantColor;
 }
 
 /// Only opt transparent content into this theme. Cards, chips, filled buttons,
@@ -215,7 +216,8 @@ class _BackgroundReadabilityHostState extends State<BackgroundReadabilityHost> {
       final result = analyzeBackgroundPixels(
         bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
       );
-      if (_value?.foreground != result.foreground) {
+      if (_value?.foreground != result.foreground ||
+          _value?.dominantColor != result.dominantColor) {
         setState(() => _value = result);
       } else {
         _value = result;

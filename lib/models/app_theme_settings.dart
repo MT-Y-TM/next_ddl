@@ -1,3 +1,5 @@
+import 'liquid_glass_settings.dart';
+
 enum ThemeBackgroundMode {
   solid('solid'),
   gradient('gradient'),
@@ -20,6 +22,7 @@ class AppThemeSettings {
     this.seedColorValue = 0xFF0E7490,
     this.cornerRadius = 8,
     this.liquidGlassInputsEnabled = false,
+    this.liquidGlassSettings = const LiquidGlassSettings(),
     this.backgroundMode = ThemeBackgroundMode.solid,
     this.solidBackgroundColorValue = 0xFFF4F7F8,
     this.gradientStartColorValue = 0xFFF4F7F8,
@@ -40,6 +43,7 @@ class AppThemeSettings {
   final int seedColorValue;
   final double cornerRadius;
   final bool liquidGlassInputsEnabled;
+  final LiquidGlassSettings liquidGlassSettings;
   final ThemeBackgroundMode backgroundMode;
   final int solidBackgroundColorValue;
   final int gradientStartColorValue;
@@ -103,6 +107,7 @@ class AppThemeSettings {
     int? seedColorValue,
     double? cornerRadius,
     bool? liquidGlassInputsEnabled,
+    LiquidGlassSettings? liquidGlassSettings,
     ThemeBackgroundMode? backgroundMode,
     int? solidBackgroundColorValue,
     int? gradientStartColorValue,
@@ -129,6 +134,7 @@ class AppThemeSettings {
       cornerRadius: (cornerRadius ?? this.cornerRadius).clamp(0, 32).toDouble(),
       liquidGlassInputsEnabled:
           liquidGlassInputsEnabled ?? this.liquidGlassInputsEnabled,
+      liquidGlassSettings: liquidGlassSettings ?? this.liquidGlassSettings,
       backgroundMode: backgroundMode ?? this.backgroundMode,
       solidBackgroundColorValue:
           solidBackgroundColorValue ?? this.solidBackgroundColorValue,
@@ -161,6 +167,7 @@ class AppThemeSettings {
     'seedColorValue': seedColorValue,
     'cornerRadius': cornerRadius,
     'liquidGlassInputsEnabled': liquidGlassInputsEnabled,
+    'liquidGlassSettings': liquidGlassSettings.toJson(),
     'backgroundMode': backgroundMode.value,
     'solidBackgroundColorValue': solidBackgroundColorValue,
     'gradientStartColorValue': gradientStartColorValue,
@@ -213,6 +220,9 @@ class AppThemeSettings {
           (json['seedColorValue'] as num?)?.toInt() ?? defaults.seedColorValue,
       liquidGlassInputsEnabled:
           json['liquidGlassInputsEnabled'] as bool? ?? false,
+      liquidGlassSettings: LiquidGlassSettings.fromJson(
+        json['liquidGlassSettings'] as Map<String, dynamic>?,
+      ),
       cornerRadius:
           ((json['cornerRadius'] as num?)?.toDouble() ?? defaults.cornerRadius)
               .clamp(0, 32)

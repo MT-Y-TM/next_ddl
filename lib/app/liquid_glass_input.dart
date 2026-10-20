@@ -5,17 +5,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:kyant_glass/kyant_glass.dart';
 
+import '../models/liquid_glass_settings.dart';
+import '../utils/background_readability.dart';
 import 'background_readability.dart';
 
 class InputGlassTheme extends ThemeExtension<InputGlassTheme> {
-  const InputGlassTheme({required this.enabled, required this.radius});
+  const InputGlassTheme({
+    required this.enabled,
+    required this.radius,
+    this.parameters = const LiquidGlassSettings(),
+  });
   final bool enabled;
   final double radius;
+  final LiquidGlassSettings parameters;
 
   @override
-  InputGlassTheme copyWith({bool? enabled, double? radius}) => InputGlassTheme(
+  InputGlassTheme copyWith({
+    bool? enabled,
+    double? radius,
+    LiquidGlassSettings? parameters,
+  }) => InputGlassTheme(
     enabled: enabled ?? this.enabled,
     radius: radius ?? this.radius,
+    parameters: parameters ?? this.parameters,
   );
 
   @override
@@ -25,6 +37,7 @@ class InputGlassTheme extends ThemeExtension<InputGlassTheme> {
       : InputGlassTheme(
           enabled: t < 0.5 ? enabled : other.enabled,
           radius: radius + (other.radius - radius) * t,
+          parameters: LiquidGlassSettings.lerp(parameters, other.parameters, t),
         );
 }
 
@@ -152,8 +165,23 @@ class LiquidGlassInput extends StatelessWidget {
     final settings = theme.extension<InputGlassTheme>();
     if (settings?.enabled != true) return child;
     final dark = theme.brightness == Brightness.dark;
-    final foreground = dark ? const Color(0xFFF4F7F8) : const Color(0xFF172028);
-    final radius = BorderRadius.circular(settings!.radius);
+    final parameters = settings!.parameters.copyWith();
+    final opacity = parameters.opacity(dark: dark);
+    final tint = (dark ? const Color(0xFF172028) : Colors.white).withValues(
+      alpha: opacity,
+    );
+    final background =
+        WallpaperReadability.maybeOf(context)?.dominantColor ??
+        theme.colorScheme.surface;
+    final lightText =
+        BackgroundReadability.forColor(
+          Color.alphaBlend(tint, background),
+        ).foreground ==
+        Colors.white;
+    final foreground = lightText
+        ? const Color(0xFFF4F7F8)
+        : const Color(0xFF172028);
+    final radius = BorderRadius.circular(settings.radius);
     final border = OutlineInputBorder(
       borderRadius: radius,
       borderSide: BorderSide.none,
@@ -192,14 +220,13 @@ class LiquidGlassInput extends StatelessWidget {
     );
     return KyantGlass(
       radius: settings.radius,
-      blur: 6,
-      refractionHeight: 10,
-      refractionAmount: 5,
-      dispersion: 0.08,
+      blur: parameters.blur,
+      refractionHeight: parameters.refractionHeight,
+      refractionAmount: parameters.refractionAmount,
+      dispersion: parameters.dispersion,
+      highlight: parameters.highlight,
       pipeline: KyantPipeline.explicit,
-      tint: (dark ? const Color(0xFF172028) : Colors.white).withValues(
-        alpha: dark ? 0.72 : 0.58,
-      ),
+      tint: tint,
       child: Theme(
         data: inputTheme,
         child: DefaultTextStyle.merge(

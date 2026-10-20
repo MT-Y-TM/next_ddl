@@ -7,6 +7,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/app/app.dart';
+import 'package:kyant_glass/kyant_glass.dart';
 import 'package:next_ddl/features/settings/settings_page.dart';
 import 'package:next_ddl/features/settings/background_image_editor_page.dart';
 import 'package:next_ddl/features/tasks/task_edit_page.dart';
@@ -18,6 +19,7 @@ import 'package:next_ddl/models/alarm_audio_item.dart';
 import 'package:next_ddl/models/app_alarm_settings.dart';
 import 'package:next_ddl/models/app_snapshot.dart';
 import 'package:next_ddl/models/app_theme_settings.dart';
+import 'package:next_ddl/models/liquid_glass_settings.dart';
 import 'package:next_ddl/models/deadline_task.dart';
 import 'package:next_ddl/models/milestone.dart';
 import 'package:next_ddl/models/update_release.dart';
@@ -37,6 +39,7 @@ import 'package:timezone/timezone.dart' as tz;
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   tz_data.initializeTimeZones();
+  setUpAll(KyantGlass.precache);
 
   for (final locale in [
     AppLocalePreference.zh,
@@ -51,7 +54,7 @@ void main() {
           AppSnapshot.empty().copyWith(preferredLocale: locale),
           updateService: _FakeAppUpdateService(),
           versionNotes: const VersionReleaseNotes(
-            version: '1.2.10',
+            version: '1.2.11',
             body: '## 中文\n本次中文内容\n## English\nCurrent English notes',
           ),
         ),
@@ -59,7 +62,7 @@ void main() {
       await tester.pumpAndSettle();
       final l = AppLocalizations.of(tester.element(find.byType(SettingsPage)))!;
       await _openSettingsSection(tester, l.settingsAboutApp);
-      expect(find.text('1.2.10'), findsOneWidget);
+      expect(find.text('1.2.11'), findsOneWidget);
       expect(find.text(l.versionReleaseNotes), findsOneWidget);
       expect(
         find.text(
@@ -100,6 +103,118 @@ void main() {
         .loadSnapshot();
     expect(stored.themeSettings.liquidGlassInputsEnabled, isTrue);
   });
+
+  for (final locale in [
+    AppLocalePreference.zh,
+    AppLocalePreference.en,
+    AppLocalePreference.ja,
+  ]) {
+    testWidgets('glass controls preview, save and reset in $locale', (
+      tester,
+    ) async {
+      await tester.runAsync(KyantGlass.precache);
+      final initial = const AppThemeSettings(
+        liquidGlassInputsEnabled: true,
+        cornerRadius: 27,
+        backgroundImagePath: 'wallpaper.png',
+        seedColorValue: 0xFF123456,
+      );
+      await tester.pumpWidget(
+        _buildApp(
+          AppSnapshot.empty().copyWith(
+            preferredLocale: locale,
+            themeSettings: initial,
+          ),
+          DateTime.utc(2026, 10, 20),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      final l = AppLocalizations.of(tester.element(find.byType(SettingsPage)))!;
+      await _openSettingsSection(tester, l.themeSettings);
+      final preview = find.byKey(const ValueKey('theme-glass-preview'));
+      final container = ProviderScope.containerOf(tester.element(preview));
+      final repository = container.read(deadlineRepositoryProvider);
+      final labels = [
+        l.themeGlassBlur,
+        l.themeGlassRefractionHeight,
+        l.themeGlassRefractionAmount,
+        l.themeGlassDispersion,
+        l.themeGlassTintOpacity,
+        l.themeGlassHighlight,
+      ];
+      for (final label in labels) {
+        expect(find.text(label), findsOneWidget);
+      }
+      for (final p in LiquidGlassParameter.values) {
+        final slider = find.byKey(ValueKey('theme-glass-${p.name}'));
+        final next = (p.min + p.max) / 2;
+        final before = (await repository.loadSnapshot())
+            .themeSettings
+            .liquidGlassSettings
+            .toJson();
+        tester.widget<Slider>(slider).onChanged!(next);
+        await tester.pump();
+        expect(
+          (await repository.loadSnapshot()).themeSettings.liquidGlassSettings
+              .toJson(),
+          before,
+        );
+        final rendered = tester.widget<KyantGlass>(
+          find.descendant(of: preview, matching: find.byType(KyantGlass)),
+        );
+        switch (p) {
+          case LiquidGlassParameter.blur:
+            expect(rendered.blur, next);
+          case LiquidGlassParameter.refractionHeight:
+            expect(rendered.refractionHeight, next);
+          case LiquidGlassParameter.refractionAmount:
+            expect(rendered.refractionAmount, next);
+          case LiquidGlassParameter.dispersion:
+            expect(rendered.dispersion, next);
+          case LiquidGlassParameter.tintOpacity:
+            expect(rendered.tint.a, closeTo(next, 0.001));
+          case LiquidGlassParameter.highlight:
+            expect(rendered.highlight, next);
+        }
+        tester.widget<Slider>(slider).onChangeEnd!(next);
+        await tester.pumpAndSettle();
+        expect(
+          (await repository.loadSnapshot()).themeSettings.liquidGlassSettings
+              .valueFor(p, dark: false),
+          next,
+        );
+      }
+      final slider = find.byKey(const ValueKey('theme-glass-blur'));
+      await tester.ensureVisible(slider);
+      await tester.pumpAndSettle();
+      await tester.drag(slider, const Offset(80, 0));
+      await tester.pumpAndSettle();
+      expect(
+        (await repository.loadSnapshot())
+            .themeSettings
+            .liquidGlassSettings
+            .blur,
+        isNot(10),
+      );
+      final reset = find.byKey(const ValueKey('theme-glass-reset'));
+      await tester.ensureVisible(reset);
+      await tester.pumpAndSettle();
+      await tester.tap(reset);
+      await tester.pumpAndSettle();
+      final stored = (await repository.loadSnapshot()).themeSettings;
+      expect(
+        stored.liquidGlassSettings.toJson(),
+        const LiquidGlassSettings().toJson(),
+      );
+      expect(stored.liquidGlassInputsEnabled, isTrue);
+      expect(stored.backgroundImagePath, 'wallpaper.png');
+      expect(stored.cornerRadius, 27);
+      expect(stored.seedColorValue, 0xFF123456);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets(
     'home page defaults to in-progress tab and separates overdue tasks',
@@ -1469,5 +1584,5 @@ class _FakeAppUpdateService implements AppUpdateService {
 
 class _FakeAppInfoService implements AppInfoService {
   @override
-  Future<String> getVersionLabel() async => '1.2.10';
+  Future<String> getVersionLabel() async => '1.2.11';
 }

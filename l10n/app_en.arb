@@ -392,5 +392,14 @@
   "taskAlarmUsesGlobalPlaylist": "Uses the global playlist when no task ringtones are configured",
   "useGlobalAlarmPlaylist": "Use global playlist",
   "themeLiquidGlassInputs": "Liquid glass inputs",
-  "versionReleaseNotes": "What's new"
+  "versionReleaseNotes": "What's new",
+  "themeGlassBlur": "Blur strength",
+  "themeGlassRefractionHeight": "Refraction thickness",
+  "themeGlassRefractionAmount": "Refraction strength",
+  "themeGlassDispersion": "Dispersion strength",
+  "themeGlassTintOpacity": "Opacity",
+  "themeGlassHighlight": "Highlight strength",
+  "themeGlassPreview": "Live preview",
+  "themeGlassPreviewText": "Liquid glass input",
+  "themeGlassReset": "Reset glass parameters"
 }

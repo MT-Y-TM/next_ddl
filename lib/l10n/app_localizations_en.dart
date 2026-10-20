@@ -788,4 +788,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionReleaseNotes => 'What\'s new';
+
+  @override
+  String get themeGlassBlur => 'Blur strength';
+
+  @override
+  String get themeGlassRefractionHeight => 'Refraction thickness';
+
+  @override
+  String get themeGlassRefractionAmount => 'Refraction strength';
+
+  @override
+  String get themeGlassDispersion => 'Dispersion strength';
+
+  @override
+  String get themeGlassTintOpacity => 'Opacity';
+
+  @override
+  String get themeGlassHighlight => 'Highlight strength';
+
+  @override
+  String get themeGlassPreview => 'Live preview';
+
+  @override
+  String get themeGlassPreviewText => 'Liquid glass input';
+
+  @override
+  String get themeGlassReset => 'Reset glass parameters';
 }

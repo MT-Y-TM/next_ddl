@@ -24,6 +24,7 @@ ThemeData buildNextDdlTheme({
       InputGlassTheme(
         enabled: settings.liquidGlassInputsEnabled,
         radius: settings.cornerRadius,
+        parameters: settings.liquidGlassSettings,
       ),
     ],
     colorScheme: scheme,

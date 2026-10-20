@@ -391,5 +391,14 @@
   "taskAlarmUsesGlobalPlaylist": "タスク着信音が未設定の場合は共通プレイリストを使用します",
   "useGlobalAlarmPlaylist": "共通プレイリストを使う",
   "themeLiquidGlassInputs": "リキッドガラス入力欄",
-  "versionReleaseNotes": "更新内容"
+  "versionReleaseNotes": "更新内容",
+  "themeGlassBlur": "ぼかしの強さ",
+  "themeGlassRefractionHeight": "屈折の厚み",
+  "themeGlassRefractionAmount": "屈折の強さ",
+  "themeGlassDispersion": "色分散の強さ",
+  "themeGlassTintOpacity": "不透明度",
+  "themeGlassHighlight": "ハイライトの強さ",
+  "themeGlassPreview": "リアルタイムプレビュー",
+  "themeGlassPreviewText": "リキッドガラス入力欄",
+  "themeGlassReset": "ガラス設定をリセット"
 }

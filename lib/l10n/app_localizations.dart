@@ -1479,6 +1479,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What\'s new'**
   String get versionReleaseNotes;
+
+  /// No description provided for @themeGlassBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur strength'**
+  String get themeGlassBlur;
+
+  /// No description provided for @themeGlassRefractionHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Refraction thickness'**
+  String get themeGlassRefractionHeight;
+
+  /// No description provided for @themeGlassRefractionAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Refraction strength'**
+  String get themeGlassRefractionAmount;
+
+  /// No description provided for @themeGlassDispersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Dispersion strength'**
+  String get themeGlassDispersion;
+
+  /// No description provided for @themeGlassTintOpacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Opacity'**
+  String get themeGlassTintOpacity;
+
+  /// No description provided for @themeGlassHighlight.
+  ///
+  /// In en, this message translates to:
+  /// **'Highlight strength'**
+  String get themeGlassHighlight;
+
+  /// No description provided for @themeGlassPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Live preview'**
+  String get themeGlassPreview;
+
+  /// No description provided for @themeGlassPreviewText.
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid glass input'**
+  String get themeGlassPreviewText;
+
+  /// No description provided for @themeGlassReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset glass parameters'**
+  String get themeGlassReset;
 }
 
 class _AppLocalizationsDelegate

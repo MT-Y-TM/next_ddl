@@ -774,4 +774,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get versionReleaseNotes => '更新内容';
+
+  @override
+  String get themeGlassBlur => 'ぼかしの強さ';
+
+  @override
+  String get themeGlassRefractionHeight => '屈折の厚み';
+
+  @override
+  String get themeGlassRefractionAmount => '屈折の強さ';
+
+  @override
+  String get themeGlassDispersion => '色分散の強さ';
+
+  @override
+  String get themeGlassTintOpacity => '不透明度';
+
+  @override
+  String get themeGlassHighlight => 'ハイライトの強さ';
+
+  @override
+  String get themeGlassPreview => 'リアルタイムプレビュー';
+
+  @override
+  String get themeGlassPreviewText => 'リキッドガラス入力欄';
+
+  @override
+  String get themeGlassReset => 'ガラス設定をリセット';
 }

@@ -391,5 +391,14 @@
   "taskAlarmUsesGlobalPlaylist": "未配置任务铃声时使用全局播放列表",
   "useGlobalAlarmPlaylist": "改用全局播放列表",
   "themeLiquidGlassInputs": "液态玻璃输入框",
-  "versionReleaseNotes": "本次更新"
+  "versionReleaseNotes": "本次更新",
+  "themeGlassBlur": "模糊强度",
+  "themeGlassRefractionHeight": "折射厚度",
+  "themeGlassRefractionAmount": "折射强度",
+  "themeGlassDispersion": "色散强度",
+  "themeGlassTintOpacity": "不透明度",
+  "themeGlassHighlight": "高光强度",
+  "themeGlassPreview": "实时预览",
+  "themeGlassPreviewText": "液态玻璃输入框",
+  "themeGlassReset": "恢复默认参数"
 }
