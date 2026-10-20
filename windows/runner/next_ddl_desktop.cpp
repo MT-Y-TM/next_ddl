@@ -3,7 +3,7 @@
 
 namespace {
 constexpr UINT kTrayMessage = WM_APP + 73;
-constexpr UINT kOpen = 1, kExit = 2;
+constexpr UINT kOpen = 1, kStop = 2, kExit = 3;
 using flutter::EncodableMap;
 using flutter::EncodableValue;
 std::wstring ReadText(const EncodableMap& args, const char* key) {
@@ -41,6 +41,7 @@ NextDdlDesktop::NextDdlDesktop(HWND window, flutter::BinaryMessenger* messenger)
     title_ = ReadText(*args, "title");
     remaining_ = ReadText(*args, "remaining");
     open_label_ = ReadText(*args, "openLabel");
+    stop_label_ = ReadText(*args, "stopLabel");
     exit_label_ = ReadText(*args, "exitLabel");
     if (!enabled_) {
       title_ = ReadText(*args, "appLabel");
@@ -52,6 +53,7 @@ NextDdlDesktop::NextDdlDesktop(HWND window, flutter::BinaryMessenger* messenger)
   });
   title_ = L"Next DDL";
   open_label_ = L"Open Next DDL";
+  stop_label_ = L"Stop current alarm";
   exit_label_ = L"Exit Next DDL";
   UpdateIcon();
 }
@@ -89,6 +91,7 @@ void NextDdlDesktop::ShowMenu() {
   if (!remaining_.empty()) AppendMenuW(menu, MF_STRING | MF_DISABLED, 0, remaining_.c_str());
   AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
   AppendMenuW(menu, MF_STRING, kOpen, open_label_.c_str());
+  AppendMenuW(menu, MF_STRING, kStop, stop_label_.c_str());
   AppendMenuW(menu, MF_STRING, kExit, exit_label_.c_str());
   POINT point{};
   GetCursorPos(&point);
@@ -98,6 +101,7 @@ void NextDdlDesktop::ShowMenu() {
   DestroyMenu(menu);
   PostMessageW(window_, WM_NULL, 0, 0);
   if (action == kOpen) RestoreWindow();
+  if (action == kStop) PostMessageW(window_, kNextDdlStopAlarmMessage, 0, 0);
   if (action == kExit) PostMessageW(window_, kNextDdlExitMessage, 0, 0);
 }
 std::optional<LRESULT> NextDdlDesktop::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {

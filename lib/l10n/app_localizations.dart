@@ -1381,7 +1381,7 @@ abstract class AppLocalizations {
   /// No description provided for @alarmWindowsHint.
   ///
   /// In en, this message translates to:
-  /// **'Windows can ring while the app is running. Closing the app stops desktop alarm scheduling.'**
+  /// **'Windows can ring after the window is hidden to the tray. Use the tray menu to stop ringing or exit the app.'**
   String get alarmWindowsHint;
 
   /// No description provided for @enableAlarmFeature.
@@ -1545,6 +1545,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System default'**
   String get themeSystemFont;
+
+  /// No description provided for @desktopStopAlarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop current alarm'**
+  String get desktopStopAlarm;
 
   /// No description provided for @desktopOpenApp.
   ///

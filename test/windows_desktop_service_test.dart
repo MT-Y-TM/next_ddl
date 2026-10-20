@@ -44,6 +44,7 @@ void main() {
     expect(summary['remaining'], '30 hours');
     expect(summary['openLabel'], 'Open Next DDL');
     expect(summary['appLabel'], 'Next DDL');
+    expect(summary['stopLabel'], 'Stop current alarm');
   });
 
   test('falls back to the task title when the milestone title is blank', () {

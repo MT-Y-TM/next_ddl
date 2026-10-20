@@ -1,5 +1,5 @@
 {
-  "version": "1.2.15",
-  "zh": "- Windows 主题设置新增系统字体选择，会枚举电脑中已安装的字体并立即应用到全局界面。\n- 选择系统默认即可恢复原有字体；字体选择会写入主题设置并兼容旧 JSON。\n- 保持 Windows 托盘摘要、关闭窗口后台响铃和三语主题设置能力。",
-  "en": "- Add a Windows theme setting that enumerates installed system fonts and applies the selected family to the entire interface.\n- Choose System default to restore the original font; the selection is persisted in theme settings and remains compatible with old JSON.\n- Keep the Windows tray summary, background alarms after closing the window and localized theme settings."
+  "version": "1.2.16",
+  "zh": "- Windows 托盘菜单新增“停止当前响铃”，无需重新打开应用即可停止正在播放的闹钟。\n- 三语同步更新 Windows 后台闹钟说明，明确窗口隐藏到托盘后仍可响铃。\n- 保持系统字体选择、托盘截止摘要和后台闹钟能力。",
+  "en": "- Add Stop current alarm to the Windows tray menu so ringing can stop without reopening the app.\n- Update the Windows alarm guidance in all three languages to explain that alarms continue while the window is hidden to the tray.\n- Keep system font selection, tray deadline summaries and background alarms."
 }

@@ -732,7 +732,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get alarmWindowsHint =>
-      'Windows can ring while the app is running. Closing the app stops desktop alarm scheduling.';
+      'Windows can ring after the window is hidden to the tray. Use the tray menu to stop ringing or exit the app.';
 
   @override
   String get enableAlarmFeature => 'Enable alarm capability';
@@ -821,6 +821,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeSystemFont => 'System default';
+
+  @override
+  String get desktopStopAlarm => 'Stop current alarm';
 
   @override
   String get desktopOpenApp => 'Open Next DDL';

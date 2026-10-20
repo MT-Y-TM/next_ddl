@@ -30,6 +30,7 @@ class WindowsDesktopService {
         timeUnit: snapshot.persistentNotificationTimeUnit,
         daySuffix: l.compactDaySuffix, hourSuffix: l.compactHourSuffix),
       'openLabel': l.desktopOpenApp,
+      'stopLabel': l.desktopStopAlarm,
       'exitLabel': l.desktopExitApp,
       'appLabel': l.appTitle,
     };

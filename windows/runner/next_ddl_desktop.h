@@ -9,6 +9,7 @@
 #include <string>
 
 inline constexpr UINT kNextDdlExitMessage = WM_APP + 74;
+inline constexpr UINT kNextDdlStopAlarmMessage = WM_APP + 75;
 
 class NextDdlDesktop {
  public:
@@ -25,7 +26,7 @@ class NextDdlDesktop {
   NOTIFYICONDATAW icon_{};
   bool added_ = false;
   bool enabled_ = false;
-  std::wstring title_, remaining_, open_label_, exit_label_;
+  std::wstring title_, remaining_, open_label_, stop_label_, exit_label_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
 };
 #endif

@@ -719,7 +719,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get alarmWindowsHint =>
-      'Windows ではアプリ起動中にアラームを鳴らせます。アプリを閉じるとデスクトップのアラームスケジュールは停止します。';
+      'Windows ではウィンドウをトレイに隠した後も鳴動できます。トレイメニューから停止または終了できます。';
 
   @override
   String get enableAlarmFeature => 'アラーム機能を有効化';
@@ -807,6 +807,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get themeSystemFont => 'システムの既定値';
+
+  @override
+  String get desktopStopAlarm => '現在のアラームを停止';
 
   @override
   String get desktopOpenApp => 'Next DDL を開く';

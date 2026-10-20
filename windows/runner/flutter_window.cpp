@@ -65,6 +65,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     DestroyWindow(hwnd);
     return 0;
   }
+  if (message == kNextDdlStopAlarmMessage) {
+    if (alarm_scheduler_) alarm_scheduler_->StopCurrentAlarm();
+    return 0;
+  }
   if (message == WM_CLOSE) {
     ShowWindow(hwnd, SW_HIDE);
     return 0;

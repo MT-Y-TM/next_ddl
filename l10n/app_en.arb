@@ -369,7 +369,7 @@
   "themeSaveBackground": "Save background",
   "alarmSettings": "Alarm settings",
   "alarmAndroidHint": "Android uses a foreground service to ring at reminder times and can be stopped from the notification shade. MIUI background and exact alarm permissions can affect reliability.",
-  "alarmWindowsHint": "Windows can ring while the app is running. Closing the app stops desktop alarm scheduling.",
+  "alarmWindowsHint": "Windows can ring after the window is hidden to the tray. Use the tray menu to stop ringing or exit the app.",
   "enableAlarmFeature": "Enable alarm capability",
   "enableAlarmFeatureHint": "When enabled, tasks with alarm ringing turned on can play audio at reminder times.",
   "globalAlarmPlaylist": "Global ringtone playlist",
@@ -404,6 +404,7 @@
   "themeGlassReset": "Reset glass parameters",
   "themeFontFamily": "Font family",
   "themeSystemFont": "System default",
+  "desktopStopAlarm": "Stop current alarm",
   "desktopOpenApp": "Open Next DDL",
   "desktopExitApp": "Exit Next DDL"
 }

@@ -19,6 +19,7 @@ class NextDdlAlarmScheduler {
  public:
   explicit NextDdlAlarmScheduler(flutter::BinaryMessenger* messenger);
   ~NextDdlAlarmScheduler();
+  void StopCurrentAlarm();
 
  private:
   struct Trigger {
@@ -32,7 +33,6 @@ class NextDdlAlarmScheduler {
   void SyncAlarms(const flutter::EncodableMap& arguments);
   void RemoveTask(const std::string& task_id);
   void RemoveAll();
-  void StopCurrentAlarm();
   void StartSchedulerThread();
   void SchedulerLoop();
   void FireTrigger(const Trigger& trigger);
