@@ -1,5 +1,5 @@
 {
-  "version": "1.2.20",
-  "zh": "- Windows 普通提醒改用应用自主管理的托盘通知。\n- 编辑、删除或导入任务后，可以可靠取消本版本产生的未来提醒和已显示通知。\n- 点击提醒可恢复 Next DDL 并打开对应任务详情；提醒检查中的待处理数量也会读取原生调度器。\n- 修复 Windows 原生通知回调的编译问题。\n- 旧版本留下的 Toast 仍可能需要在 Windows 通知中心手动清理。",
-  "en": "- Windows task reminders now use app-managed tray notifications.\n- Future reminders and displayed notifications created by this version can be cancelled reliably after editing, deleting, or importing tasks.\n- Clicking a reminder restores Next DDL and opens the related task; reminder diagnostics also read the native scheduler count.\n- Fixed the Windows native notification callback build issue.\n- Toasts left by older builds may still need to be cleared manually in Windows Notification Center."
+  "version": "1.2.21",
+  "zh": "- Windows 页面切换改为即时过渡，避免新页面出现后旧页面继续停留造成卡顿。\n- 保留现有 Windows 托盘通知管理和任务提醒能力。",
+  "en": "- Windows page navigation now switches immediately, avoiding the old page lingering underneath the new page and causing a noticeable hitch.\n- Existing Windows tray notification management and task reminder features are preserved."
 }

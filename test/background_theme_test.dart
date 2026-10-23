@@ -25,6 +25,17 @@ void main() {
     },
   );
 
+  test('Windows page transitions complete immediately', () {
+    final theme = buildNextDdlTheme(settings: const AppThemeSettings());
+    final builder = theme.pageTransitionsTheme.builders[
+      TargetPlatform.windows
+    ];
+
+    expect(builder, isNotNull);
+    expect(builder!.transitionDuration, Duration.zero);
+    expect(builder.reverseTransitionDuration, Duration.zero);
+  });
+
   testWidgets('app shell keeps background layer stable while child changes', (
     tester,
   ) async {

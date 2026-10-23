@@ -34,6 +34,10 @@ ThemeData buildNextDdlTheme({
     pageTransitionsTheme: PageTransitionsTheme(
       builders: {
         ...const PageTransitionsTheme().builders,
+        // Windows uses transparent pages over a shared wallpaper. The default
+        // zoom transition keeps the previous page painting underneath for
+        // several frames, which looks like a freeze during navigation.
+        TargetPlatform.windows: const _ImmediatePageTransitionsBuilder(),
         // Flutter's default Android transition paints an opaque surface over
         // our shared wallpaper. Animate page content with a transparent surface.
         TargetPlatform.android: const FadeForwardsPageTransitionsBuilder(
@@ -79,6 +83,27 @@ ThemeData buildNextDdlTheme({
       behavior: SnackBarBehavior.floating,
     ),
   );
+}
+
+class _ImmediatePageTransitionsBuilder extends PageTransitionsBuilder {
+  const _ImmediatePageTransitionsBuilder();
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Duration get reverseTransitionDuration => Duration.zero;
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
+  }
 }
 
 class NextDdlAppShell extends StatelessWidget {
