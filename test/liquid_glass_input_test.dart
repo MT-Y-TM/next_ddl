@@ -100,7 +100,14 @@ void main() {
       await tester.enterText(find.byType(TextField), 'Updated 日本語');
       await tester.pumpAndSettle();
       expect(text.text, 'Updated 日本語');
-      expect(backdrop.revision, revision);
+      expect(backdrop.revision, greaterThanOrEqualTo(revision));
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      final beforeRefocus = backdrop.revision;
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(backdrop.revision, greaterThan(beforeRefocus));
       navigator.currentState!.push(
         MaterialPageRoute<void>(
           builder: (_) => const Scaffold(

@@ -1,5 +1,6 @@
 import '../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
+import '../../app/smooth_scroll.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -95,7 +96,7 @@ class _TaskEditPageState extends ConsumerState<TaskEditPage> {
 
     return Scaffold(
       appBar: AppBar(title: Text(isEditing ? l10n.editTask : l10n.newTask)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           WallpaperRegion(

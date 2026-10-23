@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/smooth_scroll.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -66,7 +67,7 @@ class TaskDetailPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

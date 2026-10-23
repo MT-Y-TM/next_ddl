@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../../app/feedback.dart';
+import '../../app/smooth_scroll.dart';
 import '../../models/app_alarm_settings.dart';
 import '../../models/app_snapshot.dart';
 import '../../models/app_theme_settings.dart';
@@ -46,7 +47,7 @@ class SettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           _SettingsEntryCard(
@@ -158,7 +159,7 @@ class _TaskDataSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTasksAndData)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
@@ -279,7 +280,7 @@ class _ThemeSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.themeSettings)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           ThemeSettingsCard(settings: themeSettings, enabled: snapshot != null),
@@ -299,7 +300,7 @@ class _NotificationAlarmSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsNotificationsAndAlarms)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
@@ -395,7 +396,7 @@ class _LanguageTimezoneSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsLanguageAndTimezone)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
@@ -486,7 +487,7 @@ class _AboutAppSettingsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsAboutApp)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
@@ -608,7 +609,7 @@ class _PredictionSettingsPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(strings.title)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/background_readability.dart';
+import '../../app/smooth_scroll.dart';
 
 import '../../app/feedback.dart';
 import '../../models/app_snapshot.dart';
@@ -114,7 +115,7 @@ class _BackupPageState extends State<BackupPage> {
     final l = BackupLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(title: Text(l.title)),
-      body: ListView(
+      body: SmoothListView(
         padding: const EdgeInsets.all(16),
         children: [
           WallpaperText(l.retention(widget.service.retentionCount)),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/smooth_scroll.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 import '../../models/deadline_task.dart';
 import '../../services/timezone_service.dart';
@@ -68,7 +69,7 @@ class _TaskPostponeDialogState extends State<TaskPostponeDialog> {
       title: Text(s.postpone),
       content: SizedBox(
         width: 440,
-        child: SingleChildScrollView(
+        child: SmoothSingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

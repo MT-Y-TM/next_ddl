@@ -1,6 +1,7 @@
 import '../../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
+import '../../../app/smooth_scroll.dart';
 
 import '../../../utils/timezone_labels.dart';
 
@@ -69,7 +70,7 @@ class _TimezonePickerDialogState extends State<TimezonePickerDialog> {
             ),
             const SizedBox(height: 12),
             Flexible(
-              child: ListView.builder(
+              child: SmoothListViewBuilder(
                 shrinkWrap: true,
                 itemCount: items.length,
                 itemBuilder: (context, index) {

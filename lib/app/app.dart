@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'smooth_scroll.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
@@ -244,7 +245,7 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
           }
           return AlertDialog(
             title: Text(l10n.updateDialogTitle),
-            content: SingleChildScrollView(
+            content: SmoothSingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

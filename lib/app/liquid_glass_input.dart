@@ -57,11 +57,26 @@ class InputGlassBackdropShell extends StatefulWidget {
       _InputGlassBackdropShellState();
 }
 
-class _InputGlassBackdropShellState extends State<InputGlassBackdropShell> {
+class _InputGlassBackdropShellState extends State<InputGlassBackdropShell>
+    with WidgetsBindingObserver {
   final _backdrop = _WallpaperGlassBackdrop();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    FocusManager.instance.addListener(_handleFocusChange);
+  }
+
+  @override
+  void didChangeMetrics() => _backdrop.refreshGeometry();
+
+  void _handleFocusChange() => _backdrop.refreshGeometry();
+
+  @override
   void dispose() {
+    FocusManager.instance.removeListener(_handleFocusChange);
+    WidgetsBinding.instance.removeObserver(this);
     _backdrop.dispose();
     super.dispose();
   }
@@ -108,6 +123,10 @@ class _WallpaperGlassBackdrop extends ChangeNotifier implements KyantBackdrop {
 
   void painted(RenderRepaintBoundary boundary) {
     _boundary = boundary;
+    _scheduleCapture();
+  }
+
+  void _scheduleCapture() {
     if (!enabled || _disposed || _scheduled) return;
     _scheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -143,7 +162,16 @@ class _WallpaperGlassBackdrop extends ChangeNotifier implements KyantBackdrop {
   }
 
   void invalidateGeometry() {
-    if (enabled && !_disposed) notifyListeners();
+    refreshGeometry();
+  }
+
+  /// Keyboard and window metric changes can move the glass target before the
+  /// retained wallpaper boundary is painted again. Invalidate immediately,
+  /// then recapture after the new layout has settled.
+  void refreshGeometry() {
+    if (!enabled || _disposed) return;
+    notifyListeners();
+    _scheduleCapture();
   }
 
   @override

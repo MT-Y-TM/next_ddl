@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../app/smooth_scroll.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
@@ -314,7 +315,7 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
               const SizedBox(height: 8),
               SizedBox(
                 height: 100,
-                child: ListView.separated(
+                child: SmoothListViewSeparated(
                   scrollDirection: Axis.horizontal,
                   itemCount: settings.backgroundImageHistory.length,
                   separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -415,7 +416,7 @@ class _ThemeSettingsCardState extends ConsumerState<ThemeSettingsCard> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(title),
-        content: SingleChildScrollView(
+        content: SmoothSingleChildScrollView(
           child: ColorPicker(
             color: selected,
             onColorChanged: (color) => selected = color,

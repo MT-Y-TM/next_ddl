@@ -1,5 +1,5 @@
 {
-  "version": "1.2.21",
-  "zh": "- Windows 页面切换改为即时过渡，避免新页面出现后旧页面继续停留造成卡顿。\n- 保留现有 Windows 托盘通知管理和任务提醒能力。",
-  "en": "- Windows page navigation now switches immediately, avoiding the old page lingering underneath the new page and causing a noticeable hitch.\n- Existing Windows tray notification management and task reminder features are preserved."
+  "version": "1.2.22",
+  "zh": "- Windows 列表和弹窗的鼠标滚轮滚动改为平滑过渡，减少滚轮跳动。\n- Android 液态玻璃输入框会在键盘和焦点布局变化后重新采样背景，修复首帧放大或错位。",
+  "en": "- Windows lists and dialogs now use smooth mouse-wheel scrolling instead of abrupt jumps.\n- Android liquid-glass inputs resample the background after keyboard and focus layout changes, fixing enlarged or misaligned first frames."
 }

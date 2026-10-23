@@ -1,5 +1,6 @@
 import '../../app/liquid_glass_input.dart';
 import 'package:flutter/material.dart';
+import '../../app/smooth_scroll.dart';
 import '../../app/background_readability.dart';
 import 'package:timezone/timezone.dart' as tz;
 
@@ -98,7 +99,7 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(task.title),
-        content: SingleChildScrollView(
+        content: SmoothSingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +241,7 @@ class _TaskPlanningPageState extends State<TaskPlanningPage> {
         appBar: AppBar(title: Text(s.text('title'))),
         body: AbsorbPointer(
           absorbing: _busy,
-          child: ListView(
+          child: SmoothListView(
             padding: const EdgeInsets.all(16),
             children: [
               if (_busy) const LinearProgressIndicator(),
@@ -612,7 +613,7 @@ class _PlanningEditorState extends State<_PlanningEditor> {
       title: Text(s.text(widget.repeat ? 'repeat' : 'edit')),
       content: SizedBox(
         width: 520,
-        child: SingleChildScrollView(
+        child: SmoothSingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

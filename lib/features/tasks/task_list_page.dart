@@ -1,4 +1,5 @@
 import '../../app/liquid_glass_input.dart';
+import '../../app/smooth_scroll.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -79,7 +80,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
             title: Text(strings.manageTags),
             content: SizedBox(
               width: 400,
-              child: SingleChildScrollView(
+              child: SmoothSingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -307,7 +308,7 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                         ],
                       ),
               ),
-              SingleChildScrollView(
+              SmoothSingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -424,7 +425,7 @@ class _TaskTabView extends StatefulWidget {
 }
 
 class _TaskTabViewState extends State<_TaskTabView> {
-  final _scrollController = ScrollController();
+  final _scrollController = SmoothScrollController();
 
   @override
   void didUpdateWidget(covariant _TaskTabView oldWidget) {
@@ -477,7 +478,7 @@ class _TaskTabViewState extends State<_TaskTabView> {
     }
     return NotificationListener<ScrollNotification>(
       onNotification: widget.onScrollNotification,
-      child: ListView.builder(
+      child: SmoothListViewBuilder(
         controller: _scrollController,
         padding: const EdgeInsets.only(bottom: 120, top: 8),
         itemCount: widget.tasks.length + 1,
