@@ -216,7 +216,8 @@ std::optional<LRESULT> NextDdlNotificationScheduler::HandleMessage(
       task_id = active_task_id_;
     }
     if (!task_id.empty()) {
-      channel_->InvokeMethod("notificationTapped", EncodableValue(task_id));
+      channel_->InvokeMethod(
+          "notificationTapped", std::make_unique<EncodableValue>(task_id));
     }
   }
   if (event == NIN_BALLOONHIDE || event == NIN_BALLOONTIMEOUT) {
