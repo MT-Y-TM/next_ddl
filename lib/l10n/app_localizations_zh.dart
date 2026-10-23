@@ -324,7 +324,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get windowsNotificationNotice =>
-      '当前 Windows 版本使用 ZIP 形式发布而非 MSIX。已显示的系统通知可能无法被可靠取消，编辑任务后旧 toast 可能残留。';
+      'Windows ZIP 版本改用应用自主管理的托盘通知，Next DDL 新产生的通知可以可靠取消；旧版本遗留的 Toast 可能仍需手动清理。';
 
   @override
   String get androidNotificationNotice =>

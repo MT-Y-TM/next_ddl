@@ -79,18 +79,22 @@ class ReminderHealthService {
     FlutterLocalNotificationsPlugin? plugin,
     MethodChannel? alarmChannel,
     MethodChannel? healthChannel,
+    MethodChannel? notificationChannel,
     TargetPlatform? platform,
     DateTime Function()? now,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
        _channel = alarmChannel ?? const MethodChannel('next_ddl/alarm'),
        _healthChannel =
            healthChannel ?? const MethodChannel('next_ddl/reminder_health'),
+       _notificationChannel = notificationChannel ??
+           const MethodChannel('next_ddl/windows_notifications'),
        platform = platform ?? defaultTargetPlatform,
        _now = now ?? DateTime.now;
 
   final FlutterLocalNotificationsPlugin _plugin;
   final MethodChannel _channel;
   final MethodChannel _healthChannel;
+  final MethodChannel _notificationChannel;
   final TargetPlatform platform;
   final DateTime Function() _now;
   final List<ReminderHealthEvent> _events = [];
@@ -146,6 +150,18 @@ class ReminderHealthService {
     final exact = await exactAlarmPermission();
     int? count;
     if (supported) {
+      if (platform == TargetPlatform.windows) {
+        try {
+          final nativeCount = await _notificationChannel
+              .invokeMethod<int>('pendingCount')
+              .timeout(_timeout);
+          if (nativeCount != null && nativeCount >= 0) count = nativeCount;
+        } catch (_) {
+          // Older Windows builds do not expose the native scheduler count.
+        }
+      }
+    }
+    if (supported && count == null) {
       try {
         final pending = await _plugin.pendingNotificationRequests().timeout(
           _timeout,

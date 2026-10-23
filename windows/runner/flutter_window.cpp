@@ -31,6 +31,8 @@ bool FlutterWindow::OnCreate() {
       GetHandle(), flutter_controller_->engine()->messenger());
   fonts_ = std::make_unique<NextDdlFonts>(
       flutter_controller_->engine()->messenger());
+  notifications_ = std::make_unique<NextDdlNotificationScheduler>(
+      GetHandle(), flutter_controller_->engine()->messenger());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -46,6 +48,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  notifications_ = nullptr;
   fonts_ = nullptr;
   desktop_ = nullptr;
   alarm_scheduler_ = nullptr;
@@ -75,6 +78,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
   if (desktop_) {
     const auto result = desktop_->HandleMessage(message, wparam, lparam);
+    if (result) return *result;
+  }
+  if (notifications_) {
+    const auto result = notifications_->HandleMessage(message, lparam);
     if (result) return *result;
   }
   // Give Flutter, including plugins, an opportunity to handle window messages.

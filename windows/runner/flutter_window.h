@@ -9,6 +9,7 @@
 #include "next_ddl_alarm_scheduler.h"
 #include "next_ddl_desktop.h"
 #include "next_ddl_fonts.h"
+#include "next_ddl_notification_scheduler.h"
 #include "win32_window.h"
 
 // A window that does nothing but host a Flutter view.
@@ -36,6 +37,7 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<NextDdlAlarmScheduler> alarm_scheduler_;
   std::unique_ptr<NextDdlDesktop> desktop_;
   std::unique_ptr<NextDdlFonts> fonts_;
+  std::unique_ptr<NextDdlNotificationScheduler> notifications_;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

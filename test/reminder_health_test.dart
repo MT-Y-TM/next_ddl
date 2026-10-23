@@ -17,6 +17,7 @@ void main() {
   const notifications = MethodChannel(
     'dexterous.com/flutter/local_notifications',
   );
+  const windowsNotifications = MethodChannel('next_ddl/windows_notifications');
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   final now = DateTime.utc(2026, 9, 25);
@@ -59,7 +60,12 @@ void main() {
   );
 
   tearDown(() {
-    for (final channel in [health, alarm, notifications]) {
+    for (final channel in [
+      health,
+      alarm,
+      notifications,
+      windowsNotifications,
+    ]) {
       messenger.setMockMethodCallHandler(channel, null);
     }
     debugDefaultTargetPlatformOverride = null;
@@ -261,6 +267,13 @@ void main() {
   test(
     'inspect uses native pending count and filters/deduplicates audio',
     () async {
+      messenger.setMockMethodCallHandler(
+        windowsNotifications,
+        (call) async {
+          expect(call.method, 'pendingCount');
+          return 5;
+        },
+      );
       messenger.setMockMethodCallHandler(health, (call) async {
         if (call.method == 'pendingAlarmCount') return 3;
         expect(call.method, 'checkAudioUris');
@@ -293,6 +306,7 @@ void main() {
         ],
         settings: settings,
       );
+      expect(report.pendingNotificationCount, 5);
       expect(report.pendingAlarmCount, 3);
       expect(report.audio, hasLength(2));
     },

@@ -326,7 +326,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get windowsNotificationNotice =>
-      '現在の Windows 版は MSIX ではなく ZIP 形式で配布されています。表示済みのシステム通知は確実に取り消せない場合があり、タスク編集後に古いトーストが残ることがあります。';
+      'Windows の ZIP 版ではアプリが管理するトレイ通知を使用します。Next DDL が新しく作成した通知は確実に取り消せますが、旧版の Toast が残っている場合は手動で削除してください。';
 
   @override
   String get androidNotificationNotice =>

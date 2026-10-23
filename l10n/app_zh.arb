@@ -172,7 +172,7 @@
     }
   },
   "notificationNotice": "通知说明",
-  "windowsNotificationNotice": "当前 Windows 版本使用 ZIP 形式发布而非 MSIX。已显示的系统通知可能无法被可靠取消，编辑任务后旧 toast 可能残留。",
+  "windowsNotificationNotice": "Windows ZIP 版本改用应用自主管理的托盘通知，Next DDL 新产生的通知可以可靠取消；旧版本遗留的 Toast 可能仍需手动清理。",
   "androidNotificationNotice": "Android 首次启用提醒时只会请求普通通知权限，不再跳转“闹钟和提醒”。提醒会以更兼容 MIUI 的方式调度，保存、删除或导入任务后会自动重建未来提醒。",
   "chooseTimezone": "选择应用时区",
   "searchTimezone": "搜索时区",

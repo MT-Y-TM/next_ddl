@@ -172,7 +172,7 @@
     }
   },
   "notificationNotice": "Notification notes",
-  "windowsNotificationNotice": "The current Windows build is distributed as a ZIP instead of MSIX. Displayed system notifications may not be cancelled reliably, and old toasts may remain after editing tasks.",
+  "windowsNotificationNotice": "The Windows ZIP build uses app-managed tray notifications. Notifications created by Next DDL can be cancelled reliably; Toasts left by older builds may still need manual cleanup.",
   "androidNotificationNotice": "On Android, enabling reminders only requests standard notification permission and no longer opens the Alarms & reminders page. Reminders are scheduled in a MIUI-friendlier way and rebuild automatically after saving, deleting, or importing tasks.",
   "chooseTimezone": "Choose app timezone",
   "searchTimezone": "Search timezones",

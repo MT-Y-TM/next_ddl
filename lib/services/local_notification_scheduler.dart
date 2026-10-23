@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -24,6 +25,8 @@ class LocalNotificationScheduler implements NotificationScheduler {
 
   final TimezoneService _timezoneService;
   final FlutterLocalNotificationsPlugin _plugin;
+  static const MethodChannel _windowsChannel =
+      MethodChannel('next_ddl/windows_notifications');
   static const int _persistentNotificationId = 10001;
 
   static final StreamController<String> _tapController =
@@ -49,16 +52,37 @@ class LocalNotificationScheduler implements NotificationScheduler {
         }
       },
     );
+    if (Platform.isWindows) {
+      _windowsChannel.setMethodCallHandler((call) async {
+        if (call.method == 'notificationTapped' && call.arguments is String) {
+          _tapController.add(call.arguments as String);
+        }
+      });
+    }
   }
 
   @override
   Future<void> removeAll() async {
+    if (Platform.isWindows) {
+      try {
+        await _windowsChannel.invokeMethod<void>('removeAll');
+      } on MissingPluginException {
+        // Keep tests and older unpackaged builds compatible.
+      }
+    }
     await _plugin.cancel(_persistentNotificationId);
     await _plugin.cancelAll();
   }
 
   @override
   Future<void> removeTask(String taskId) async {
+    if (Platform.isWindows) {
+      try {
+        await _windowsChannel.invokeMethod<void>('removeTask', {'taskId': taskId});
+      } on MissingPluginException {
+        // Keep tests and older unpackaged builds compatible.
+      }
+    }
     final requests = await _plugin.pendingNotificationRequests();
     for (final request in requests) {
       if (request.payload == taskId) {
@@ -155,6 +179,8 @@ class LocalNotificationScheduler implements NotificationScheduler {
       ),
     ];
 
+    final nativeNotifications = <Map<String, Object>>[];
+
     for (final target in targets) {
       for (final offset in task.reminderOffsetsSeconds.toSet()) {
         final scheduledAtUtc = target.dueAtUtc.subtract(
@@ -173,6 +199,15 @@ class LocalNotificationScheduler implements NotificationScheduler {
           title: target.title,
           l10n: l10n,
         );
+        if (Platform.isWindows) {
+          nativeNotifications.add({
+            'id': notificationId,
+            'title': task.title,
+            'body': message,
+            'triggerAtUtcMs': scheduledAtUtc.millisecondsSinceEpoch,
+          });
+          continue;
+        }
         await _plugin.zonedSchedule(
           notificationId,
           task.title,
@@ -191,6 +226,16 @@ class LocalNotificationScheduler implements NotificationScheduler {
           payload: task.id,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         );
+      }
+    }
+    if (Platform.isWindows) {
+      try {
+        await _windowsChannel.invokeMethod<void>('syncTask', {
+          'taskId': task.id,
+          'notifications': nativeNotifications,
+        });
+      } on MissingPluginException {
+        // Older builds retain the plugin path without native scheduling.
       }
     }
   }

@@ -679,7 +679,7 @@ abstract class AppLocalizations {
   /// No description provided for @windowsNotificationNotice.
   ///
   /// In en, this message translates to:
-  /// **'The current Windows build is distributed as a ZIP instead of MSIX. Displayed system notifications may not be cancelled reliably, and old toasts may remain after editing tasks.'**
+  /// **'The Windows ZIP build uses app-managed tray notifications. Notifications created by Next DDL can be cancelled reliably; Toasts left by older builds may still need manual cleanup.'**
   String get windowsNotificationNotice;
 
   /// No description provided for @androidNotificationNotice.

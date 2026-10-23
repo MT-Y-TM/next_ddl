@@ -12,6 +12,7 @@ add_executable(${BINARY_NAME} WIN32
   "next_ddl_alarm_scheduler.cpp"
   "next_ddl_desktop.cpp"
   "next_ddl_fonts.cpp"
+  "next_ddl_notification_scheduler.cpp"
   "utils.cpp"
   "win32_window.cpp"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
