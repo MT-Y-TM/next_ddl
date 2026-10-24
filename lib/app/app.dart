@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'smooth_scroll.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kyant_glass/kyant_glass.dart';
 import 'package:next_ddl/l10n/app_localizations.dart';
 
 import '../features/tasks/task_detail_page.dart';
@@ -43,6 +44,9 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   ProviderSubscription<AsyncValue<AppSnapshot>>? _widgetSubscription;
   ProviderSubscription<int>? _widgetTimezoneSubscription;
   bool _refreshingPlans = false;
+  bool _glassWarmupStarted = false;
+  DateTime? _lastDesktopClockSync;
+  static const _desktopClockRefreshInterval = Duration(minutes: 1);
 
   @override
   void initState() {
@@ -68,8 +72,13 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     if (Platform.isWindows) {
       _desktopClockSubscription = ref.listenManual(nowProvider, (_, next) {
         final snapshot = ref.read(tasksControllerProvider).valueOrNull;
-        if (snapshot != null && next.valueOrNull != null) {
-          _syncDesktop(snapshot);
+        final now = next.valueOrNull;
+        final last = _lastDesktopClockSync;
+        if (snapshot != null &&
+            now != null &&
+            (last == null ||
+                now.difference(last) >= _desktopClockRefreshInterval)) {
+          _syncDesktop(snapshot, nowUtc: now);
         }
       });
     }
@@ -132,9 +141,11 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
     }
   }
 
-  Future<void> _syncDesktop(AppSnapshot snapshot) async {
+  Future<void> _syncDesktop(AppSnapshot snapshot, {DateTime? nowUtc}) async {
     try {
-      await _desktop.sync(snapshot, DateTime.now().toUtc());
+      final now = nowUtc ?? DateTime.now().toUtc();
+      _lastDesktopClockSync = now;
+      await _desktop.sync(snapshot, now);
     } catch (error) {
       debugPrint('Desktop summary sync failed: ${error.runtimeType}');
     }
@@ -197,6 +208,12 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
   Widget build(BuildContext context) {
     final localePreference = ref.watch(localePreferenceProvider);
     final themeSettings = ref.watch(themeSettingsProvider);
+    if (themeSettings.liquidGlassInputsEnabled && !_glassWarmupStarted) {
+      _glassWarmupStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _warmupGlassShaders();
+      });
+    }
     return MaterialApp(
       navigatorKey: _navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
@@ -219,6 +236,14 @@ class _NextDdlAppState extends ConsumerState<NextDdlApp>
           NextDdlAppShell(child: child ?? const SizedBox.shrink()),
       home: const TaskListPage(),
     );
+  }
+
+  Future<void> _warmupGlassShaders() async {
+    try {
+      await KyantGlass.precache();
+    } catch (error) {
+      debugPrint('Liquid glass shader warmup failed: ${error.runtimeType}');
+    }
   }
 
   Future<void> _showUpdateDialog(UpdateRelease release) async {

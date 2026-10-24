@@ -1,5 +1,5 @@
 {
-  "version": "1.2.25",
-  "zh": "- 将首页秒级倒计时刷新下沉到单张任务卡片，避免每秒重建整个任务列表。\n- 任务顺序、筛选和状态变化仍会及时更新。",
-  "en": "- Moved second-level countdown refreshes into individual task cards to avoid rebuilding the entire task list every second.\n- Task ordering, filtering, and status changes still update promptly."
+  "version": "1.2.26",
+  "zh": "- 在启用液态玻璃时提前预热 shader，减少首次打开输入页面的渲染卡顿。\n- Windows 托盘摘要改为低频刷新，任务或设置变化时仍立即同步。",
+  "en": "- Prewarmed liquid-glass shaders when enabled to reduce the first-render hitch on input pages.\n- Reduced Windows tray summary refresh frequency while keeping immediate sync for task and setting changes."
 }
