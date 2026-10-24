@@ -28,7 +28,9 @@ void main() {
     );
     await tester.pump();
 
-    controller.position.pointerScroll(160);
+    controller.position.pointerScroll(40);
+    controller.position.pointerScroll(40);
+    controller.position.pointerScroll(80);
     expect(controller.offset, lessThan(160));
     await tester.pump(const Duration(milliseconds: 1));
     await tester.pump(const Duration(milliseconds: 89));

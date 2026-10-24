@@ -1,5 +1,5 @@
 {
-  "version": "1.2.23",
-  "zh": "- 优化 Windows 滚动时的液态玻璃背景采样，避免滚动过程中重复读取整张背景图。\n- 保留键盘、窗口尺寸和背景变化时的正确重新采样。",
-  "en": "- Optimized liquid-glass backdrop sampling while scrolling on Windows, avoiding repeated full-background readbacks.\n- Correct resampling is preserved for keyboard, window-size, and background changes."
+  "version": "1.2.24",
+  "zh": "- 合并同一帧内的多个 Windows 滚轮事件，减少高频滚轮和触控板滚动时的动画创建。\n- 保持触摸拖动和其他平台的原生滚动行为。",
+  "en": "- Coalesced multiple Windows wheel events in the same frame to reduce animation churn during high-frequency mouse and trackpad scrolling.\n- Touch dragging and native scrolling on other platforms remain unchanged."
 }

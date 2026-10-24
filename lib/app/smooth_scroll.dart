@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 /// Makes mouse-wheel scrolling feel continuous on desktop without changing
@@ -50,6 +51,9 @@ class _SmoothScrollPosition extends ScrollPositionWithSingleContext {
   final Curve curve;
   final bool? smoothWheel;
   double? _wheelTarget;
+  double _pendingWheelDelta = 0;
+  bool _wheelFrameScheduled = false;
+  bool _disposed = false;
 
   @override
   void pointerScroll(double delta) {
@@ -58,24 +62,44 @@ class _SmoothScrollPosition extends ScrollPositionWithSingleContext {
       return;
     }
 
-    if (delta == 0 || !hasPixels) return;
-    final base = _wheelTarget ?? pixels;
-    final target = math.min(
-      math.max(base + delta, minScrollExtent),
-      maxScrollExtent,
-    );
-    if (target == base) return;
+    if (delta == 0 || !hasPixels || _disposed) return;
+    _pendingWheelDelta += delta;
+    if (_wheelFrameScheduled) return;
 
-    _wheelTarget = target;
-    animateTo(target, duration: duration, curve: curve).whenComplete(() {
-      if (_wheelTarget == target) _wheelTarget = null;
+    _wheelFrameScheduled = true;
+    SchedulerBinding.instance.scheduleFrameCallback((_) {
+      _wheelFrameScheduled = false;
+      if (_disposed || !hasPixels || _pendingWheelDelta == 0) return;
+
+      final base = _wheelTarget ?? pixels;
+      final target = math.min(
+        math.max(base + _pendingWheelDelta, minScrollExtent),
+        maxScrollExtent,
+      );
+      _pendingWheelDelta = 0;
+      if (target == base) return;
+
+      _wheelTarget = target;
+      animateTo(target, duration: duration, curve: curve).whenComplete(() {
+        if (_wheelTarget == target) _wheelTarget = null;
+      });
     });
   }
 
   @override
   void beginActivity(ScrollActivity? newActivity) {
-    if (newActivity is! DrivenScrollActivity) _wheelTarget = null;
+    if (newActivity is! DrivenScrollActivity) {
+      _wheelTarget = null;
+      _pendingWheelDelta = 0;
+    }
     super.beginActivity(newActivity);
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _pendingWheelDelta = 0;
+    super.dispose();
   }
 }
 
