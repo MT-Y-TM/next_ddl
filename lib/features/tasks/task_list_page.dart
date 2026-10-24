@@ -196,14 +196,19 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   @override
   Widget build(BuildContext context) {
     final snapshotAsync = ref.watch(tasksControllerProvider);
+    // The clock still updates the providers every second, but the page only
+    // rebuilds when task membership/order data changes. Individual cards own
+    // their second-level countdown rebuilds.
+    ref.watch(inProgressTasksProvider.select(_taskCollectionFingerprint));
+    ref.watch(overdueTasksProvider.select(_taskCollectionFingerprint));
     final inProgress = filterTaskUi(
-      ref.watch(inProgressTasksProvider),
+      ref.read(inProgressTasksProvider),
       _search.text,
       tag: _tag,
       untagged: _untagged,
     );
     final overdue = filterTaskUi(
-      ref.watch(overdueTasksProvider),
+      ref.read(overdueTasksProvider),
       _search.text,
       tag: _tag,
       untagged: _untagged,
@@ -223,7 +228,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
           ..sort();
     final filtering =
         _search.text.trim().isNotEmpty || _tag != null || _untagged;
-    final now = ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
     ref.watch(timezoneRevisionProvider);
     final timezoneService = ref.watch(timezoneServiceProvider);
     final l10n = AppLocalizations.of(context)!;
@@ -357,7 +361,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                       filtering: filtering,
                       onClear: _clear,
                       tasks: inProgress,
-                      nowUtc: now,
                       summary: l10n.inProgressSummary(inProgress.length),
                       toConfiguredTime: timezoneService.utcToConfigured,
                       onScrollNotification: _handleScrollNotification,
@@ -366,7 +369,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                       filtering: filtering,
                       onClear: _clear,
                       tasks: overdue,
-                      nowUtc: now,
                       summary: l10n.overdueSummary(overdue.length),
                       toConfiguredTime: timezoneService.utcToConfigured,
                       onScrollNotification: _handleScrollNotification,
@@ -374,7 +376,6 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                     _TaskTabView(
                       tasks: archived,
                       emptyMessage: strings.emptyArchive,
-                      nowUtc: now,
                       summary: '${strings.archived} (${archived.length})',
                       toConfiguredTime: timezoneService.utcToConfigured,
                       filtering: filtering,
@@ -399,10 +400,29 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   }
 }
 
+int _taskCollectionFingerprint(List<DeadlineTask> tasks) => Object.hashAll(
+  tasks.map(
+    (task) => Object.hash(
+      task.id,
+      task.updatedAtUtc,
+      task.finalDueAtUtc,
+      task.completedAtUtc,
+      Object.hashAll(
+        task.milestones.map(
+          (milestone) => Object.hash(
+            milestone.id,
+            milestone.dueAtUtc,
+            milestone.completedAtUtc,
+          ),
+        ),
+      ),
+    ),
+  ),
+);
+
 class _TaskTabView extends StatefulWidget {
   const _TaskTabView({
     required this.tasks,
-    required this.nowUtc,
     required this.summary,
     required this.toConfiguredTime,
     required this.filtering,
@@ -416,7 +436,6 @@ class _TaskTabView extends StatefulWidget {
   final VoidCallback onClear;
   final bool Function(ScrollNotification) onScrollNotification;
   final List<DeadlineTask> tasks;
-  final DateTime nowUtc;
   final String summary;
   final DateTime Function(DateTime value) toConfiguredTime;
 
@@ -492,7 +511,6 @@ class _TaskTabViewState extends State<_TaskTabView> {
               )
             : _TaskCard(
                 task: widget.tasks[index - 1],
-                nowUtc: widget.nowUtc,
                 toConfiguredTime: widget.toConfiguredTime,
               ),
       ),
@@ -503,12 +521,10 @@ class _TaskTabViewState extends State<_TaskTabView> {
 class _TaskCard extends ConsumerStatefulWidget {
   const _TaskCard({
     required this.task,
-    required this.nowUtc,
     required this.toConfiguredTime,
   });
 
   final DeadlineTask task;
-  final DateTime nowUtc;
   final DateTime Function(DateTime value) toConfiguredTime;
 
   @override
@@ -569,15 +585,17 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final task = widget.task;
-    final urgency = resolveTaskUrgency(task, widget.nowUtc);
-    final nextMilestone = resolveNextMilestone(task, widget.nowUtc);
+    final now =
+        ref.watch(nowProvider).valueOrNull ?? DateTime.now().toUtc();
+    final urgency = resolveTaskUrgency(task, now);
+    final nextMilestone = resolveNextMilestone(task, now);
     final scheme = Theme.of(context).colorScheme;
     final color = switch (urgency) {
       TaskUrgency.normal => scheme.primary,
       TaskUrgency.urgent => scheme.tertiary,
       TaskUrgency.overdue => scheme.error,
     };
-    final progress = resolveRemainingProgress(task, widget.nowUtc);
+    final progress = resolveRemainingProgress(task, now);
     final strings = TaskUiStrings(context);
 
     return Card(
@@ -720,7 +738,7 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                     )
                   else ...[
                     Text(
-                      task.finalDueAtUtc.isAfter(widget.nowUtc)
+                      task.finalDueAtUtc.isAfter(now)
                           ? l10n.inProgressTab
                           : l10n.overdueTab,
                     ),
@@ -733,8 +751,8 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                             ? l10n.finalDeadline
                             : resolveMilestoneDisplayTitle(nextMilestone.title),
                         countdown: formatCountdownFromDates(
-                          now: widget.nowUtc,
-                          target: nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
+                          now: now,
+                           target: nextMilestone?.dueAtUtc ?? task.finalDueAtUtc,
                           overduePrefix: l10n.countdownOverduePrefix,
                           daySuffix: l10n.countdownDaySuffix,
                         ),
@@ -748,7 +766,7 @@ class _TaskCardState extends ConsumerState<_TaskCard> {
                       label: l10n.finalDeadline,
                       title: null,
                       countdown: formatCountdownFromDates(
-                        now: widget.nowUtc,
+                        now: now,
                         target: task.finalDueAtUtc,
                         overduePrefix: l10n.countdownOverduePrefix,
                         daySuffix: l10n.countdownDaySuffix,

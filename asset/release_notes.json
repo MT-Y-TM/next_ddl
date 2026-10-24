@@ -1,5 +1,5 @@
 {
-  "version": "1.2.24",
-  "zh": "- 合并同一帧内的多个 Windows 滚轮事件，减少高频滚轮和触控板滚动时的动画创建。\n- 保持触摸拖动和其他平台的原生滚动行为。",
-  "en": "- Coalesced multiple Windows wheel events in the same frame to reduce animation churn during high-frequency mouse and trackpad scrolling.\n- Touch dragging and native scrolling on other platforms remain unchanged."
+  "version": "1.2.25",
+  "zh": "- 将首页秒级倒计时刷新下沉到单张任务卡片，避免每秒重建整个任务列表。\n- 任务顺序、筛选和状态变化仍会及时更新。",
+  "en": "- Moved second-level countdown refreshes into individual task cards to avoid rebuilding the entire task list every second.\n- Task ordering, filtering, and status changes still update promptly."
 }
