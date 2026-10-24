@@ -162,7 +162,10 @@ class _WallpaperGlassBackdrop extends ChangeNotifier implements KyantBackdrop {
   }
 
   void invalidateGeometry() {
-    refreshGeometry();
+    // Scrolling changes the consumer's transform, not the retained wallpaper
+    // pixels. Repainting the consumer is enough; a full-window GPU readback
+    // is reserved for focus, metrics, or background changes.
+    if (enabled && !_disposed) notifyListeners();
   }
 
   /// Keyboard and window metric changes can move the glass target before the

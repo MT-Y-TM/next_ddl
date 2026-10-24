@@ -1,5 +1,5 @@
 {
-  "version": "1.2.22",
-  "zh": "- Windows 列表和弹窗的鼠标滚轮滚动改为平滑过渡，减少滚轮跳动。\n- Android 液态玻璃输入框会在键盘和焦点布局变化后重新采样背景，修复首帧放大或错位。",
-  "en": "- Windows lists and dialogs now use smooth mouse-wheel scrolling instead of abrupt jumps.\n- Android liquid-glass inputs resample the background after keyboard and focus layout changes, fixing enlarged or misaligned first frames."
+  "version": "1.2.23",
+  "zh": "- 优化 Windows 滚动时的液态玻璃背景采样，避免滚动过程中重复读取整张背景图。\n- 保留键盘、窗口尺寸和背景变化时的正确重新采样。",
+  "en": "- Optimized liquid-glass backdrop sampling while scrolling on Windows, avoiding repeated full-background readbacks.\n- Correct resampling is preserved for keyboard, window-size, and background changes."
 }

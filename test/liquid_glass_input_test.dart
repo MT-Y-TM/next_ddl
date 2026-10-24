@@ -133,4 +133,48 @@ void main() {
       await tester.pump();
     },
   );
+
+  testWidgets(
+    'scrolling updates glass geometry without recapturing the wallpaper',
+    (tester) async {
+      await tester.runAsync(KyantGlass.precache);
+      final scrollController = ScrollController();
+      addTearDown(scrollController.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildNextDdlTheme(
+            settings: const AppThemeSettings(liquidGlassInputsEnabled: true),
+          ),
+          builder: (_, child) => NextDdlAppShell(
+            background: const ColoredBox(color: Colors.blue),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: ListView(
+              controller: scrollController,
+              children: [
+                const SizedBox(height: 120),
+                LiquidGlassInput(child: const TextField()),
+                const SizedBox(height: 500),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final backdrop = KyantBackdropScope.maybeOf(
+        tester.element(find.byType(TextField)),
+      )!;
+      expect(backdrop.image, isNotNull);
+      final revision = backdrop.revision;
+
+      scrollController.jumpTo(40);
+      await tester.pumpAndSettle();
+
+      expect(backdrop.revision, revision);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    },
+  );
 }
