@@ -22,9 +22,12 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
             prefs.getString(selectedTaskKey(oldId), null)?.let {
                 editor.putString(selectedTaskKey(newId), it)
             }
+            prefs.getString(selectedCategoryKey(oldId), null)?.let {
+                editor.putString(selectedCategoryKey(newId), it)
+            }
             editor.putBoolean(manualSelectionKey(newId), prefs.getBoolean(manualSelectionKey(oldId), false))
             if (oldId != newId) {
-                editor.remove(selectedTaskKey(oldId)).remove(manualSelectionKey(oldId))
+                editor.remove(selectedTaskKey(oldId)).remove(manualSelectionKey(oldId)).remove(selectedCategoryKey(oldId))
             }
         }
         editor.commit()
@@ -34,7 +37,7 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
     override fun onDeleted(context: Context, ids: IntArray) {
         val editor = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
         for (id in ids) {
-            editor.remove(selectedTaskKey(id)).remove(manualSelectionKey(id))
+            editor.remove(selectedTaskKey(id)).remove(manualSelectionKey(id)).remove(selectedCategoryKey(id))
         }
         editor.apply()
     }
@@ -54,6 +57,7 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
 
         private fun selectedTaskKey(id: Int) = "selectedTask_$id"
         private fun manualSelectionKey(id: Int) = "manualSelection_$id"
+        private fun selectedCategoryKey(id: Int) = "selectedCategory_$id"
 
         fun refreshAll(context: Context, resetManualSelection: Boolean = false) {
             val manager = AppWidgetManager.getInstance(context)
@@ -127,7 +131,9 @@ class NextDdlWidgetProvider : AppWidgetProvider() {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             val raw = prefs.getString("snapshot", null) ?: return false
             val snapshot = runCatching { NextDdlWidgetSnapshot.parse(raw) }.getOrNull() ?: return false
-            if (snapshot.tasks.none { it.id == taskId }) return false
+            val task = snapshot.tasks.firstOrNull { it.id == taskId } ?: return false
+            val category = prefs.getString(selectedCategoryKey(widgetId), NextDdlWidgetSnapshot.CATEGORY_IN_PROGRESS)
+            if (task.completed && category != NextDdlWidgetSnapshot.CATEGORY_COMPLETED) return false
             if (!prefs.edit()
                 .putString(selectedTaskKey(widgetId), taskId)
                 .putBoolean(manualSelectionKey(widgetId), true)

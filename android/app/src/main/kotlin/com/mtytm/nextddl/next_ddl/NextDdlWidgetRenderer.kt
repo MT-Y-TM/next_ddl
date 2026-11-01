@@ -106,14 +106,24 @@ internal object NextDdlWidgetRenderer {
         views.setTextViewText(R.id.widget_countdown_label, context.getString(R.string.widget_remaining_label))
         views.setTextViewText(R.id.widget_empty_hint, context.getString(R.string.widget_empty_hint))
         if (task != null) {
-            val overdue = task.finalDue < now
+            val completed = task.completed
+            val overdue = !completed && task.finalDue < now
             views.setTextViewText(R.id.widget_status, context.getString(
-                if (overdue) R.string.widget_overdue_status else R.string.widget_focus_label))
-            views.setTextViewText(R.id.widget_percent, "${task.remainingProgress(now)}%")
-            views.setProgressBar(R.id.widget_progress, 100, task.remainingProgress(now), false)
+                when {
+                    completed -> R.string.widget_completed_status
+                    overdue -> R.string.widget_overdue_status
+                    else -> R.string.widget_focus_label
+                }))
+            val progress = if (completed) 100 else task.remainingProgress(now)
+            views.setTextViewText(R.id.widget_percent, "$progress%")
+            views.setProgressBar(R.id.widget_progress, 100, progress, false)
             val hours = abs(task.finalDue - now) / (60L * 60L * 1000L)
             val amount = context.getString(R.string.widget_days_hours, hours / 24L, hours % 24L)
-            val countdown = if (overdue) context.getString(R.string.widget_overdue, amount) else amount
+            val countdown = when {
+                completed -> context.getString(R.string.widget_completed_status)
+                overdue -> context.getString(R.string.widget_overdue, amount)
+                else -> amount
+            }
             val locale = context.resources.configuration.locales[0]
             val date = SimpleDateFormat("yyyy-MM-dd HH:mm", locale).apply {
                 timeZone = TimeZone.getTimeZone(snapshot.timezoneId)

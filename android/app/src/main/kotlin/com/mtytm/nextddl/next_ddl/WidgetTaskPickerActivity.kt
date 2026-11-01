@@ -10,8 +10,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.BaseAdapter
 import android.widget.ListView
+import android.widget.Spinner
 import android.widget.TextView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -29,9 +32,13 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
     internal var sheet: BottomSheetDialog? = null
         private set
     private var list: ListView? = null
+    private var categoryPicker: Spinner? = null
     private var content: View? = null
     private var loadedSnapshot: String? = null
     private var loadedSelection: String? = null
+    private var loadedCategory: String? = null
+    private var categoryOptions: List<PickerCategory> = emptyList()
+    private var applyingCategory = false
 
     override fun attachBaseContext(base: Context) {
         val snapshot = readSnapshot(base)
@@ -75,7 +82,7 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
     }
 
     override fun onSharedPreferenceChanged(preferences: SharedPreferences, key: String?) {
-        if (key == "snapshot" || key == "selectedTask_$widgetId") refreshList()
+        if (key == "snapshot" || key == "selectedTask_$widgetId" || key == "selectedCategory_$widgetId") refreshList()
     }
 
     private fun showPicker() {
@@ -85,6 +92,19 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
         val root = layoutInflater.inflate(R.layout.widget_task_picker, null)
         content = root
         list = root.findViewById(R.id.widget_picker_list)
+        categoryPicker = root.findViewById(R.id.widget_picker_category)
+        categoryPicker?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (applyingCategory || position !in categoryOptions.indices) return
+                val category = categoryOptions[position].id
+                if (prefs.getString("selectedCategory_$widgetId", NextDdlWidgetSnapshot.CATEGORY_IN_PROGRESS) != category) {
+                    prefs.edit().putString("selectedCategory_$widgetId", category).apply()
+                    loadedCategory = null
+                    refreshList()
+                }
+            }
+        }
         root.findViewById<View>(R.id.widget_picker_close).setOnClickListener { dialog.dismiss() }
         list?.setOnItemClickListener { parent, _, position, _ ->
             val task = parent.getItemAtPosition(position) as? WidgetTask ?: return@setOnItemClickListener
@@ -116,18 +136,31 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
         if (!NextDdlWidgetProvider.ownsWidget(this, widgetId)) { finish(); return }
         val raw = prefs.getString("snapshot", null)
         val displayedId = prefs.getString("selectedTask_$widgetId", null)
-        if (taskList.adapter != null && loadedSnapshot == raw && loadedSelection == displayedId) return
-        val firstLoad = taskList.adapter == null
         val snapshot = readSnapshot(this)
+        val category = prefs.getString("selectedCategory_$widgetId", NextDdlWidgetSnapshot.CATEGORY_IN_PROGRESS)
+            ?: NextDdlWidgetSnapshot.CATEGORY_IN_PROGRESS
+        if (taskList.adapter != null && loadedSnapshot == raw && loadedSelection == displayedId && loadedCategory == category) return
+        val firstLoad = taskList.adapter == null
+        if (loadedSnapshot != raw || categoryOptions.isEmpty()) {
+            categoryOptions = buildCategories(snapshot)
+            categoryPicker?.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item,
+                categoryOptions.map { it.label }).also { it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
+        }
+        val categoryPosition = categoryOptions.indexOfFirst { it.id == category }.takeIf { it >= 0 } ?: 0
+        val activeCategory = categoryOptions.getOrNull(categoryPosition)?.id ?: NextDdlWidgetSnapshot.CATEGORY_IN_PROGRESS
+        if (activeCategory != category) prefs.edit().putString("selectedCategory_$widgetId", activeCategory).apply()
+        applyingCategory = true
+        categoryPicker?.setSelection(categoryPosition, false)
+        applyingCategory = false
         val now = System.currentTimeMillis()
-        val tasks = snapshot.selectableTasks(now)
+        val tasks = snapshot.selectableTasks(now, activeCategory)
         val selectedId = displayedId?.takeIf { id -> tasks.any { it.id == id } }
-            ?: snapshot.select(now)?.id
         val position = taskList.firstVisiblePosition
         val top = taskList.getChildAt(0)?.top ?: 0
         taskList.adapter = TaskAdapter(this, tasks, snapshot.timezoneId, selectedId, now)
         loadedSnapshot = raw
         loadedSelection = displayedId
+        loadedCategory = activeCategory
         val selectedPosition = tasks.indexOfFirst { it.id == selectedId }
         taskList.setSelectionFromTop(if (firstLoad && selectedPosition >= 0) selectedPosition else position,
             if (firstLoad) 0 else top)
@@ -137,10 +170,23 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
         val header = root.findViewById<View>(R.id.widget_picker_header)
         header.measure(View.MeasureSpec.makeMeasureSpec(metrics.widthPixels, View.MeasureSpec.AT_MOST),
             View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED))
-        val remaining = (metrics.heightPixels * 0.75f - header.measuredHeight - 64 * metrics.density).toInt()
+        val categoryHeight = categoryPicker?.height?.takeIf { it > 0 } ?: (48 * metrics.density).roundToInt()
+        val remaining = (metrics.heightPixels * 0.75f - header.measuredHeight - categoryHeight - 64 * metrics.density).toInt()
             .coerceAtLeast((80 * metrics.density).roundToInt())
         taskList.layoutParams = taskList.layoutParams.apply {
             height = min(remaining, (tasks.size * 100 * metrics.density * resources.configuration.fontScale).roundToInt())
+        }
+    }
+
+    private fun buildCategories(snapshot: NextDdlWidgetSnapshot): List<PickerCategory> = buildList {
+        add(PickerCategory(NextDdlWidgetSnapshot.CATEGORY_IN_PROGRESS, getString(R.string.widget_category_in_progress)))
+        add(PickerCategory(NextDdlWidgetSnapshot.CATEGORY_OVERDUE, getString(R.string.widget_category_overdue)))
+        add(PickerCategory(NextDdlWidgetSnapshot.CATEGORY_IMPORTANT, getString(R.string.widget_category_important)))
+        add(PickerCategory(NextDdlWidgetSnapshot.CATEGORY_ALL, getString(R.string.widget_category_all)))
+        if (snapshot.tasks.any { it.completed }) add(PickerCategory(NextDdlWidgetSnapshot.CATEGORY_COMPLETED,
+            getString(R.string.widget_category_completed)))
+        snapshot.tasks.flatMap { it.tags }.distinct().sortedBy { it.lowercase(Locale.ROOT) }.forEach { tag ->
+            add(PickerCategory(NextDdlWidgetSnapshot.CATEGORY_TAG_PREFIX + tag, getString(R.string.widget_category_tag, tag)))
         }
     }
 
@@ -152,6 +198,9 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
         content = null
         loadedSnapshot = null
         loadedSelection = null
+        loadedCategory = null
+        categoryOptions = emptyList()
+        categoryPicker = null
     }
 
     private class TaskAdapter(
@@ -174,11 +223,12 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
             row.findViewById<TextView>(R.id.widget_picker_task_title).text = task.title
             val hours = kotlin.math.abs(task.finalDue - now) / 3600000L
             val amount = context.getString(R.string.widget_days_hours, hours / 24, hours % 24)
-            val remaining = context.getString(if (task.finalDue < now) R.string.widget_overdue else R.string.widget_remaining, amount)
+            val remaining = if (task.completed) context.getString(R.string.widget_completed_status)
+                else context.getString(if (task.finalDue < now) R.string.widget_overdue else R.string.widget_remaining, amount)
             val summary = context.getString(R.string.widget_picker_summary, remaining, formatter.format(Date(task.finalDue)))
             row.findViewById<TextView>(R.id.widget_picker_task_summary).apply {
                 text = summary
-                setTextColor(context.getColor(if (task.finalDue < now) R.color.widget_warning else R.color.widget_secondary))
+                setTextColor(context.getColor(if (!task.completed && task.finalDue < now) R.color.widget_warning else R.color.widget_secondary))
             }
             val selected = task.id == selectedId
             row.findViewById<View>(R.id.widget_picker_selected).visibility = if (selected) View.VISIBLE else View.INVISIBLE
@@ -194,4 +244,6 @@ class WidgetTaskPickerActivity : Activity(), SharedPreferences.OnSharedPreferenc
             context.getSharedPreferences(NextDdlWidgetProvider.PREFS, MODE_PRIVATE).getString("snapshot", null)
                 ?.let { runCatching { NextDdlWidgetSnapshot.parse(it) }.getOrNull() } ?: NextDdlWidgetSnapshot()
     }
+
+    private data class PickerCategory(val id: String, val label: String)
 }

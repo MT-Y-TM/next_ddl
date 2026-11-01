@@ -38,6 +38,13 @@
             android:src="@drawable/ic_widget_picker_close"
             android:tint="@color/widget_secondary" />
     </LinearLayout>
+    <Spinner
+        android:id="@+id/widget_picker_category"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:backgroundTint="@color/widget_accent" />
     <ListView
         android:id="@+id/widget_picker_list"
         android:layout_width="match_parent"

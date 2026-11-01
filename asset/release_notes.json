@@ -1,5 +1,5 @@
 {
-  "version": "1.2.26",
-  "zh": "- 在启用液态玻璃时提前预热 shader，减少首次打开输入页面的渲染卡顿。\n- Windows 托盘摘要改为低频刷新，任务或设置变化时仍立即同步。",
-  "en": "- Prewarmed liquid-glass shaders when enabled to reduce the first-render hitch on input pages.\n- Reduced Windows tray summary refresh frequency while keeping immediate sync for task and setting changes."
+  "version": "1.2.27",
+  "zh": "- 安卓小组件任务选择支持先选分类再选任务，默认显示进行中任务。\n- 支持按已过期、重要、全部未完成、已完成和自定义标签筛选，并为每个小组件分别记住分类。",
+  "en": "- Android widgets now let you choose a category before selecting a task, defaulting to In progress.\n- Filter by overdue, important, all unfinished, completed, or custom tags; each widget remembers its own category."
 }

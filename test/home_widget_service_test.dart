@@ -50,7 +50,7 @@ void main() {
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
   test(
-    'widget snapshot retains starred task across JSON and omits completed stars',
+    'widget snapshot retains starred task and completed category data',
     () {
       final snapshot = AppSnapshot.empty().copyWith(
         tasks: [
@@ -64,7 +64,7 @@ void main() {
         timezoneId: 'UTC',
       );
       final tasks = encoded['tasks'] as List;
-      expect(tasks, hasLength(2));
+      expect(tasks, hasLength(3));
       expect(
         tasks.where((item) => item['widgetPinned'] == true).single['id'],
         'starred',
@@ -73,7 +73,7 @@ void main() {
   );
 
   test(
-    'snapshot excludes completed tasks/nodes and private data; keeps future candidates',
+      'snapshot includes category metadata and completed items without private data',
     () {
       final result = HomeWidgetService.buildSnapshot(
         AppSnapshot.empty().copyWith(
@@ -82,16 +82,19 @@ void main() {
         timezoneId: 'Asia/Tokyo',
       );
       final tasks = result['tasks'] as List;
-      expect(tasks, hasLength(1));
-      expect(tasks.single['milestones'], hasLength(2));
-      expect(tasks.single['milestones'][0]['title'], ' ');
+      expect(tasks, hasLength(2));
+      expect(tasks.last['completedAtUtc'], now.millisecondsSinceEpoch);
+      expect(tasks.last['widgetPinned'], false);
+      expect(tasks.first['tags'], isEmpty);
+      expect(tasks.first['milestones'], hasLength(2));
+      expect(tasks.first['milestones'][0]['title'], ' ');
       expect(
-        tasks.single['finalDueAtUtc'],
+        tasks.first['finalDueAtUtc'],
         now.add(const Duration(days: 2)).millisecondsSinceEpoch,
       );
-      expect(tasks.single['createdAtUtc'], now.millisecondsSinceEpoch);
-      expect(tasks.single['widgetPinned'], false);
-      expect(tasks.single.containsKey('note'), false);
+      expect(tasks.first['createdAtUtc'], now.millisecondsSinceEpoch);
+      expect(tasks.first['widgetPinned'], false);
+      expect(tasks.first.containsKey('note'), false);
       expect(result['timezoneId'], 'Asia/Tokyo');
       expect(result['schemaVersion'], 1);
     },

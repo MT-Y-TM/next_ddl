@@ -8,6 +8,13 @@
     <string name="widget_picker_cancel">キャンセル</string>
     <string name="widget_picker_selected">現在表示中</string>
     <string name="widget_picker_summary">%1$s · %2$s</string>
+    <string name="widget_category_in_progress">進行中</string>
+    <string name="widget_category_overdue">期限超過</string>
+    <string name="widget_category_important">重要</string>
+    <string name="widget_category_all">未完了すべて</string>
+    <string name="widget_category_completed">完了済み</string>
+    <string name="widget_category_tag">タグ：%1$s</string>
+    <string name="widget_completed_status">完了済み</string>
     <string name="widget_overdue_status">期限超過</string>
     <string name="widget_empty">未完了のタスクはありません</string>
     <string name="widget_empty_hint">タップして Next DDL を開く</string>

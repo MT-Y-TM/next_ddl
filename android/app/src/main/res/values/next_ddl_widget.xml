@@ -20,6 +20,13 @@
     <string name="widget_picker_cancel">Cancel</string>
     <string name="widget_picker_selected">Currently displayed</string>
     <string name="widget_picker_summary">%1$s · %2$s</string>
+    <string name="widget_category_in_progress">In progress</string>
+    <string name="widget_category_overdue">Overdue</string>
+    <string name="widget_category_important">Important</string>
+    <string name="widget_category_all">All unfinished</string>
+    <string name="widget_category_completed">Completed</string>
+    <string name="widget_category_tag">Tag: %1$s</string>
+    <string name="widget_completed_status">Completed</string>
     <string name="widget_overdue_status">Overdue</string>
     <string name="widget_empty">No unfinished tasks</string>
     <string name="widget_empty_hint">Tap to open Next DDL</string>

@@ -29,11 +29,12 @@ class HomeWidgetService {
     'timezoneId': timezoneId,
     'tasks': [
       for (final task in snapshot.tasks)
-        if (task.completedAtUtc == null)
           {
             'id': task.id,
             'title': task.title,
-            'widgetPinned': task.widgetPinned,
+            'widgetPinned': !task.isCompleted && task.widgetPinned,
+            'completedAtUtc': task.completedAtUtc?.millisecondsSinceEpoch,
+            'tags': task.tags,
             'createdAtUtc': task.createdAtUtc.millisecondsSinceEpoch,
             'finalDueAtUtc': task.finalDueAtUtc.millisecondsSinceEpoch,
             'updatedAtUtc': task.updatedAtUtc.millisecondsSinceEpoch,

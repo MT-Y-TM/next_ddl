@@ -8,6 +8,13 @@
     <string name="widget_picker_cancel">取消</string>
     <string name="widget_picker_selected">当前展示</string>
     <string name="widget_picker_summary">%1$s · %2$s</string>
+    <string name="widget_category_in_progress">进行中</string>
+    <string name="widget_category_overdue">已过期</string>
+    <string name="widget_category_important">重要</string>
+    <string name="widget_category_all">全部未完成</string>
+    <string name="widget_category_completed">已完成</string>
+    <string name="widget_category_tag">标签：%1$s</string>
+    <string name="widget_completed_status">已完成</string>
     <string name="widget_overdue_status">已过期</string>
     <string name="widget_empty">暂无未完成任务</string>
     <string name="widget_empty_hint">点击打开 Next DDL</string>

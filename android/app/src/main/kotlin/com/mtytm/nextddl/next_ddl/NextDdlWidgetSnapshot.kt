@@ -11,6 +11,8 @@ internal data class WidgetTask(
     val nodes: List<WidgetNode>,
     val created: Long = 0L,
     val pinned: Boolean = false,
+    val completed: Boolean = false,
+    val tags: List<String> = emptyList(),
 ) {
     fun next(now: Long): WidgetNode? = nodes.filter { it.due >= now }.minByOrNull { it.due }
     fun activeDue(now: Long): Long = next(now)?.due ?: finalDue
@@ -30,14 +32,25 @@ internal data class NextDdlWidgetSnapshot(
     val timezoneId: String = "UTC",
     val tasks: List<WidgetTask> = emptyList(),
 ) {
-    fun selectableTasks(now: Long): List<WidgetTask> {
-        val future = tasks.filter { it.finalDue >= now }
+    fun selectableTasks(now: Long, category: String = CATEGORY_ALL): List<WidgetTask> {
+        val candidates = when {
+            category == CATEGORY_COMPLETED -> tasks.filter { it.completed }
+            category == CATEGORY_OVERDUE -> tasks.filter { !it.completed && it.finalDue < now }
+            category == CATEGORY_IMPORTANT -> tasks.filter { !it.completed && it.pinned }
+            category == CATEGORY_ALL -> tasks.filterNot { it.completed }
+            category.startsWith(CATEGORY_TAG_PREFIX) -> {
+                val tag = category.removePrefix(CATEGORY_TAG_PREFIX)
+                tasks.filter { !it.completed && tag in it.tags }
+            }
+            else -> tasks.filter { !it.completed && it.finalDue >= now }
+        }
+        val future = candidates.filter { it.finalDue >= now }
         val upcoming = future.sortedWith(
                 compareBy<WidgetTask> { it.activeDue(now) }
                     .thenByDescending { it.updated }
                     .thenBy { it.id },
             )
-        val overdue = tasks.filter { it.finalDue < now }.sortedWith(
+        val overdue = candidates.filter { it.finalDue < now }.sortedWith(
                 compareBy<WidgetTask> { it.finalDue }
                     .thenByDescending { it.updated }
                     .thenBy { it.id },
@@ -61,11 +74,11 @@ internal data class NextDdlWidgetSnapshot(
         selectedId: String? = null,
         manualSelection: Boolean = false,
     ): WidgetTask? {
-        val ordered = selectableTasks(now)
+        val ordered = selectableTasks(now, CATEGORY_ALL)
         if (manualSelection) {
-            ordered.firstOrNull { it.id == selectedId }?.let { return it }
+            tasks.firstOrNull { it.id == selectedId }?.let { return it }
         }
-        return tasks.firstOrNull { it.id == pinnedTaskId() } ?: ordered.firstOrNull()
+        return tasks.firstOrNull { !it.completed && it.id == pinnedTaskId() } ?: ordered.firstOrNull()
     }
 
     fun nextAfter(now: Long, selectedId: String?): WidgetTask? {
@@ -77,24 +90,35 @@ internal data class NextDdlWidgetSnapshot(
     }
 
     companion object {
+        const val CATEGORY_IN_PROGRESS = "in_progress"
+        const val CATEGORY_OVERDUE = "overdue"
+        const val CATEGORY_IMPORTANT = "important"
+        const val CATEGORY_ALL = "all"
+        const val CATEGORY_COMPLETED = "completed"
+        const val CATEGORY_TAG_PREFIX = "tag:"
+
         fun parse(raw: String): NextDdlWidgetSnapshot {
             val root = JSONObject(raw)
             require(root.getInt("schemaVersion") == 1) { "Unsupported widget schema" }
             val array = root.getJSONArray("tasks")
             val tasks = (0 until array.length()).mapNotNull { index ->
                 val task = array.getJSONObject(index)
-                if (!task.isNull("completedAtUtc")) return@mapNotNull null
-                val nodes = task.getJSONArray("milestones")
+                val completed = !task.isNull("completedAtUtc")
+                val nodes = task.optJSONArray("milestones") ?: org.json.JSONArray()
                 WidgetTask(
                     task.getString("id").also { require(it.isNotBlank()) },
-                    task.getString("title"), task.getLong("finalDueAtUtc"), task.getLong("updatedAtUtc"),
+                    task.getString("title"), task.optLong("finalDueAtUtc", 0L), task.optLong("updatedAtUtc", 0L),
                     (0 until nodes.length()).mapNotNull { nodeIndex ->
                         val node = nodes.getJSONObject(nodeIndex)
                         if (!node.isNull("completedAtUtc")) null
                         else WidgetNode(node.getString("title"), node.getLong("dueAtUtc"))
                     },
-                    task.optLong("createdAtUtc", task.getLong("updatedAtUtc")),
+                    task.optLong("createdAtUtc", task.optLong("updatedAtUtc", 0L)),
                     task.optBoolean("widgetPinned", false),
+                    completed,
+                    task.optJSONArray("tags")?.let { tags ->
+                        (0 until tags.length()).mapNotNull { tags.optString(it).takeIf(String::isNotBlank) }
+                    } ?: emptyList(),
                 )
             }
             return NextDdlWidgetSnapshot(root.optString("locale", "system"), root.optString("timezoneId", "UTC"), tasks)
